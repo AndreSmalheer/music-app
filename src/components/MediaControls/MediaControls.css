@@ -1,7 +1,101 @@
-.MediaControls {
-  width: 100%;
-  height: 100%;
+.media-controls {
+  box-sizing: border-box;
+  width: min(80vw, 420px);
+  height: 70px;
+  background-color: var(--bg-secondary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  z-index: 999;
+}
+
+.media-info-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+
+.media-cover-image {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.media-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  overflow: hidden;
+}
+
+.media-song-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.media-artist-name {
+  margin: 0;
+  color: var(--text-secondary, #888);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.media-buttons-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.media-control-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  color: #aaa;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+  line-height: 0;
+}
+
+.media-control-button svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+  color: var(--media-control-color);
+}
+
+.media-control-button:active svg {
+  transform: scale(0.92);
+  color: var(--media-active-control-color);
+}
+
+.media-play-button {
+  width: 40px;
+  height: 40px;
+  color: var(--btn-default);
 }

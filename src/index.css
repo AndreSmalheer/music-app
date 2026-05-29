@@ -1,17 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Lilita+One&display=swap");
+
 :root {
-    --bg-primary: #242323;
-    --bg-secondary: #323232;
-    --text-primary: #ffffff;
-    --spacing-horizontal: 16px;
-    --border-radius-large: 27px;
-    --footer-offset: 90px;
-    --btn-default: #ffffff;
-    --btn-active: #4da3ff;
+  --bg-primary: #242323;
+  --bg-secondary: #323232;
+  --text-primary: #ffffff;
+  --spacing-horizontal: 16px;
+  --border-radius-large: 27px;
+  --footer-offset: 90px;
+  --btn-default: #ffffff;
+  --btn-active: #4da3ff;
+  --font-primary: "Lilita One", sans-serif;
+  --media-control-color: #c5c5c5;
+  --media-active-control-color: #ffffff;
 }
 
 body,
-html{
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-primary);
+html {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  font-family: var(--font-primary);
 }

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
+import MediaControls from "../MediaControls/MediaControls";
 import "./Footer.css";
 
 function HomeIcon() {
@@ -72,6 +73,8 @@ function RadioIcon() {
 function Footer() {
   return (
     <div className="Footer-container">
+        <MediaControls />
+
       <div className="Footer">
         <div className="footer-nav">
           <NavLink

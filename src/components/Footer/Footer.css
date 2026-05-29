@@ -1,13 +1,16 @@
 .Footer-container {
   width: 100%;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  align-items: center;
+  gap: 10px;
+  bottom: 0;
+  left: 0;
 }
 
 .Footer {
   box-sizing: border-box;
-  position: fixed;
-  bottom: 0;
-  left: 0;
   width: 100%;
   padding: 12px var(--spacing-horizontal) 20px;
   background-color: var(--bg-secondary);
@@ -18,17 +21,6 @@
   z-index: 1000;
   border-top-left-radius: var(--border-radius-large);
   border-top-right-radius: var(--border-radius-large);
-}
-
-.media-controls {
-  width: min(80vw, 420px);
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
 }
 
 .footer-nav {
