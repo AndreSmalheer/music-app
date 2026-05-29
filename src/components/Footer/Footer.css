@@ -1,37 +1,55 @@
-.Footer{
-    box-sizing: border-box;
+.Footer {
+  box-sizing: border-box;
 
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    min-height: 70px;
-    padding: 25px var(--spacing-horizontal);
-    background-color: var(--bg-secondary);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  min-height: 70px;
+  padding: 25px var(--spacing-horizontal);
+  background-color: var(--bg-secondary);
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: clamp(var(--spacing-horizontal), 4vw, 34px);
-    flex-wrap: wrap;
-    z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(var(--spacing-horizontal), 4vw, 34px);
+  flex-wrap: wrap;
+  z-index: 1000;
 
-    border-top-left-radius: var(--border-radius-large);
-    border-top-right-radius: var(--border-radius-large);
+  border-top-left-radius: var(--border-radius-large);
+  border-top-right-radius: var(--border-radius-large);
 }
 
-.footer-btn{
-    background-color: transparent;
-    border: none;
+.footer-btn {
+  background-color: transparent;
+  border: none;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
-/* .footer-btn:hover{
+.footer-btn img {
+  width: clamp(40px, 12vw, 50px);
+  height: clamp(40px, 12vw, 50px);
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+@media (hover: hover) {
+  .footer-btn:hover img {
+    transform: scale(1.08);
+    filter: brightness(1.15);
     cursor: pointer;
-    transform: scale(1.1);
-    transition: transform 0.25s ease-in-out;
-} */
+  }
+}
 
-.footer-btn img{
-    width: clamp(40px, 12vw, 50px);
-    height: clamp(40px, 12vw, 50px);
+.footer-btn:active img {
+  transform: scale(0.92);
+  filter: brightness(0.85);
+}
+
+.footer-btn:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 4px;
 }
