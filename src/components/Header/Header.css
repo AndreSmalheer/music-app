@@ -27,6 +27,10 @@
   cursor: pointer;
 }
 
+.settings-btn{
+    margin-left: auto;
+}
+
 @media (hover: hover) {
   .back-btn:hover,
   .settings-btn:hover {

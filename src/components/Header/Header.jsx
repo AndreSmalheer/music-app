@@ -58,15 +58,12 @@ function BackBtn() {
   );
 }
 
-function Header() {
+function Header({ backBtn = false }) {
   return (
-    <>
-      <div className="Header">
-        <BackBtn />
-
-        <SettingsBtn />
-      </div>
-    </>
+    <div className="Header">
+      {backBtn && <BackBtn />}
+      <SettingsBtn />
+    </div>
   );
 }
 
