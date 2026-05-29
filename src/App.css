@@ -6,5 +6,10 @@
 
 main {
   flex: 1;
-  padding-bottom: var(--footer-offset); /* Room for the fixed footer */
+  padding-bottom: var(--footer-offset);
+}
+
+.page{
+    width: 100vw;
+    min-height: 84vh;
 }

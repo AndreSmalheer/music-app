@@ -1,11 +1,29 @@
 import "./Header.css";
+import { useState } from "react";
 
 function SettingsBtn() {
+  const [spinning, setSpinning] = useState(false);
+
+  const handleClick = () => {
+    setSpinning(false);
+
+    requestAnimationFrame(() => {
+      setSpinning(true);
+    });
+
+    setTimeout(() => {
+      setSpinning(false);
+    }, 600);
+  };
+
   return (
-    <div className="settings-btn">
+    <div
+      className={`settings-btn ${spinning ? "spin" : ""}`}
+      onClick={handleClick}
+    >
       <svg
-        width="25"
-        height="25"
+        width="35"
+        height="35"
         viewBox="0 0 25 25"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

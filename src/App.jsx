@@ -48,9 +48,9 @@ function App() {
   return (
     <div className="App">
       <Header />
-      <main>
-        <Player />
-      </main>
+
+      <div className="page"></div>
+
       <Footer />
     </div>
   );
