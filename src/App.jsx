@@ -1,7 +1,9 @@
 import "./App.css";
 import { useRef } from "react";
+import { Routes, Route } from "react-router-dom";
 import Footer from "./components/Footer/Footer";
 import Header from "./components/Header/Header";
+import Home from "./pages/Home/Home";
 
 function Player() {
   const audioRef = useRef(null);
@@ -49,7 +51,11 @@ function App() {
     <div className="App">
       <Header />
 
-      <div className="page"></div>
+      <div className="page">
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </div>
 
       <Footer />
     </div>

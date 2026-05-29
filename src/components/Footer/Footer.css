@@ -1,23 +1,46 @@
+.Footer-container {
+    width: 100%;
+    height: 100%;
+    background-color: gray;
+}
+
 .Footer {
   box-sizing: border-box;
-
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  min-height: 70px;
-  padding: 25px var(--spacing-horizontal);
+  padding: 12px var(--spacing-horizontal) 20px;
   background-color: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  border-top-left-radius: var(--border-radius-large);
+  border-top-right-radius: var(--border-radius-large);
+}
 
+/* Media controls row */
+.media-controls {
+  width: min(80vw, 420px);
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+/* Nav buttons row */
+.footer-nav {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: clamp(var(--spacing-horizontal), 4vw, 34px);
+  min-height: 70px;
   flex-wrap: wrap;
-  z-index: 1000;
-
-  border-top-left-radius: var(--border-radius-large);
-  border-top-right-radius: var(--border-radius-large);
 }
 
 .footer-btn {
