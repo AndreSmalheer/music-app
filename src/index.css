@@ -1,0 +1,16 @@
+:root {
+    --bg-primary: #242323;
+    --bg-secondary: #323232;
+    --text-primary: #ffffff;
+    --spacing-horizontal: 16px;
+    --border-radius-large: 27px;
+    --footer-offset: 90px;
+}
+
+body,
+html{
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-primary);
+    overflow-x: hidden;
+}

@@ -1,0 +1,37 @@
+.Footer{
+    box-sizing: border-box;
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 70px;
+    padding: 25px var(--spacing-horizontal);
+    background-color: var(--bg-secondary);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(var(--spacing-horizontal), 4vw, 34px);
+    flex-wrap: wrap;
+    z-index: 1000;
+
+    border-top-left-radius: var(--border-radius-large);
+    border-top-right-radius: var(--border-radius-large);
+}
+
+.footer-btn{
+    background-color: transparent;
+    border: none;
+}
+
+/* .footer-btn:hover{
+    cursor: pointer;
+    transform: scale(1.1);
+    transition: transform 0.25s ease-in-out;
+} */
+
+.footer-btn img{
+    width: clamp(40px, 12vw, 50px);
+    height: clamp(40px, 12vw, 50px);
+}
