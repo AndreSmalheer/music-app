@@ -5,6 +5,8 @@
     --spacing-horizontal: 16px;
     --border-radius-large: 27px;
     --footer-offset: 90px;
+    --btn-default: #ffffff;
+    --btn-active: #4da3ff;
 }
 
 body,
