@@ -53,8 +53,8 @@ function MediaControls({
   onNext,
   onPrevious,
   isPlaying,
-  title = "test",
-  artist = "test",
+  title,
+  artist,
   coverSrc,
 }) {
   return (

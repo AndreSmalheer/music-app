@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
 import { NavLink } from "react-router-dom";
 import MediaControls from "../MediaControls/MediaControls";
+import { PlayerContext } from "../MediaPlayer/MediaPlayer";
 import "./Footer.css";
 
 function HomeIcon() {
@@ -71,9 +73,29 @@ function RadioIcon() {
 }
 
 function Footer() {
+  const {
+    audioPlayerRef,
+    isPlaying,
+    currentTrack,
+    handlePlay,
+    handlePause,
+    handleNext,
+    handlePrevious,
+    playSong,
+  } = useContext(PlayerContext);
   return (
     <div className="Footer-container">
-        <MediaControls />
+      <MediaControls
+        audioPlayerRef={audioPlayerRef}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        isPlaying={isPlaying}
+        title={currentTrack.title}
+        artist={currentTrack.artist}
+        coverSrc={currentTrack.coverSrc}
+      />
 
       <div className="Footer">
         <div className="footer-nav">

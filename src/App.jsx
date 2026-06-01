@@ -6,6 +6,7 @@ import Footer from "./components/Footer/Footer";
 import Header from "./components/Header/Header";
 import Home from "./pages/Home/Home";
 import Search from "./pages/Search/Search";
+import MediaPlayer from "./components/MediaPlayer/MediaPlayer";
 
 function Player() {
   const audioRef = useRef(null);
@@ -66,33 +67,34 @@ function App() {
 
   return (
     <div className="App">
-      <Header />
+      <MediaPlayer>
+        <Header />
 
-      <div className="page">
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route
-              path="/"
-              element={
-                <PageWrapper>
-                  <Home />
-                </PageWrapper>
-              }
-            />
+        <div className="page">
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route
+                path="/"
+                element={
+                  <PageWrapper>
+                    <Home />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <PageWrapper>
+                    <Search />
+                  </PageWrapper>
+                }
+              />
+            </Routes>
+          </AnimatePresence>
+        </div>
 
-            <Route
-              path="/search"
-              element={
-                <PageWrapper>
-                  <Search />
-                </PageWrapper>
-              }
-            />
-          </Routes>
-        </AnimatePresence>
-      </div>
-
-      <Footer />
+        <Footer />
+      </MediaPlayer>
     </div>
   );
 }
