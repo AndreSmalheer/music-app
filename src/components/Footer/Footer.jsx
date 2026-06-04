@@ -86,10 +86,11 @@ function Footer() {
   } = useContext(PlayerContext);
 
   const isNowPlayingPage = location.pathname === "/now-playing";
+  const showMediaControls = !isNowPlayingPage && currentTrack;
 
   return (
     <div className="Footer-container">
-      {!isNowPlayingPage && (
+      {showMediaControls && (
         <MediaControls
           audioPlayerRef={audioPlayerRef}
           onPlay={handlePlay}

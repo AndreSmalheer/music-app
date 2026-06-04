@@ -1,5 +1,6 @@
 import "./Header.css";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function SettingsBtn() {
   const [spinning, setSpinning] = useState(false);
@@ -42,8 +43,9 @@ function SettingsBtn() {
 }
 
 function BackBtn() {
+  const navigate = useNavigate();
   return (
-    <div className="back-btn">
+    <div className="back-btn" onClick={() => navigate(-1)}>
       <svg
         viewBox="0 0 27 20"
         className="icon"
@@ -58,11 +60,14 @@ function BackBtn() {
   );
 }
 
-function Header({ backBtn = false }) {
+function Header() {
+  const location = useLocation();
+  const isNowPlaying = location.pathname === "/now-playing";
+
   return (
     <div className="Header">
-      {backBtn && <BackBtn />}
-      <SettingsBtn />
+      {isNowPlaying && <BackBtn />}
+      {!isNowPlaying && <SettingsBtn />}
     </div>
   );
 }

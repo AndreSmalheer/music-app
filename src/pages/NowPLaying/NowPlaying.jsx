@@ -104,6 +104,8 @@ function NowPlaying() {
   const {
     audioPlayerRef,
     isPlaying,
+    currentTime,
+    duration,
     currentTrack,
     handlePlay,
     handlePause,
@@ -111,6 +113,40 @@ function NowPlaying() {
     handlePrevious,
     playSong,
   } = useContext(PlayerContext);
+
+  if (!currentTrack) {
+    return (
+      <div className="now-playing-page">
+        <h1 className="now-playing-title">No song selected</h1>
+      </div>
+    );
+  }
+
+  const formatTime = (time) => {
+    const absoluteTime = Math.max(0, time);
+    if (isNaN(absoluteTime)) return "0:00";
+    const minutes = Math.floor(absoluteTime / 60);
+    const seconds = Math.floor(absoluteTime % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleSeek = (e) => {
+    if (!audioPlayerRef.current || duration === 0) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const offsetX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, offsetX / rect.width));
+    const newTime = percentage * duration;
+
+    audioPlayerRef.current.currentTime = newTime;
+
+    if (!isPlaying) {
+      handlePlay();
+    }
+  };
 
   return (
     <>
@@ -139,13 +175,24 @@ function NowPlaying() {
         </div>
 
         <div className="progress-bar">
-          <div className="progress-bar-track">
-            <div className="progress-bar-fill"></div>
+          <div
+            className="progress-bar-track"
+            onClick={handleSeek}
+            onTouchStart={handleSeek}
+          >
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
 
           <div className="progress-bar-times">
-            <div className="progress-time progress-time-start">0:00</div>
-            <div className="progress-time progress-time-end">-0:00</div>
+            <div className="progress-time progress-time-start">
+              {formatTime(currentTime)}
+            </div>
+            <div className="progress-time progress-time-end">
+              -{formatTime(duration - currentTime)}
+            </div>
           </div>
         </div>
       </div>

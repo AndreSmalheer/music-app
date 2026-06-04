@@ -86,16 +86,18 @@
   background-color: var(--progress-bar-bg);
   border-radius: 999px;
   overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
 }
 
 /* IMPORTANT: this must be dynamic */
 .progress-bar-fill {
   height: 100%;
   width: 0%;
-  width: 200px;
   background-color: var(--progress-bar-fill);
   border-radius: 999px;
   transition: width 0.2s linear;
+  pointer-events: none;
 }
 
 .progress-bar-times {

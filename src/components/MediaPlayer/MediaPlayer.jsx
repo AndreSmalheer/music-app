@@ -22,11 +22,9 @@ function MediaPlayer({ children }) {
   };
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState({
-    title: "Unknown",
-    artist: "Unknown",
-    coverSrc: "",
-  });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentTrack, setCurrentTrack] = useState(null);
 
   const handlePlay = async () => {
     try {
@@ -84,6 +82,14 @@ function MediaPlayer({ children }) {
   const handleNext = () => console.log("next");
   const handlePrevious = () => console.log("previous");
 
+  const onTimeUpdate = () => {
+    setCurrentTime(audioPlayerRef.current?.currentTime || 0);
+  };
+
+  const onLoadedMetadata = () => {
+    setDuration(audioPlayerRef.current?.duration || 0);
+  };
+
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
 
@@ -101,6 +107,8 @@ function MediaPlayer({ children }) {
   const value = {
     audioPlayerRef,
     isPlaying,
+    currentTime,
+    duration,
     currentTrack,
     handlePlay,
     handlePause,
@@ -111,7 +119,11 @@ function MediaPlayer({ children }) {
 
   return (
     <PlayerContext.Provider value={value}>
-      <audio ref={audioPlayerRef} />
+      <audio
+        ref={audioPlayerRef}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+      />
       {children}
     </PlayerContext.Provider>
   );
