@@ -72,7 +72,11 @@ function MediaControls({
         <div className="media-buttons-section">
           <button
             className="media-control-button"
-            onClick={onPrevious}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPrevious();
+            }}
             aria-label="Previous"
           >
             <PrevBtn />
@@ -80,7 +84,16 @@ function MediaControls({
 
           <button
             className="media-control-button media-play-button"
-            onClick={isPlaying ? onPause : onPlay}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              if (isPlaying) {
+                onPause();
+              } else {
+                onPlay();
+              }
+            }}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? <PauseBtn /> : <PlayBtn />}
@@ -88,7 +101,11 @@ function MediaControls({
 
           <button
             className="media-control-button"
-            onClick={onNext}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onNext();
+            }}
             aria-label="Next"
           >
             <NextBtn />
