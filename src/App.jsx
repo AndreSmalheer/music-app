@@ -7,6 +7,7 @@ import Header from "./components/Header/Header";
 import Home from "./pages/Home/Home";
 import Search from "./pages/Search/Search";
 import MediaPlayer from "./components/MediaPlayer/MediaPlayer";
+import NowPlaying from "./pages/NowPLaying/NowPlaying";
 
 function Player() {
   const audioRef = useRef(null);
@@ -86,6 +87,14 @@ function App() {
                 element={
                   <PageWrapper>
                     <Search />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/now-playing"
+                element={
+                  <PageWrapper>
+                    <NowPlaying />
                   </PageWrapper>
                 }
               />

@@ -1,4 +1,5 @@
 import "./MediaControls.css";
+import { NavLink } from "react-router-dom";
 
 function PrevBtn() {
   return (
@@ -58,41 +59,43 @@ function MediaControls({
   coverSrc,
 }) {
   return (
-    <div className="media-controls">
-      <div className="media-info-section">
-        <img className="media-cover-image" src={coverSrc} alt="" />
-        <div className="media-text">
-          <p className="media-song-title">{title || "No track"}</p>
-          <p className="media-artist-name">{artist || ""}</p>
+    <NavLink to="/now-playing" className="media-controls-link">
+      <div className="media-controls">
+        <div className="media-info-section">
+          <img className="media-cover-image" src={coverSrc} alt="" />
+          <div className="media-text">
+            <p className="media-song-title">{title || "No track"}</p>
+            <p className="media-artist-name">{artist || ""}</p>
+          </div>
+        </div>
+
+        <div className="media-buttons-section">
+          <button
+            className="media-control-button"
+            onClick={onPrevious}
+            aria-label="Previous"
+          >
+            <PrevBtn />
+          </button>
+
+          <button
+            className="media-control-button media-play-button"
+            onClick={isPlaying ? onPause : onPlay}
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? <PauseBtn /> : <PlayBtn />}
+          </button>
+
+          <button
+            className="media-control-button"
+            onClick={onNext}
+            aria-label="Next"
+          >
+            <NextBtn />
+          </button>
         </div>
       </div>
-
-      <div className="media-buttons-section">
-        <button
-          className="media-control-button"
-          onClick={onPrevious}
-          aria-label="Previous"
-        >
-          <PrevBtn />
-        </button>
-
-        <button
-          className="media-control-button media-play-button"
-          onClick={isPlaying ? onPause : onPlay}
-          aria-label={isPlaying ? "Pause" : "Play"}
-        >
-          {isPlaying ? <PauseBtn /> : <PlayBtn />}
-        </button>
-
-        <button
-          className="media-control-button"
-          onClick={onNext}
-          aria-label="Next"
-        >
-          <NextBtn />
-        </button>
-      </div>
-    </div>
+    </NavLink>
   );
 }
 
