@@ -388,7 +388,88 @@ function VolumeDown() {
     >
       <path
         d="M79.4593 1.19019C61.988 4.46956 46.4445 14.3358 36.041 28.7499H28.75C21.1278 28.7591 13.8205 31.791 8.43076 37.1807C3.04107 42.5704 0.00913018 49.8778 0 57.4999L0 80.4999C0.00913018 88.1221 3.04107 95.4295 8.43076 100.819C13.8205 106.209 21.1278 109.241 28.75 109.25H36.0468C46.4472 123.665 61.9892 133.531 79.4593 136.81C80.2884 136.962 81.1409 136.931 81.9564 136.717C82.7719 136.504 83.5305 136.113 84.1785 135.574C84.8264 135.035 85.3479 134.36 85.7058 133.596C86.0638 132.833 86.2496 132 86.25 131.157V6.84244C86.2496 5.99941 86.0638 5.16679 85.7058 4.40355C85.3479 3.6403 84.8264 2.96511 84.1785 2.4258C83.5305 1.88648 82.7719 1.49624 81.9564 1.28271C81.1409 1.06919 80.2884 1.0376 79.4593 1.19019Z"
-        fill="#C5C5C5"
+        fill="currentcolor"
+      />
+    </svg>
+  );
+}
+
+function AirplayBtn() {
+  return (
+    <svg
+      width="267"
+      height="267"
+      viewBox="0 0 267 267"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g clip-path="url(#clip0_383_127)">
+        <path
+          d="M161.279 146.505C154.382 138.25 144.258 133.5 133.5 133.5C122.742 133.5 112.618 138.25 105.665 146.583L43.9214 221.955C38.7928 228.218 37.747 236.673 41.218 243.993C44.689 251.314 51.8758 255.864 59.9859 255.864H207.003C215.113 255.864 222.3 251.314 225.771 244.005C229.242 236.684 228.218 228.229 223.078 221.944L161.279 146.505ZM63.1231 233.625L122.82 160.756C128.127 154.393 138.951 154.471 144.135 160.678L203.888 233.625H63.1231ZM267 66.75V155.75C267 171.703 260.136 186.911 248.176 197.469C246.063 199.338 243.426 200.25 240.812 200.25C237.741 200.25 234.671 198.982 232.468 196.479C228.407 191.873 228.841 184.842 233.458 180.781C240.645 174.451 244.761 165.318 244.761 155.75V66.75C244.761 48.3492 229.787 33.375 211.386 33.375H55.6249C37.2241 33.375 22.2499 48.3492 22.2499 66.75V155.75C22.2499 165.318 26.3661 174.451 33.5529 180.781C38.1586 184.842 38.6036 191.873 34.5319 196.479C30.4601 201.084 23.4514 201.54 18.8234 197.469C6.8529 186.911 -0.0112305 171.714 -0.0112305 155.75V66.75C-0.000105468 36.0784 24.9533 11.125 55.6249 11.125H211.375C242.047 11.125 267 36.0784 267 66.75Z"
+          fill="currentcolor"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_383_127">
+          <rect width="267" height="267" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
+
+function QueueBtn() {
+  return (
+    <svg
+      width="267"
+      height="267"
+      viewBox="0 0 267 267"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M77.875 66.75H255.875C258.826 66.75 261.655 65.5779 263.742 63.4916C265.828 61.4052 267 58.5755 267 55.625C267 52.6745 265.828 49.8448 263.742 47.7584C261.655 45.6721 258.826 44.5 255.875 44.5H77.875C74.9245 44.5 72.0948 45.6721 70.0084 47.7584C67.9221 49.8448 66.75 52.6745 66.75 55.625C66.75 58.5755 67.9221 61.4052 70.0084 63.4916C72.0948 65.5779 74.9245 66.75 77.875 66.75Z"
+        fill="currentcolor"
+      />
+      <path
+        d="M255.875 122.375H77.875C74.9245 122.375 72.0948 123.547 70.0084 125.633C67.9221 127.72 66.75 130.549 66.75 133.5C66.75 136.451 67.9221 139.28 70.0084 141.367C72.0948 143.453 74.9245 144.625 77.875 144.625H255.875C258.826 144.625 261.655 143.453 263.742 141.367C265.828 139.28 267 136.451 267 133.5C267 130.549 265.828 127.72 263.742 125.633C261.655 123.547 258.826 122.375 255.875 122.375Z"
+        fill="currentcolor"
+      />
+      <path
+        d="M255.875 200.25H77.875C74.9245 200.25 72.0948 201.422 70.0084 203.508C67.9221 205.595 66.75 208.424 66.75 211.375C66.75 214.326 67.9221 217.155 70.0084 219.242C72.0948 221.328 74.9245 222.5 77.875 222.5H255.875C258.826 222.5 261.655 221.328 263.742 219.242C265.828 217.155 267 214.326 267 211.375C267 208.424 265.828 205.595 263.742 203.508C261.655 201.422 258.826 200.25 255.875 200.25Z"
+        fill="currentcolor"
+      />
+      <path
+        d="M22.25 77.875C34.5383 77.875 44.5 67.9133 44.5 55.625C44.5 43.3367 34.5383 33.375 22.25 33.375C9.96166 33.375 0 43.3367 0 55.625C0 67.9133 9.96166 77.875 22.25 77.875Z"
+        fill="currentcolor"
+      />
+      <path
+        d="M22.25 155.75C34.5383 155.75 44.5 145.788 44.5 133.5C44.5 121.212 34.5383 111.25 22.25 111.25C9.96166 111.25 0 121.212 0 133.5C0 145.788 9.96166 155.75 22.25 155.75Z"
+        fill="currentcolor"
+      />
+      <path
+        d="M22.25 233.625C34.5383 233.625 44.5 223.663 44.5 211.375C44.5 199.087 34.5383 189.125 22.25 189.125C9.96166 189.125 0 199.087 0 211.375C0 223.663 9.96166 233.625 22.25 233.625Z"
+        fill="currentcolor"
+      />
+    </svg>
+  );
+}
+
+function ReorderIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 8H20M4 12H20M4 16H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -494,18 +575,47 @@ function NowPlaying() {
     duration,
     currentTrack,
     volume,
+    queue,
+    currentIndex,
     handlePlay,
     handlePause,
     handleNext,
     handlePrevious,
     handleVolumeChange,
     playSong,
+    reorderQueue,
   } = useContext(PlayerContext);
 
   const [repeatMode, setRepeatMode] = useState("off");
   const [shuffle, setShuffle] = useState(false);
   const [favroute, setFavroute] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData("draggedIndex", index);
+    e.currentTarget.classList.add("dragging");
+  };
+
+  const handleDragEnd = (e) => {
+    e.currentTarget.classList.remove("dragging");
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    const dragIndex = parseInt(e.dataTransfer.getData("draggedIndex"), 10);
+    if (dragIndex === dropIndex) return;
+
+    const newQueue = [...queue];
+    const draggedItem = newQueue[dragIndex];
+    newQueue.splice(dragIndex, 1);
+    newQueue.splice(dropIndex, 0, draggedItem);
+
+    reorderQueue(newQueue);
+  };
 
   const toggleRepeat = (e) => {
     e.preventDefault();
@@ -685,7 +795,63 @@ function NowPlaying() {
             <VolumeUp />
           </div>
         </div>
+
+        <div className="player-utilities">
+          <button className="airplay-btn utiletie-btn">
+            <AirplayBtn />
+          </button>
+
+          <button
+            className="queu-btn utiletie-btn"
+            onClick={() => setQueueOpen(true)}
+          >
+            <QueueBtn />
+          </button>
+        </div>
       </div>
+
+      {queueOpen && (
+        <div className="queue-overlay" onClick={() => setQueueOpen(false)}>
+          <div className="queue-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="queue-header">
+              <div className="queue-handle"></div>
+              <h2 className="queue-title">Queue</h2>
+            </div>
+            <div className="queue-content">
+              <div className="queue-list">
+                {queue.length > 0 ? (
+                  queue.map((track, index) => (
+                    <div
+                      key={`${track.src}-${index}`}
+                      className={`queue-item ${index === currentIndex ? "active" : ""}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <img
+                        src={track.coverSrc}
+                        alt=""
+                        className="queue-item-image"
+                      />
+                      <div className="queue-item-info">
+                        <p className="queue-item-title">{track.title}</p>
+                        <p className="queue-item-artist">{track.artist}</p>
+                      </div>
+                      <div className="queue-item-reorder">
+                        <ReorderIcon />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="queue-empty-message">Your queue is empty</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {optionsOpen && (
         <div className="options-overlay" onClick={() => setOptionsOpen(false)}>

@@ -26,6 +26,8 @@ function MediaPlayer({ children }) {
   const [duration, setDuration] = useState(0);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [volume, setVolume] = useState(1);
+  const [queue, setQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
 
   const handleVolumeChange = (newVolume) => {
     const v = Math.max(0, Math.min(1, newVolume));
@@ -62,20 +64,36 @@ function MediaPlayer({ children }) {
     title = "Unknown",
     artist = "Unknown",
     coverSrc = "",
+    index = -1,
   ) => {
-    // console.log("Playing song:", src);
-
     if (!audioPlayerRef.current) return;
 
     audioPlayerRef.current.src = src;
 
-    console.log(coverSrc);
-
-    setCurrentTrack({
+    const track = {
+      src,
       title,
       artist,
       coverSrc,
-    });
+    };
+
+    setCurrentTrack(track);
+
+    if (index !== -1) {
+      setCurrentIndex(index);
+    } else {
+      // If played from outside (like search/home), add to queue if not present or just set as current
+      setQueue((prev) => {
+        const exists = prev.findIndex((t) => t.src === src);
+        if (exists !== -1) {
+          setCurrentIndex(exists);
+          return prev;
+        }
+        const newQueue = [...prev, track];
+        setCurrentIndex(newQueue.length - 1);
+        return newQueue;
+      });
+    }
 
     updateMediaSession(title, artist, coverSrc);
 
@@ -88,8 +106,31 @@ function MediaPlayer({ children }) {
     }
   };
 
-  const handleNext = () => console.log("next");
-  const handlePrevious = () => console.log("previous");
+  const handleNext = () => {
+    if (currentIndex < queue.length - 1) {
+      const nextIndex = currentIndex + 1;
+      const track = queue[nextIndex];
+      playSong(track.src, track.title, track.artist, track.coverSrc, nextIndex);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      const track = queue[prevIndex];
+      playSong(track.src, track.title, track.artist, track.coverSrc, prevIndex);
+    }
+  };
+
+  const reorderQueue = (newQueue) => {
+    setQueue(newQueue);
+    if (currentTrack) {
+      const newIndex = newQueue.findIndex((t) => t.src === currentTrack.src);
+      if (newIndex !== -1) {
+        setCurrentIndex(newIndex);
+      }
+    }
+  };
 
   const onTimeUpdate = () => {
     setCurrentTime(audioPlayerRef.current?.currentTime || 0);
@@ -111,7 +152,7 @@ function MediaPlayer({ children }) {
     };
 
     setHandlers();
-  }, [handlePlay, handlePause, handleNext, handlePrevious]);
+  }, [handlePlay, handlePause, handleNext, handlePrevious, queue, currentIndex]);
 
   const value = {
     audioPlayerRef,
@@ -120,12 +161,15 @@ function MediaPlayer({ children }) {
     duration,
     currentTrack,
     volume,
+    queue,
+    currentIndex,
     handlePlay,
     handlePause,
     handleNext,
     handlePrevious,
     handleVolumeChange,
     playSong,
+    reorderQueue,
   };
 
   return (
