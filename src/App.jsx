@@ -1,54 +1,14 @@
 import "./App.css";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 import Footer from "./components/Footer/Footer";
 import Header from "./components/Header/Header";
 import Home from "./pages/Home/Home";
 import Search from "./pages/Search/Search";
 import MediaPlayer from "./components/MediaPlayer/MediaPlayer";
 import NowPlaying from "./pages/NowPLaying/NowPlaying";
-
-function Player() {
-  const audioRef = useRef(null);
-
-  const handlePlay = async () => {
-    try {
-      await audioRef.current.play();
-
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: "test",
-        artist: "test",
-        album: "test",
-        artwork: [
-          {
-            src: "/indieblog-best-album-covers-2010s-07 4.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-        ],
-      });
-      console.log("Playing...");
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>🎵 Audio Test</h1>
-
-      <button onClick={handlePlay} style={{ padding: 20, fontSize: 18 }}>
-        Play Audio
-      </button>
-
-      <audio
-        ref={audioRef}
-        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-      />
-    </div>
-  );
-}
 
 function PageWrapper({ children }) {
   return (
@@ -65,6 +25,12 @@ function PageWrapper({ children }) {
 
 function App() {
   const location = useLocation();
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add("capacitor");
+    }
+  }, []);
 
   return (
     <div className="App">

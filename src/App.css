@@ -13,8 +13,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Disable scrolling specifically for Now Playing */
+.capacitor .App{
+    padding-top: 40px;
+}
+
 .App:has(.now-playing-page) .page {
   overflow: hidden;
 }
-
