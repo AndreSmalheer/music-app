@@ -1,16 +1,90 @@
-# React + Vite
+## Music App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a work in progress music application for School.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Development
 
-## React Compiler
+1.  Clone this repository:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+    ```bash
+    git clone https://github.com/AndreSmalheer/music-app.git
+    ```
 
-## Expanding the ESLint configuration
+2.  Navigate to the project directory:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+    ```bash
+    cd music-app
+    ```
+
+3.  Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+4.  Run the development server:
+
+    ```bash
+    npm run dev
+    ```
+
+---
+
+### Running on iOS Simulator
+
+1.  Build the project:
+
+    ```bash
+    npm run build
+    ```
+
+2.  Open the simulator with CapStart:
+
+    ```bash
+    npx cap open ios
+    ```
+
+3.  Configure Signing and Capabilities:
+    - Modify signing certificates and provisioning profiles within your Xcode setup to add a development team.
+
+---
+
+### Exporting to IPA App
+
+1.  Navigate to the iOS project directory:
+
+    ```bash
+    cd ios/App
+    ```
+
+2.  Build the Release version:
+
+    ```bash
+    xcodebuild \
+      -project App.xcodeproj \
+      -scheme App \
+      -configuration Release \
+      -derivedDataPath build \
+      CODE_SIGNING_ALLOWED=NO \
+      build
+    ```
+
+3.  Create Payload directory:
+
+    ```bash
+    mdkir Payload
+    ```
+
+4.  Copy the built app to the Payload directory:
+
+    ```bash
+    cp -R build/Build/Products/Release-iphoneo/App.app Payload/
+    ```
+
+5.  Create the IPA file:
+
+    ```bash
+    zip -r App.ipa Payload
+    ```
