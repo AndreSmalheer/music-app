@@ -4,13 +4,14 @@
 
 .now-playing-page {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   align-items: center;
   flex-direction: column;
-  padding: 0 16px;
+  padding: 12px 16px;
   box-sizing: border-box;
-  gap: 14px;
+  gap: clamp(8px, 2vh, 20px);
+  overflow: hidden;
 }
 
 /* COVER */

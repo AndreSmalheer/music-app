@@ -1,15 +1,20 @@
 .App {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-main {
+.page {
   flex: 1;
-  padding-bottom: var(--footer-offset);
+  width: 100vw;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.page{
-    width: 100vw;
-    min-height: 84vh;
+/* Disable scrolling specifically for Now Playing */
+.App:has(.now-playing-page) .page {
+  overflow: hidden;
 }
+

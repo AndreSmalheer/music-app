@@ -23,7 +23,8 @@ body,
 html {
   margin: 0;
   padding: 0;
-  padding-top: 20px;
+  height: 100%;
+  overflow: hidden;
   background-color: var(--bg-primary);
   font-family: var(--font-primary);
 }
