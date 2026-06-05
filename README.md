@@ -40,13 +40,19 @@ This is a work in progress music application for School.
     npm run build
     ```
 
-2.  Open the simulator with CapStart:
+2.  Sync the changes with cap
+
+    ```bash
+    npx cap sync
+    ```
+
+3.  Open the simulator with CapStart:
 
     ```bash
     npx cap open ios
     ```
 
-3.  Configure Signing and Capabilities:
+4.  Configure Signing and Capabilities:
     - Modify signing certificates and provisioning profiles within your Xcode setup to add a development team.
 
 ---
