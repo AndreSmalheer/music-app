@@ -82,12 +82,17 @@
 
 .progress-bar-track {
   width: 100%;
-  height: 21px;
+  height: 18px;
   background-color: var(--progress-bar-bg);
   border-radius: 999px;
   overflow: hidden;
   cursor: pointer;
   touch-action: none;
+  transition: height 0.2s ease;
+}
+
+.progress-bar-track[data-dragging="true"] {
+  height: 21px;
 }
 
 /* IMPORTANT: this must be dynamic */
@@ -96,8 +101,14 @@
   width: 0%;
   background-color: var(--progress-bar-fill);
   border-radius: 999px;
-  transition: width 0.2s linear;
   pointer-events: none;
+  transition:
+    width 0.08s linear,
+    background-color 0.15s ease;
+}
+
+.progress-bar-track[data-dragging="true"] .progress-bar-fill {
+  background-color: var(--progress-bar-fill-dragging);
 }
 
 .progress-bar-times {
@@ -105,6 +116,98 @@
   justify-content: space-between;
   font-size: 11px;
   color: var(--text-secondary);
+}
+
+.player-controls {
+  width: min(100%, 420px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 4vw, 36px);
+  padding: 10px 0;
+}
+
+.control {
+  width: clamp(28px, 4vw, 38px);
+  height: clamp(28px, 4vw, 38px);
+}
+
+.control svg {
+  width: 90%;
+  height: 70%;
+}
+
+.control--previous,
+.control--next {
+  width: clamp(48px, 6vw, 72px);
+  height: clamp(36px, 5vw, 56px);
+}
+
+.control--play-pause {
+  /* width: clamp(72px, 9vw, 96px); */
+  /* height: clamp(56px, 7vw, 80px); */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control--play-pause svg {
+  color: var(--bg-primary);
+  width: 26px;
+  height: 26px;
+}
+
+.control-group--main {
+  display: flex;
+  /* gap: clamp(4px, 1vw, 10px); */
+  gap: 10px;
+  align-items: center;
+}
+
+.control--shuffle {
+  width: clamp(36px, 4.5vw, 56px);
+  height: clamp(36px, 4.5vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.control--shuffle.active {
+  background: var(--media-control-active-bg);
+  border-radius: 50%;
+}
+
+.control--shuffle svg {
+  width: 100%;
+  height: 100%;
+  color: var(--media-control-color);
+}
+
+.control--repeat {
+  position: relative;
+  width: clamp(36px, 4.5vw, 56px);
+  height: clamp(36px, 4.5vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 5px;
+}
+
+.control--repeat.active {
+  background: var(--media-control-active-bg);
+  border-radius: 50%;
+}
+
+.control--repeat svg {
+  width: 100%;
+  height: 100%;
+  color: var(--media-control-color);
 }
 
 /* DESKTOP */
