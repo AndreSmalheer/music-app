@@ -25,6 +25,15 @@ function MediaPlayer({ children }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTrack, setCurrentTrack] = useState(null);
+  const [volume, setVolume] = useState(1);
+
+  const handleVolumeChange = (newVolume) => {
+    const v = Math.max(0, Math.min(1, newVolume));
+    setVolume(v);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.volume = v;
+    }
+  };
 
   const handlePlay = async () => {
     try {
@@ -110,10 +119,12 @@ function MediaPlayer({ children }) {
     currentTime,
     duration,
     currentTrack,
+    volume,
     handlePlay,
     handlePause,
     handleNext,
     handlePrevious,
+    handleVolumeChange,
     playSong,
   };
 
