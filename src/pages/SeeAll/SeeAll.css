@@ -1,0 +1,82 @@
+.see-all-page {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 10px 26px;
+}
+
+.see-all-title {
+  width: 100%;
+  font-size: clamp(20px, 7vw, 24px);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.see-all-recent-songs-container {
+  width: 100%;
+  padding-left: 4px;
+  padding-top: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.see-all-recent-song {
+  width: 100%;
+  height: 90px;
+  padding-left: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.see-all-recent-song-album-cover {
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1/1;
+  background-color: gray;
+  border-radius: 7px;
+}
+
+.see-all-recent-song-song-info {
+  height: 100%;
+  padding-top: 8px;
+  padding-left: 8px;
+}
+
+.see-all-recent-song-song-info-title,
+.see-all-recent-song-song-info-artists {
+  padding: 0;
+  margin: 0;
+}
+
+.see-all-recent-song-song-info-title {
+  font-size: 16px;
+  color: white;
+}
+
+.see-all-recent-song-song-info-artists {
+  font-size: 14px;
+  color: #bfbfbf;
+}
+
+.options-container-see-all {
+  width: 24px;
+  height: 8px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: -20px;
+  padding-right: 10px;
+  cursor: pointer;
+}
+
+.options-container-see-all span {
+  border-radius: 50%;
+  display: block;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1/1;
+  background-color: #c696fb;
+}

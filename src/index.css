@@ -6,11 +6,13 @@
   --text-primary: #ffffff;
   --text-secondary: #bfbfbf;
   --progress-bar-bg: #595959;
+  --search-bar-bg: #363636;
   --progress-bar-fill: #6b00de;
   --progress-bar-fill-dragging: #9a4dff;
   --spacing-horizontal: 16px;
   --border-radius-large: 27px;
   --footer-offset: 90px;
+  --tag-text-collor: #E3E3E3;
   --btn-default: #ffffff;
   --btn-active: #4da3ff;
   --font-primary: "Lilita One", sans-serif;

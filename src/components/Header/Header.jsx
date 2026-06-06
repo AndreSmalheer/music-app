@@ -62,12 +62,14 @@ function BackBtn() {
 
 function Header() {
   const location = useLocation();
-  const isNowPlaying = location.pathname === "/now-playing";
+  const path = location.pathname.toLowerCase();
+  
+  // Pages that should show the back button and hide the settings button
+  const isBackPage = path.includes("now-playing") || path.includes("see-all");
 
   return (
     <div className="Header">
-      {isNowPlaying && <BackBtn />}
-      {!isNowPlaying && <SettingsBtn />}
+      {isBackPage ? <BackBtn /> : <SettingsBtn />}
     </div>
   );
 }

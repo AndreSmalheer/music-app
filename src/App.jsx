@@ -9,6 +9,7 @@ import Home from "./pages/Home/Home";
 import Search from "./pages/Search/Search";
 import MediaPlayer from "./components/MediaPlayer/MediaPlayer";
 import NowPlaying from "./pages/NowPLaying/NowPlaying";
+import SeeAll from "./pages/SeeAll/SeeAll";
 
 function PageWrapper({ children }) {
   return (
@@ -61,6 +62,15 @@ function App() {
                 element={
                   <PageWrapper>
                     <NowPlaying />
+                  </PageWrapper>
+                }
+              />
+
+              <Route
+                path="/see-all"
+                element={
+                  <PageWrapper>
+                    <SeeAll />
                   </PageWrapper>
                 }
               />

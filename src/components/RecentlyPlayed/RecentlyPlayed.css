@@ -10,22 +10,29 @@
 }
 
 .recently-played__title {
-  font-size: 1.2rem;
+  font-size: clamp(20px, 7vw, 24px);
   font-weight: 700;
   color: #fff;
   margin: 0;
 }
 
 .recently-played__arrow {
+  width: 42px;
+  height: 33px;
   background: none;
   border: none;
-  color: #fff;
   cursor: pointer;
   padding: 4px;
   display: flex;
   align-items: center;
   opacity: 0.8;
   transition: opacity 0.15s;
+}
+
+.recently-played__arrow svg {
+  width: 100%;
+  height: 100%;
+  color: #FFFFFF;
 }
 
 .recently-played__arrow:hover {
@@ -37,6 +44,7 @@
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
+  padding-left: 6px;
   scrollbar-width: none;
 }
 
@@ -54,14 +62,15 @@
   width: 110px;
   height: 110px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 11px;
   display: block;
 }
 
 .track-card__title {
+  text-align: center;
   margin: 6px 0 0;
-  font-size: 0.78rem;
-  color: #fff;
+  font-size: 14px;
+  color: #bfbfbf;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

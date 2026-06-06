@@ -1,0 +1,78 @@
+.options-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.options-menu {
+  width: 100%;
+  max-width: 500px;
+  background-color: var(--bg-secondary);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 0 32px 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.options-menu-header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.options-menu-handle {
+  width: 36px;
+  height: 4px;
+  background-color: var(--progress-bar-bg);
+  border-radius: 2px;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.options-item {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 18px;
+  padding: 16px 20px;
+  text-align: left;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.options-item:hover,
+.options-item:active {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.options-item--cancel {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+}
