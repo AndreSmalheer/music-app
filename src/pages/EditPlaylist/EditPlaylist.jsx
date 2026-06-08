@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import { useConfirm } from "../../context/ConfirmModalContext";
 import "./EditPlaylist.css";
 
 const songsList = Array.from({ length: 10 }, (_, i) => ({
@@ -12,8 +12,18 @@ const songsList = Array.from({ length: 10 }, (_, i) => ({
 
 function EditPlaylist() {
   const [songs, setSongs] = useState(songsList);
-  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, song: null });
   const [isDragging, setIsDragging] = useState(false);
+  const { showConfirm } = useConfirm();
+
+  const handleDelete = (song) => {
+    showConfirm(
+      `Are you sure you want to delete "${song.title}"?`,
+      () => {
+        console.log("Deleted", song);
+        setSongs(songs.filter(s => s.id !== song.id));
+      }
+    );
+  };
 
   return (
     <div className="playlist-detail-page edit-playlist-page">
@@ -59,7 +69,7 @@ function EditPlaylist() {
                 color: 'white',
                 fontSize: '14px',
               }}
-              onClick={() => setConfirmDelete({ isOpen: true, song: song })}
+              onClick={() => handleDelete(song)}
             >
               Delete
             </div>
@@ -80,7 +90,7 @@ function EditPlaylist() {
               onDragEnd={(event, info) => {
                 setTimeout(() => setIsDragging(false), 50);
                 if (info.offset.x < -60) {
-                  setConfirmDelete({ isOpen: true, song: song });
+                  handleDelete(song);
                 }
               }}
             >
@@ -95,16 +105,6 @@ function EditPlaylist() {
         ))}
       </div>
 
-      <ConfirmModal
-        isOpen={confirmDelete.isOpen}
-        onClose={() => setConfirmDelete({ isOpen: false, song: null })}
-        onConfirm={() => {
-            console.log("Deleted", confirmDelete.song);
-            setSongs(songs.filter(s => s.id !== confirmDelete.song.id));
-            setConfirmDelete({ isOpen: false, song: null });
-        }}
-        message={`Are you sure you want to delete "${confirmDelete.song?.title}"?`}
-      />
     </div>
   );
 }

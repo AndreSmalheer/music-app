@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
-import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
@@ -23,7 +22,6 @@ function PlaylistDetail() {
   const { playSong } = useContext(PlayerContext);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, song: null });
 
   const { stop, ...longPressProps } = useLongPress(() => setOptionsOpen(true), null, { disabled: isDragging });
   const tapFeedback = { scale: 0.98 };
@@ -127,15 +125,6 @@ function PlaylistDetail() {
         onOptionClick={(opt) => console.log(opt)}
       />
 
-      <ConfirmModal
-        isOpen={confirmDelete.isOpen}
-        onClose={() => setConfirmDelete({ isOpen: false, song: null })}
-        onConfirm={() => {
-            console.log("Deleted", confirmDelete.song);
-            setConfirmDelete({ isOpen: false, song: null });
-        }}
-        message={`Are you sure you want to delete "${confirmDelete.song?.title}"?`}
-      />
     </div>
   );
 }
