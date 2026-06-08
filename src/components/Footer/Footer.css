@@ -11,6 +11,10 @@
   z-index: 2;
 }
 
+.capacitor .Footer-container{
+    margin-bottom: clamp(16px, 4vh, 44px)
+}
+
 .Footer {
   box-sizing: border-box;
   width: 100%;
