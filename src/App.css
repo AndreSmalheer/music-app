@@ -28,11 +28,6 @@
   padding-bottom: calc(var(--mini-player-height) - 50px);
 }
 
-
-.App.has-player .settings-page{
-  padding-bottom: calc(var(--mini-player-height) + 50px);
-}
-
 .capacitor .App{
     padding-top: 40px;
 }

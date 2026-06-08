@@ -1,7 +1,7 @@
 import "./NowPlaying.css";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useContext, useState } from "react";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -589,7 +589,7 @@ function NowPlaying() {
   const [repeatMode, setRepeatMode] = useState("off");
   const [shuffle, setShuffle] = useState(false);
   const [favroute, setFavroute] = useState(false);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
   const [queueOpen, setQueueOpen] = useState(false);
 
   const handleDragStart = (e, index) => {
@@ -677,7 +677,7 @@ function NowPlaying() {
               <FavrouteIcon filled={favroute} />
             </div>
 
-            <div className="options-btn" onClick={() => setOptionsOpen(true)}>
+            <div className="options-btn" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
               <OptionsIcon />
             </div>
           </div>
@@ -871,14 +871,11 @@ function NowPlaying() {
         )}
       </AnimatePresence>
 
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={menuOptions}
-        onOptionClick={(option) => console.log(option)}
-      />
+      
     </>
   );
 }
 
 export default NowPlaying;
+
+

@@ -1,10 +1,6 @@
 .playlist-detail-page {
-  height: calc(100vh - var(--footer-offset));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   padding: 20px var(--spacing-horizontal);
   box-sizing: border-box;
-  padding-bottom: 70px;
 }
 
 .playlist-header {

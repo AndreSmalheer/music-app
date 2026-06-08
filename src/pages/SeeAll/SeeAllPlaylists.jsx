@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import "./SeeAll.css";
 
@@ -22,7 +22,8 @@ function PlusIcon() {
 }
 
 function SeeAllPlaylists() {
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
+  
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ function SeeAllPlaylists() {
   }, []);
 
   const navigate = useNavigate();
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   if (isLoading) {
@@ -88,15 +89,9 @@ function SeeAllPlaylists() {
           </motion.div>
         ))}
       </div>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={["Play", "Edit", "Delete", "Share"]}
-        onOptionClick={(opt) => console.log(opt)}
-      />
     </div>
   );
 }
 
 export default SeeAllPlaylists;
+

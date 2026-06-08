@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import "./SeeAll.css";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import useLongPress from "../../hooks/useLongPress";
 import Skeleton from "../../components/Skeleton/Skeleton";
 
 function SeeAll() {
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
+  
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +15,7 @@ function SeeAll() {
     return () => clearTimeout(timer);
   }, []);
 
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   const menuOptions = [
@@ -62,7 +63,7 @@ function SeeAll() {
             <div className="see-all-recent-song-song-info-artists">Artist</div>
           </div>
 
-          <div className="options-container-see-all" onClick={() => setOptionsOpen(true)}>
+          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
             <span></span>
             <span></span>
             <span></span>
@@ -83,7 +84,7 @@ function SeeAll() {
             <div className="see-all-recent-song-song-info-artists">Artist</div>
           </div>
 
-          <div className="options-container-see-all" onClick={() => setOptionsOpen(true)}>
+          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
             <span></span>
             <span></span>
             <span></span>
@@ -104,22 +105,16 @@ function SeeAll() {
             <div className="see-all-recent-song-song-info-artists">Artist</div>
           </div>
 
-          <div className="options-container-see-all" onClick={() => setOptionsOpen(true)}>
+          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
             <span></span>
             <span></span>
             <span></span>
           </div>
         </motion.div>
       </div>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={menuOptions}
-        onOptionClick={(option) => console.log(option)}
-      />
     </div>
   );
 }
 
 export default SeeAll;
+

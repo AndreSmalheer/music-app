@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import { useModal } from "../../context/ModalContext";
 import "./PlaylistDetail.css";
 
 const songsList = Array.from({ length: 10 }, (_, i) => ({
@@ -20,10 +20,18 @@ function PlaylistDetail() {
   const [songs, setSongs] = useState([]);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
   const [isDragging, setIsDragging] = useState(false);
 
-  const { stop, ...longPressProps } = useLongPress(() => setOptionsOpen(true), null, { disabled: isDragging });
+  const menuOptions = [
+    "Shuffle",
+    "Edit Playlist",
+    "Add Songs",
+    "Delete",
+    "Download",
+  ];
+
+  const { stop, ...longPressProps } = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)), null, { disabled: isDragging });
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -37,11 +45,6 @@ function PlaylistDetail() {
   const handlePlaySong = (song) => {
     playSong("music/test.mp3", song.title, song.artist, song.cover);
     navigate("/now-playing");
-  };
-
-  const handleDragStart = () => {
-    stop();
-    setIsDragging(true);
   };
 
   return (
@@ -111,20 +114,6 @@ function PlaylistDetail() {
               </motion.div>
             ))}
       </div>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={[
-          "Shuffle",
-          "Edit Playlist",
-          "Add Songs",
-          "Delete",
-          "Download",
-        ]}
-        onOptionClick={(opt) => console.log(opt)}
-      />
-
     </div>
   );
 }

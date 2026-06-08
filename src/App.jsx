@@ -184,14 +184,14 @@ function AppContent() {
   );
 }
 
-import { ConfirmModalProvider } from "./context/ConfirmModalContext";
+import { ModalProvider } from "./context/ModalContext";
 
 function App() {
   return (
     <MediaPlayer>
-      <ConfirmModalProvider>
+      <ModalProvider>
         <AppContent />
-      </ConfirmModalProvider>
+      </ModalProvider>
     </MediaPlayer>
   );
 }

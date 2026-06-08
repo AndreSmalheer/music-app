@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
@@ -25,9 +25,9 @@ const albums = [
 function ArtistDetail() {
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
   const [isLoading, setIsLoading] = useState(true);
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const longPressProps = useLongPress(() => showOptions(["Go to Radio", "Share", "Add to Playlist", "Report"], (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -141,13 +141,6 @@ function ArtistDetail() {
           </div>
         </section>
       </div>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={["Go to Radio", "Share", "Add to Playlist", "Report"]}
-        onOptionClick={(opt) => console.log(opt)}
-      />
     </div>
   );
 }

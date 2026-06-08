@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import "./SeeAll.css";
 
@@ -13,7 +13,8 @@ const artists = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 function SeeAllArtists() {
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
+  
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ function SeeAllArtists() {
   }, []);
 
   const navigate = useNavigate();
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   if (isLoading) {
@@ -65,15 +66,9 @@ function SeeAllArtists() {
           </motion.div>
         ))}
       </div>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={["View Artist", "Share", "Add to Favorites"]}
-        onOptionClick={(opt) => console.log(opt)}
-      />
     </div>
   );
 }
 
 export default SeeAllArtists;
+

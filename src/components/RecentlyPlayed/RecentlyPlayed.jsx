@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import "./RecentlyPlayed.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
-import OptionsMenu from "../OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Skeleton from "../Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../MediaPlayer/MediaPlayer";
@@ -56,9 +56,10 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
+  
 
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -117,14 +118,10 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
             ))}
       </div>
 
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={menuOptions}
-        onOptionClick={(option) => console.log(option)}
-      />
     </div>
   );
 }
 
 export default RecentlyPlayed;
+
+

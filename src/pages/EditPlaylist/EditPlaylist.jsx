@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useConfirm } from "../../context/ConfirmModalContext";
+import { useModal } from "../../context/ModalContext";
 import "./EditPlaylist.css";
 
 const songsList = Array.from({ length: 10 }, (_, i) => ({
@@ -12,8 +12,7 @@ const songsList = Array.from({ length: 10 }, (_, i) => ({
 
 function EditPlaylist() {
   const [songs, setSongs] = useState(songsList);
-  const [isDragging, setIsDragging] = useState(false);
-  const { showConfirm } = useConfirm();
+  const { showConfirm } = useModal();
 
   const handleDelete = (song) => {
     showConfirm(

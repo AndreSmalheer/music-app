@@ -2,7 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
-import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
@@ -41,18 +41,17 @@ function ArrowBtn() {
 function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { playSong } = useContext(PlayerContext);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const { showOptions } = useModal();
   const navigate = useNavigate();
   
-  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const menuOptions = ["Play", "Add to Library", "Share"];
+  const longPressProps = useLongPress(() => showOptions(menuOptions, (option) => console.log(option)));
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
-
-  const menuOptions = ["Play", "Add to Library", "Share"];
 
   return (
     <div className="home-page">
@@ -127,13 +126,6 @@ function Home() {
           }
         </div>
       </section>
-
-      <OptionsMenu
-        isOpen={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        options={menuOptions}
-        onOptionClick={(option) => console.log(option)}
-      />
     </div>
   );
 }
