@@ -12,6 +12,7 @@ const songsList = Array.from({ length: 10 }, (_, i) => ({
 
 function EditPlaylist() {
   const [songs, setSongs] = useState(songsList);
+  const [isDragging, setIsDragging] = useState(false);
   const { showConfirm } = useModal();
 
   const handleDelete = (song) => {

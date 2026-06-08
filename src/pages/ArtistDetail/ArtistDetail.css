@@ -1,9 +1,5 @@
 .artist-detail-page {
-  height: calc(100vh - var(--footer-offset));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  padding-bottom: 60px;
 }
 
 .artist-hero {

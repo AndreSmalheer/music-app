@@ -6,6 +6,11 @@
   box-sizing: border-box;
 }
 
+.has-player .settings-page {
+    padding-bottom: 0;
+}
+
+
 .settings-header h1 {
   margin: 0;
   font-size: 32px;
@@ -104,5 +109,3 @@
   color: var(--text-secondary);
   opacity: 0.6;
 }
-
-
