@@ -1,0 +1,79 @@
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import useLongPress from "../../hooks/useLongPress";
+import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
+import Skeleton from "../../components/Skeleton/Skeleton";
+import "./SeeAll.css";
+
+const artists = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  name: "Artist Name",
+  img: "covers/test-cover.jpg",
+}));
+
+function SeeAllArtists() {
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const navigate = useNavigate();
+  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const tapFeedback = { scale: 0.98 };
+
+  if (isLoading) {
+    return (
+      <div className="see-all-page">
+        <Skeleton width="150px" height="32px" style={{ marginBottom: "20px" }} />
+        <div className="artists-list-full">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="artist-card-full-list" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Skeleton width="60px" height="60px" borderRadius="50%" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                <Skeleton width="120px" height="20px" />
+                <Skeleton width="80px" height="16px" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="see-all-page">
+      <h1 className="see-all-title">All Artists</h1>
+
+      <div className="artists-list-full">
+        {artists.map((artist) => (
+          <motion.div 
+            key={artist.id} 
+            className="artist-card-full-list"
+            {...longPressProps}
+            whileTap={tapFeedback}
+            onClick={() => navigate(`/artist/${artist.id}`)}
+          >
+            <img src={artist.img} alt={artist.name} className="artist-card-full-list__img" />
+            <div className="artist-card-full-list__info">
+              <p className="artist-card-full-list__name">{artist.name}</p>
+              <p className="artist-card-full-list__subtitle">Artist</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <OptionsMenu
+        isOpen={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        options={["View Artist", "Share", "Add to Favorites"]}
+        onOptionClick={(opt) => console.log(opt)}
+      />
+    </div>
+  );
+}
+
+export default SeeAllArtists;

@@ -1,0 +1,192 @@
+.download-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(12px, 3vh, 24px) var(--spacing-horizontal);
+  gap: clamp(12px, 3vh, 24px);
+  height: calc(100vh - var(--footer-offset));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.download-header {
+  text-align: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.download-header h1 {
+  margin: 0;
+  font-size: clamp(20px, 5vw, 28px);
+  color: var(--text-primary);
+}
+
+.download-header p {
+  margin: 2px 0 0 0;
+  font-size: clamp(12px, 3vw, 14px);
+  color: var(--text-secondary);
+}
+
+.download-input-row {
+  width: min(100%, 400px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.download-input {
+  width: 100%;
+  background-color: var(--search-bar-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  height: clamp(40px, 6vh, 48px);
+  padding: 0 16px;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.btn-submit {
+  width: 100%;
+  height: clamp(40px, 6vh, 48px);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 0 20px;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.metadata-section {
+  width: min(100%, 400px);
+  background-color: var(--bg-secondary);
+  border-radius: 24px;
+  padding: clamp(12px, 3vh, 24px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.5vh, 20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 20px;
+}
+
+.cover-edit-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 2vh, 12px);
+}
+
+.download-cover-wrapper {
+  width: clamp(100px, 25vh, 160px);
+  height: clamp(100px, 25vh, 160px);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.download-album-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-edit-cover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-cover svg {
+  width: 14px;
+  height: 14px;
+}
+
+.metadata-fields {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 2vh, 16px);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding-left: 4px;
+}
+
+.input-group input {
+  background-color: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  height: clamp(34px, 5vh, 40px);
+  padding: 0 12px;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 14px;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--text-secondary);
+}
+
+.download-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.download-actions button {
+  flex: 1;
+  height: clamp(38px, 6vh, 44px);
+  border-radius: 12px;
+  border: none;
+  font-family: var(--font-primary);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-save {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+@media (max-height: 600px) {
+  .download-page {
+    gap: 8px;
+    padding-top: 8px;
+  }
+  .download-header p {
+    display: none;
+  }
+  .metadata-section {
+    padding: 12px;
+  }
+}

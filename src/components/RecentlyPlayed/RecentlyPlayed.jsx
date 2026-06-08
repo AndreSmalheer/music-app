@@ -1,5 +1,11 @@
+import { motion } from "framer-motion";
 import "./RecentlyPlayed.css";
 import { useNavigate } from "react-router-dom";
+import { useState, useContext, useEffect } from "react";
+import OptionsMenu from "../OptionsMenu/OptionsMenu";
+import Skeleton from "../Skeleton/Skeleton";
+import useLongPress from "../../hooks/useLongPress";
+import { PlayerContext } from "../MediaPlayer/MediaPlayer";
 
 const placeholderTracks = [
   {
@@ -47,7 +53,30 @@ function ArrowBtn() {
 }
 
 function RecentlyPlayed({ tracks = placeholderTracks }) {
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { playSong } = useContext(PlayerContext);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+
+  const longPressProps = useLongPress(() => setOptionsOpen(true));
+  const tapFeedback = { scale: 0.98 };
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const menuOptions = [
+    "Add to Playlist",
+    "Go to Album",
+    "View Artist",
+    "Share Song",
+  ];
+
+  const handleTrackClick = (track) => {
+    playSong("music/test.mp3", track.title, "Various Artists", track.cover);
+    navigate("/now-playing");
+  };
 
   return (
     <div className="recently-played">
@@ -61,19 +90,39 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
           <ArrowBtn />
         </button>
       </div>
-
       <div className="recently-played__list">
-        {tracks.map((track) => (
-          <div key={track.id} className="track-card">
-            <img
-              className="track-card__cover"
-              src={track.cover}
-              alt={track.title}
-            />
-            <p className="track-card__title">{track.title}</p>
-          </div>
-        ))}
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="track-card">
+                <Skeleton height="140px" borderRadius="12px" />
+                <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+              </div>
+            ))
+          : tracks.slice(0, 3).map((track) => (
+              <motion.div 
+                key={track.id} 
+                className="track-card" 
+                {...longPressProps}
+                whileTap={tapFeedback}
+                onClick={() => handleTrackClick(track)}
+              >
+                <motion.img
+                  className="track-card__cover"
+                  src={track.cover}
+                  alt={track.title}
+                  layoutId={`cover-${track.id}`}
+                />
+                <p className="track-card__title">{track.title}</p>
+              </motion.div>
+            ))}
       </div>
+
+      <OptionsMenu
+        isOpen={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        options={menuOptions}
+        onOptionClick={(option) => console.log(option)}
+      />
     </div>
   );
 }

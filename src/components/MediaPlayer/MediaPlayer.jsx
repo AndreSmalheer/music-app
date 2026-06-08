@@ -82,7 +82,6 @@ function MediaPlayer({ children }) {
     if (index !== -1) {
       setCurrentIndex(index);
     } else {
-      // If played from outside (like search/home), add to queue if not present or just set as current
       setQueue((prev) => {
         const exists = prev.findIndex((t) => t.src === src);
         if (exists !== -1) {

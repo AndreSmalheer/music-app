@@ -1,19 +1,19 @@
 import { motion, AnimatePresence } from "framer-motion";
-import "./OptionsMenu.css";
+import "./ConfirmModal.css";
 
-function OptionsMenu({ isOpen, onClose, options, onOptionClick }) {
+function ConfirmModal({ isOpen, onClose, onConfirm, message }) {
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="options-overlay"
+          className="confirm-overlay"
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="options-menu"
+            className="confirm-modal"
             onClick={(e) => e.stopPropagation()}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -26,26 +26,16 @@ function OptionsMenu({ isOpen, onClose, options, onOptionClick }) {
               if (info.offset.y > 100) onClose();
             }}
           >
-            <div className="options-menu-header">
-              <div className="options-menu-handle"></div>
+            <div className="confirm-header">
+              <div className="confirm-handle"></div>
+              <h2 className="confirm-title">Are you sure?</h2>
             </div>
-            <div className="options-list">
-              {options.map((option) => (
-                <button
-                  key={option}
-                  className="options-item"
-                  onClick={() => {
-                    onOptionClick?.(option);
-                    onClose();
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
-              <button
-                className="options-item options-item--cancel"
-                onClick={onClose}
-              >
+            <p className="confirm-message">{message}</p>
+            <div className="confirm-actions">
+              <button className="confirm-btn confirm-btn--yes" onClick={onConfirm}>
+                Delete
+              </button>
+              <button className="confirm-btn confirm-btn--no" onClick={onClose}>
                 Cancel
               </button>
             </div>
@@ -56,4 +46,4 @@ function OptionsMenu({ isOpen, onClose, options, onOptionClick }) {
   );
 }
 
-export default OptionsMenu;
+export default ConfirmModal;

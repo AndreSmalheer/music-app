@@ -4,6 +4,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  --mini-player-height: 80px;
 }
 
 .page {
@@ -13,10 +14,33 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.App.has-player .home-page,
+.App.has-player .playlist-detail-page,
+.App.has-player .download-page,
+.App.has-player .search-page,
+.App.has-player .artist-detail-page,
+.App.has-player .create-playlist-page {
+  padding-bottom: calc(var(--mini-player-height) + 0);
+}
+
+
+.App.has-player .see-all-page{
+  padding-bottom: calc(var(--mini-player-height) - 50px);
+}
+
+
+.App.has-player .settings-page{
+  padding-bottom: calc(var(--mini-player-height) + 50px);
+}
+
 .capacitor .App{
     padding-top: 40px;
 }
 
 .App:has(.now-playing-page) .page {
   overflow: hidden;
+}
+
+.page-padding {
+  padding: 0 var(--spacing-horizontal);
 }

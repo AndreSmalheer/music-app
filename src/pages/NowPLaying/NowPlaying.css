@@ -7,7 +7,6 @@
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-direction: column;
   padding: clamp(8px, 2vh, 20px) 16px;
   box-sizing: border-box;
@@ -15,7 +14,6 @@
   overflow: hidden;
 }
 
-/* COVER */
 .album-cover {
   width: min(80vw, 38vh, 320px);
   aspect-ratio: 1 / 1;
@@ -24,7 +22,6 @@
   flex-shrink: 1;
 }
 
-/* INFO ROW */
 .now-playing-info {
   width: min(100%, 320px);
   display: flex;
@@ -58,7 +55,6 @@
   color: var(--text-secondary);
 }
 
-/* ACTION BUTTONS */
 .now-playing-actions {
   display: flex;
   align-items: center;
@@ -74,7 +70,6 @@
   color: var(--text-primary);
 }
 
-/* PROGRESS BAR */
 .progress-bar {
   width: min(100%, 320px);
   display: flex;
@@ -114,26 +109,23 @@
 }
 
 .control--play-pause {
-  /* width: clamp(72px, 9vw, 96px); */
-  /* height: clamp(56px, 7vw, 80px); */
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .control--play-pause svg {
-  color: var(--bg-primary);
+  color: #fff;
   width: 26px;
   height: 26px;
 }
 
 .control-group--main {
   display: flex;
-  /* gap: clamp(4px, 1vw, 10px); */
   gap: 10px;
   align-items: center;
 }
@@ -211,7 +203,6 @@
   height: 100%;
 }
 
-/* DESKTOP */
 @media (min-width: 768px) {
   .now-playing-page {
     padding: 40px;
@@ -253,7 +244,6 @@
   }
 }
 
-/* QUEUE MODAL */
 .queue-overlay {
   position: fixed;
   top: 0;
