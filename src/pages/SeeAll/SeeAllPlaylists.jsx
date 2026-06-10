@@ -4,13 +4,10 @@ import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
+import EmptyState from "../../components/EmptyState/EmptyState";
 import "./SeeAll.css";
 
-const playlists = Array.from({ length: 8 }, (_, i) => ({
-  id: i,
-  title: "Playlist Title",
-  cover: "/indieblog-best-album-covers-2010s-07 4.png",
-}));
+const playlists = [];
 
 function PlusIcon() {
   return (
@@ -23,7 +20,7 @@ function PlusIcon() {
 
 function SeeAllPlaylists() {
   const { showOptions } = useModal();
-  
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -42,18 +39,9 @@ function SeeAllPlaylists() {
           <Skeleton width="200px" height="32px" />
           <Skeleton width="32px" height="32px" borderRadius="8px" />
         </div>
-        
+
         <div className="playlists-list-full">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="playlist-card-full" style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-              <Skeleton width="60px" height="60px" borderRadius="6px" />
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <Skeleton width="150px" height="20px" />
-                <Skeleton width="100px" height="16px" />
-              </div>
-            </div>
-          ))}
-        </div>
+       </div>
       </div>
     );
   }
@@ -62,7 +50,7 @@ function SeeAllPlaylists() {
     <div className="see-all-page">
       <div className="see-all-header-row">
         <h1 className="see-all-title">Your Playlists</h1>
-        <motion.button 
+        <motion.button
           className="btn-add-playlist"
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate("/create-playlist")}
@@ -70,28 +58,38 @@ function SeeAllPlaylists() {
           <PlusIcon />
         </motion.button>
       </div>
-      
-      <div className="playlists-list-full">
-        {playlists.map((playlist) => (
-          <motion.div 
-            key={playlist.id} 
-            className="playlist-card-full"
-            {...longPressProps}
-            whileTap={tapFeedback}
-            onClick={() => navigate(`/playlist/${playlist.id}`)}
-          >
-            <img src={playlist.cover} alt={playlist.title} className="playlist-card-full__cover" />
 
-            <div className="playlist-card-full__info">
-              <p className="playlist-card-full__title">{playlist.title}</p>
-              <p className="playlist-card-full__subtitle">24 songs</p>
-            </div>
-          </motion.div>
-        ))}
+      <div className="playlists-list-full">
+        {playlists.length > 0 ? (
+          playlists.map((playlist) => (
+            <motion.div
+              key={playlist.id}
+              className="playlist-card-full"
+              {...longPressProps}
+              whileTap={tapFeedback}
+              onClick={() => navigate(`/playlist/${playlist.id}`)}
+            >
+              <img
+                src={playlist.cover}
+                alt={playlist.title}
+                className="playlist-card-full__cover"
+              />
+
+              <div className="playlist-card-full__info">
+                <p className="playlist-card-full__title">{playlist.title}</p>
+                <p className="playlist-card-full__subtitle">24 songs</p>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <EmptyState
+            title="No playlists found"
+            subtitle="Create your first playlist to get started"
+          />
+        )}
       </div>
     </div>
   );
 }
 
 export default SeeAllPlaylists;
-

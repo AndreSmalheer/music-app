@@ -17,8 +17,6 @@ function SettingsBtn() {
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <svg
-        width="477"
-        height="477"
         viewBox="0 0 477 477"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

@@ -4,17 +4,14 @@ import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
+import EmptyState from "../../components/EmptyState/EmptyState";
 import "./SeeAll.css";
 
-const artists = Array.from({ length: 12 }, (_, i) => ({
-  id: i,
-  name: "Artist Name",
-  img: "covers/test-cover.jpg",
-}));
+const artists = [];
 
 function SeeAllArtists() {
   const { showOptions } = useModal();
-  
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,26 +46,32 @@ function SeeAllArtists() {
     <div className="see-all-page">
       <h1 className="see-all-title">All Artists</h1>
 
-      <div className="artists-list-full">
-        {artists.map((artist) => (
-          <motion.div 
-            key={artist.id} 
-            className="artist-card-full-list"
-            {...longPressProps}
-            whileTap={tapFeedback}
-            onClick={() => navigate(`/artist/${artist.id}`)}
-          >
-            <img src={artist.img} alt={artist.name} className="artist-card-full-list__img" />
-            <div className="artist-card-full-list__info">
-              <p className="artist-card-full-list__name">{artist.name}</p>
-              <p className="artist-card-full-list__subtitle">Artist</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {artists.length > 0 ? (
+        <div className="artists-list-full">
+          {artists.map((artist) => (
+            <motion.div
+              key={artist.id}
+              className="artist-card-full-list"
+              {...longPressProps}
+              whileTap={tapFeedback}
+              onClick={() => navigate(`/artist/${artist.id}`)}
+            >
+              <img src={artist.img} alt={artist.name} className="artist-card-full-list__img" />
+              <div className="artist-card-full-list__info">
+                <p className="artist-card-full-list__name">{artist.name}</p>
+                <p className="artist-card-full-list__subtitle">Artist</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No artists found"
+          subtitle="It seems you haven't added any artists to your library yet."
+        />
+      )}
     </div>
   );
 }
 
 export default SeeAllArtists;
-

@@ -4,10 +4,13 @@ import "./SeeAll.css";
 import { useModal } from "../../context/ModalContext";
 import useLongPress from "../../hooks/useLongPress";
 import Skeleton from "../../components/Skeleton/Skeleton";
+import EmptyState from "../../components/EmptyState/EmptyState";
+
+const songs = [];
 
 function SeeAll() {
   const { showOptions } = useModal();
-  
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,72 +52,55 @@ function SeeAll() {
       <h1 className="see-all-title">Recent Songs</h1>
 
       <div className="see-all-recent-songs-container">
-        <motion.div 
-          className="see-all-recent-song" 
-          {...longPressProps}
-          whileTap={tapFeedback}
-        >
-          <div className="see-all-recent-song-album-cover">
-            <img src="/covers/test-cover.jpg" alt="Song" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px'}} />
-          </div>
+        {songs.length > 0 ? (
+          songs.map((song) => (
+            <motion.div
+              key={song.id}
+              className="see-all-recent-song"
+              {...longPressProps}
+              whileTap={tapFeedback}
+            >
+              <div className="see-all-recent-song-album-cover">
+                <img
+                  src={song.cover}
+                  alt={song.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+              </div>
 
-          <div className="see-all-recent-song-song-info">
-            <div className="see-all-recent-song-song-info-title">Title</div>
-            <div className="see-all-recent-song-song-info-artists">Artist</div>
-          </div>
+              <div className="see-all-recent-song-song-info">
+                <div className="see-all-recent-song-song-info-title">
+                  {song.title}
+                </div>
+                <div className="see-all-recent-song-song-info-artists">
+                  {song.artist}
+                </div>
+              </div>
 
-          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          className="see-all-recent-song" 
-          {...longPressProps}
-          whileTap={tapFeedback}
-        >
-          <div className="see-all-recent-song-album-cover">
-            <img src="/covers/test-cover.jpg" alt="Song" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px'}} />
-          </div>
-
-          <div className="see-all-recent-song-song-info">
-            <div className="see-all-recent-song-song-info-title">Title</div>
-            <div className="see-all-recent-song-song-info-artists">Artist</div>
-          </div>
-
-          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          className="see-all-recent-song" 
-          {...longPressProps}
-          whileTap={tapFeedback}
-        >
-          <div className="see-all-recent-song-album-cover">
-            <img src="/covers/test-cover.jpg" alt="Song" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px'}} />
-          </div>
-
-          <div className="see-all-recent-song-song-info">
-            <div className="see-all-recent-song-song-info-title">Title</div>
-            <div className="see-all-recent-song-song-info-artists">Artist</div>
-          </div>
-
-          <div className="options-container-see-all" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </motion.div>
+              <div
+                className="options-container-see-all"
+                onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}
+              >
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <EmptyState
+            title="No songs found"
+            subtitle="Start listening to music to see recent songs"
+          />
+        )}
       </div>
     </div>
   );
 }
 
 export default SeeAll;
-

@@ -6,20 +6,12 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
+import EmptyState from "../../components/EmptyState/EmptyState";
 import "./Home.css";
 
-const placeholderArtists = [
-  { id: 1, name: "Artist Name", img: "/covers/test-cover.jpg" },
-  { id: 2, name: "Artist Name", img: "/covers/test-cover.jpg" },
-  { id: 3, name: "Artist Name", img: "/covers/test-cover.jpg" },
-];
+const placeholderArtists = [];
 
-const placeholderPlaylists = [
-  { id: 1, title: "Playlist Title", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
-  { id: 2, title: "Playlist Title", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
-  { id: 3, title: "Playlist Title", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
-  { id: 4, title: "Playlist Title", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
-];
+const placeholderPlaylists = []; // Changed to empty for testing
 
 function ArrowBtn() {
   return (
@@ -43,7 +35,7 @@ function Home() {
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
-  
+
   const menuOptions = ["Play", "Add to Library", "Share"];
   const longPressProps = useLongPress(() => showOptions(menuOptions, (option) => console.log(option)));
   const tapFeedback = { scale: 0.98 };
@@ -69,16 +61,17 @@ function Home() {
           </button>
         </div>
         <div className="home-section__list">
-          {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="artist-card">
                 <Skeleton width="85px" height="85px" borderRadius="50%" />
                 <Skeleton height="1rem" style={{ marginTop: "10px", width: "60px" }} />
               </div>
             ))
-            : placeholderArtists.map((artist) => (
-              <motion.div 
-                key={artist.id} 
+          ) : placeholderArtists.length > 0 ? (
+            placeholderArtists.map((artist) => (
+              <motion.div
+                key={artist.id}
                 className="artist-card"
                 {...longPressProps}
                 whileTap={tapFeedback}
@@ -88,7 +81,13 @@ function Home() {
                 <p className="artist-card__name">{artist.name}</p>
               </motion.div>
             ))
-          }
+          ) : (
+            <EmptyState
+              minimal={true}
+              alignLeft={true}
+              iconKey="artist"
+            />
+          )}
         </div>
       </section>
 
@@ -104,16 +103,17 @@ function Home() {
           </button>
         </div>
         <div className="playlist-row">
-          {isLoading
-            ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="playlist-card" style={{ padding: '0' }}>
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="playlist-card" style={{ padding: "0" }}>
                 <Skeleton width="56px" height="56px" borderRadius="0" />
-                <Skeleton height="1rem" style={{ flex: 1, margin: '0 10px' }} />
+                <Skeleton height="1rem" style={{ flex: 1, margin: "0 10px" }} />
               </div>
             ))
-            : placeholderPlaylists.map((playlist) => (
-              <motion.div 
-                key={playlist.id} 
+          ) : placeholderPlaylists.length > 0 ? (
+            placeholderPlaylists.map((playlist) => (
+              <motion.div
+                key={playlist.id}
                 className="playlist-card"
                 {...longPressProps}
                 whileTap={tapFeedback}
@@ -123,7 +123,11 @@ function Home() {
                 <p className="playlist-card__title">{playlist.title}</p>
               </motion.div>
             ))
-          }
+          ) : (
+            <div style={{ gridColumn: "1 / -1" }}>
+              <EmptyState minimal={true} alignLeft={true} iconKey="playlist" />
+            </div>
+          )}
         </div>
       </section>
     </div>

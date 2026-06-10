@@ -4,36 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../Skeleton/Skeleton";
+import EmptyState from "../EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../MediaPlayer/MediaPlayer";
 
-const placeholderTracks = [
-  {
-    id: 1,
-    title: "Can you feel it",
-    cover: "/indieblog-best-album-covers-2010s-07 4.png",
-  },
-  {
-    id: 2,
-    title: "Can you feel it",
-    cover: "/indieblog-best-album-covers-2010s-07 4.png",
-  },
-  {
-    id: 3,
-    title: "Can you feel it",
-    cover: "/indieblog-best-album-covers-2010s-07 4.png",
-  },
-  {
-    id: 4,
-    title: "Can you feel it",
-    cover: "/indieblog-best-album-covers-2010s-07 4.png",
-  },
-  {
-    id: 5,
-    title: "Can you feel it",
-    cover: "/indieblog-best-album-covers-2010s-07 4.png",
-  },
-];
+const placeholderTracks = []; // Changed to empty for testing
 
 function ArrowBtn() {
   return (
@@ -92,30 +67,37 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
         </button>
       </div>
       <div className="recently-played__list">
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="track-card">
-                <Skeleton height="140px" borderRadius="12px" />
-                <Skeleton height="1rem" style={{ marginTop: "10px" }} />
-              </div>
-            ))
-          : tracks.slice(0, 3).map((track) => (
-              <motion.div 
-                key={track.id} 
-                className="track-card" 
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => handleTrackClick(track)}
-              >
-                <motion.img
-                  className="track-card__cover"
-                  src={track.cover}
-                  alt={track.title}
-                  layoutId={`cover-${track.id}`}
-                />
-                <p className="track-card__title">{track.title}</p>
-              </motion.div>
-            ))}
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="track-card">
+              <Skeleton height="140px" borderRadius="12px" />
+              <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+            </div>
+          ))
+        ) : tracks.length > 0 ? (
+          tracks.slice(0, 3).map((track) => (
+            <motion.div
+              key={track.id}
+              className="track-card"
+              {...longPressProps}
+              whileTap={tapFeedback}
+              onClick={() => handleTrackClick(track)}
+            >
+              <motion.img
+                className="track-card__cover"
+                src={track.cover}
+                alt={track.title}
+                layoutId={`cover-${track.id}`}
+              />
+              <p className="track-card__title">{track.title}</p>
+            </motion.div>
+          ))
+        ) : (
+          <EmptyState
+            minimal={true}
+            iconKey="song"
+          />
+        )}
       </div>
 
     </div>

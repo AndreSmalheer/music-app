@@ -31,7 +31,11 @@ function PlaylistDetail() {
     "Download",
   ];
 
-  const { stop, ...longPressProps } = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)), null, { disabled: isDragging });
+  const { stop, ...longPressProps } = useLongPress(
+    () => showOptions(menuOptions, (opt) => console.log(opt)),
+    null,
+    { disabled: isDragging },
+  );
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -88,9 +92,20 @@ function PlaylistDetail() {
       <div className="songs-list">
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="song-row" style={{ padding: '12px', gap: '16px' }}>
+              <div
+                key={i}
+                className="song-row"
+                style={{ padding: "12px", gap: "16px" }}
+              >
                 <Skeleton width="20px" height="14px" />
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
                   <Skeleton height="16px" width="70%" />
                   <Skeleton height="13px" width="40%" />
                 </div>
@@ -98,8 +113,8 @@ function PlaylistDetail() {
               </div>
             ))
           : songs.map((song, index) => (
-              <motion.div 
-                key={song.id} 
+              <motion.div
+                key={song.id}
                 className="song-row"
                 whileTap={tapFeedback}
                 onClick={() => handlePlaySong(song)}

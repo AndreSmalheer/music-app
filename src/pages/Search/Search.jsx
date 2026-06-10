@@ -3,11 +3,17 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Search.css";
 import Skeleton from "../../components/Skeleton/Skeleton";
+import EmptyState from "../../components/EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
 
 const TAGS = ["All", "Songs", "Albums", "Artists", "Playlists"];
+const searchResults = {
+  topResults: [],
+  songs: [],
+  artists: [],
+};
 
 function Search() {
   const [activeTag, setActiveTag] = useState("All");
@@ -16,7 +22,9 @@ function Search() {
   const { showOptions } = useModal();
   const navigate = useNavigate();
 
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, (opt) => console.log(opt)),
+  );
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -27,7 +35,12 @@ function Search() {
   }, []);
 
   const handlePlaySong = (title, artist) => {
-    playSong("music/test.mp3", title, artist, "/indieblog-best-album-covers-2010s-07 4.png");
+    playSong(
+      "music/test.mp3",
+      title,
+      artist,
+      "/indieblog-best-album-covers-2010s-07 4.png",
+    );
     navigate("/now-playing");
   };
 
@@ -63,24 +76,34 @@ function Search() {
             <Skeleton width="100%" height="150px" borderRadius="12px" />
             <Skeleton width="100%" height="150px" borderRadius="12px" />
           </div>
-        ) : (
+        ) : searchResults.topResults.length > 0 ? (
           <div className="result-container">
-            <motion.div 
-              className="serach-result-album-cover" 
-              {...longPressProps}
-              whileTap={tapFeedback}
-            >
-              <img src="/covers/test-cover.jpg" alt="Result" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px'}} />
-            </motion.div>
-
-            <motion.div 
-              className="serach-result-album-cover" 
-              {...longPressProps}
-              whileTap={tapFeedback}
-            >
-              <img src="/indieblog-best-album-covers-2010s-07 4.png" alt="Result" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px'}} />
-            </motion.div>
+            {searchResults.topResults.map((result) => (
+              <motion.div
+                key={result.id}
+                className="serach-result-album-cover"
+                {...longPressProps}
+                whileTap={tapFeedback}
+              >
+                <img
+                  src={result.img}
+                  alt={result.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                  }}
+                />
+              </motion.div>
+            ))}
           </div>
+        ) : (
+          <EmptyState
+            title="No results found"
+            subtitle="Try searching for something else"
+            alignLeft="true"
+          />
         )}
       </div>
 
@@ -90,73 +113,74 @@ function Search() {
         <div className="songs-container">
           {isLoading ? (
             Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="song" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "10px" }}>
+              <div
+                key={i}
+                className="song"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  padding: "10px",
+                }}
+              >
                 <Skeleton width="50px" height="50px" borderRadius="6px" />
                 <div style={{ flex: 1 }}>
                   <Skeleton width="70%" height="1rem" />
-                  <Skeleton width="40%" height="0.8rem" style={{ marginTop: "0.5rem" }} />
+                  <Skeleton
+                    width="40%"
+                    height="0.8rem"
+                    style={{ marginTop: "0.5rem" }}
+                  />
                 </div>
               </div>
             ))
+          ) : searchResults.songs.length > 0 ? (
+            searchResults.songs.map((song) => (
+              <motion.div
+                key={song.id}
+                className="song"
+                {...longPressProps}
+                whileTap={tapFeedback}
+                onClick={() => handlePlaySong(song.title, song.artist)}
+              >
+                <div className="album-cover-search-result">
+                  <img
+                    src={song.img}
+                    alt={song.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />
+                </div>
+
+                <div className="search-song-info">
+                  <h2 className="search-song-title">{song.title}</h2>
+
+                  <div className="search-song-artist">{song.artist}</div>
+                </div>
+
+                <div
+                  className="options-container"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    showOptions(menuOptions, (opt) => console.log(opt));
+                  }}
+                >
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </motion.div>
+            ))
           ) : (
-            <>
-              <motion.div 
-                className="song" 
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => handlePlaySong("Song Title", "Artist")}
-              >
-                <div className="album-cover-search-result">
-                  <img src="/covers/test-cover.jpg" alt="Song" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px'}} />
-                </div>
-
-                <div className="search-song-info">
-                  <h2 className="search-song-title">Title</h2>
-
-                  <div className="search-song-artist">Artist</div>
-                </div>
-
-                <div
-                  className="options-container"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    showOptions(menuOptions, (opt) => console.log(opt));
-                  }}
-                >
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="song" 
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => handlePlaySong("Song Title", "Artist")}
-              >
-                <div className="album-cover-search-result">
-                  <img src="/covers/test-cover.jpg" alt="Song" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px'}} />
-                </div>
-
-                <div className="search-song-info">
-                  <h2 className="search-song-title">Title</h2>
-
-                  <div className="search-song-artist">Artist</div>
-                </div>
-
-                <div
-                  className="options-container"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    showOptions(menuOptions, (opt) => console.log(opt));
-                  }}
-                >
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </motion.div>
-            </>
+            <EmptyState
+              title="No songs found"
+              subtitle="Try searching for another song"
+              alignLeft="true"
+            />
           )}
         </div>
       </div>
@@ -167,39 +191,57 @@ function Search() {
         <div className="artists-container-result">
           {isLoading ? (
             Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="result-artist" style={{ textAlign: "center" }}>
-                <Skeleton width="100px" height="100px" borderRadius="50%" style={{ margin: "0 auto" }} />
-                <Skeleton width="60px" height="1rem" style={{ margin: "0.5rem auto" }} />
+              <div
+                key={i}
+                className="result-artist"
+                style={{ textAlign: "center" }}
+              >
+                <Skeleton
+                  width="100px"
+                  height="100px"
+                  borderRadius="50%"
+                  style={{ margin: "0 auto" }}
+                />
+                <Skeleton
+                  width="60px"
+                  height="1rem"
+                  style={{ margin: "0.5rem auto" }}
+                />
               </div>
             ))
+          ) : searchResults.artists.length > 0 ? (
+            searchResults.artists.map((artist) => (
+              <motion.div
+                key={artist.id}
+                className="result-artist"
+                {...longPressProps}
+                whileTap={tapFeedback}
+                onClick={() => navigate(`/artist/${artist.id}`)}
+              >
+                <div className="result-artist-img">
+                  <img
+                    src={artist.img}
+                    alt={artist.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
+                  />
+                </div>
+
+                <h3 className="result-artist-text">{artist.name}</h3>
+              </motion.div>
+            ))
           ) : (
-            <>
-              <motion.div 
-                className="result-artist" 
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => navigate("/artist/1")}
-              >
-                <div className="result-artist-img">
-                  <img src="/covers/test-cover.jpg" alt="Artist" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
-                </div>
-
-                <h3 className="result-artist-text">Artist</h3>
-              </motion.div>
-
-              <motion.div 
-                className="result-artist" 
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => navigate("/artist/1")}
-              >
-                <div className="result-artist-img">
-                  <img src="/covers/test-cover.jpg" alt="Artist" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}} />
-                </div>
-
-                <h3 className="result-artist-text">Artist</h3>
-              </motion.div>
-            </>
+            <div style={{ width: "100%" }}>
+              <EmptyState
+                title="No artists found"
+                subtitle="Try searching for another artist"
+                alignLeft="true"
+              />
+            </div>
           )}
         </div>
       </div>
