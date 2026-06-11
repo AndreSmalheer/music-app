@@ -22,6 +22,10 @@ const steps = [
 ];
 
 function Onboarding() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [youtubeApiKey, setYoutubeApiKey] = useState("");
+  const [mongoDbUri, setMongoDbUri] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
 
@@ -67,8 +71,34 @@ function Onboarding() {
 
           {steps[currentStep].type === "form" && (
             <div className="onboarding-form">
-              <input type="email" placeholder="Email" className="onboarding-input" />
-              <input type="password" placeholder="Password" className="onboarding-input" />
+              <input 
+                type="email" 
+                placeholder="Email" 
+                className="onboarding-input" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <input 
+                type="password" 
+                placeholder="Password" 
+                className="onboarding-input" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <input 
+                type="text" 
+                placeholder="YouTube API Key" 
+                className="onboarding-input" 
+                value={youtubeApiKey}
+                onChange={(e) => setYoutubeApiKey(e.target.value)}
+              />
+              <input 
+                type="text" 
+                placeholder="MongoDB URI" 
+                className="onboarding-input" 
+                value={mongoDbUri}
+                onChange={(e) => setMongoDbUri(e.target.value)}
+              />
             </div>
           )}
 
