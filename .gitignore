@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Secrets
+.env
+*.env
+!*.env.example
+
+# Backend uploads (gegenereerde MP3's + covers)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
