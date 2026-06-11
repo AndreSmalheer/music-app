@@ -7,17 +7,16 @@ import EmptyState from "../../components/EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
+import { search as searchApi, addRecent } from "../../services/api";
 
 const TAGS = ["All", "Songs", "Albums", "Artists", "Playlists"];
-const searchResults = {
-  topResults: [],
-  songs: [],
-  artists: [],
-};
+const emptyResults = { topResults: [], songs: [], artists: [] };
 
 function Search() {
   const [activeTag, setActiveTag] = useState("All");
-  const [isLoading, setIsLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(emptyResults);
+  const [isLoading, setIsLoading] = useState(false);
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -27,20 +26,39 @@ function Search() {
   );
   const tapFeedback = { scale: 0.98 };
 
+  // Debounced zoeken: 300ms na de laatste toetsaanslag.
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const q = query.trim();
+    if (!q) {
+      setSearchResults(emptyResults);
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+    setIsLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await searchApi(q);
+        setSearchResults({
+          topResults: data.songs.slice(0, 2),
+          songs: data.songs,
+          artists: data.artists,
+        });
+      } catch (err) {
+        console.error("Zoeken mislukt:", err);
+        setSearchResults(emptyResults);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [query]);
 
-  const handlePlaySong = (title, artist) => {
-    playSong(
-      "music/test.mp3",
-      title,
-      artist,
-      "/indieblog-best-album-covers-2010s-07 4.png",
-    );
+  const showSongs = activeTag === "All" || activeTag === "Songs";
+  const showArtists = activeTag === "All" || activeTag === "Artists";
+
+  const handlePlaySong = (song) => {
+    playSong(song.src, song.title, song.artist, song.cover);
+    if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
@@ -54,7 +72,12 @@ function Search() {
 
   return (
     <div className="search-page">
-      <input className="search-container" placeholder="type here..."></input>
+      <input
+        className="search-container"
+        placeholder="type here..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      ></input>
 
       <div className="tags-container">
         {TAGS.map((tag) => (
@@ -107,6 +130,7 @@ function Search() {
         )}
       </div>
 
+      {showSongs && (
       <div className="result-section result-songs">
         <h3>Songs</h3>
 
@@ -141,7 +165,7 @@ function Search() {
                 className="song"
                 {...longPressProps}
                 whileTap={tapFeedback}
-                onClick={() => handlePlaySong(song.title, song.artist)}
+                onClick={() => handlePlaySong(song)}
               >
                 <div className="album-cover-search-result">
                   <img
@@ -184,7 +208,9 @@ function Search() {
           )}
         </div>
       </div>
+      )}
 
+      {showArtists && (
       <div className="result-section result-artist">
         <h3 className="result-section-title">Artist</h3>
 
@@ -245,6 +271,7 @@ function Search() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

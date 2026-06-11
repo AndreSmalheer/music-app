@@ -1,26 +1,45 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useModal } from "../../context/ModalContext";
+import { getPlaylist, updatePlaylist } from "../../services/api";
 import "./EditPlaylist.css";
 
-const songsList = Array.from({ length: 10 }, (_, i) => ({
-  id: i,
-  title: `Playlist Track ${i + 1}`,
-  artist: "Artist Name",
-  cover: "/indieblog-best-album-covers-2010s-07 4.png",
-}));
-
 function EditPlaylist() {
-  const [songs, setSongs] = useState(songsList);
+  const { id } = useParams();
+  const [playlist, setPlaylist] = useState(null);
+  const [songs, setSongs] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const { showConfirm } = useModal();
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await getPlaylist(id);
+        if (!active) return;
+        setPlaylist(data);
+        setSongs(data?.songs || []);
+      } catch (err) {
+        console.error("Playlist laden mislukt:", err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handleDelete = (song) => {
     showConfirm(
       `Are you sure you want to delete "${song.title}"?`,
-      () => {
-        console.log("Deleted", song);
-        setSongs(songs.filter(s => s.id !== song.id));
+      async () => {
+        const remaining = songs.filter((s) => s.id !== song.id);
+        setSongs(remaining);
+        try {
+          await updatePlaylist(id, { songs: remaining.map((s) => s.id) });
+        } catch (err) {
+          console.error("Opslaan mislukt:", err);
+        }
       }
     );
   };
@@ -30,12 +49,12 @@ function EditPlaylist() {
       <div className="playlist-header">
         <div className="playlist-header-content">
           <img
-            src="/indieblog-best-album-covers-2010s-07 4.png"
+            src={playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"}
             alt="Playlist Cover"
             className="playlist-main-cover"
           />
           <div className="playlist-info">
-            <h1 className="playlist-title">Edit Playlist</h1>
+            <h1 className="playlist-title">{playlist?.title || "Edit Playlist"}</h1>
             <p className="playlist-description">Reorder or remove tracks from your playlist.</p>
           </div>
         </div>

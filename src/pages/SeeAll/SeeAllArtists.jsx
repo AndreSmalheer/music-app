@@ -5,18 +5,30 @@ import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
+import { getArtists } from "../../services/api";
 import "./SeeAll.css";
-
-const artists = [];
 
 function SeeAllArtists() {
   const { showOptions } = useModal();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [artists, setArtists] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
+    let active = true;
+    (async () => {
+      try {
+        const data = await getArtists();
+        if (active) setArtists(data);
+      } catch (err) {
+        console.error("Artiesten laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const navigate = useNavigate();
