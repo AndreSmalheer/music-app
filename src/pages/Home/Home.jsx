@@ -6,7 +6,6 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import EmptyState from "../../components/EmptyState/EmptyState";
 import "./Home.css";
 
 const placeholderArtists = [];
@@ -82,11 +81,9 @@ function Home() {
               </motion.div>
             ))
           ) : (
-            <EmptyState
-              minimal={true}
-              alignLeft={true}
-              iconKey="artist"
-            />
+            <div className="empty-artist-card">
+              <div className="empty-artist-img" />
+            </div>
           )}
         </div>
       </section>
@@ -125,7 +122,7 @@ function Home() {
             ))
           ) : (
             <div style={{ gridColumn: "1 / -1" }}>
-              <EmptyState minimal={true} alignLeft={true} iconKey="playlist" />
+              <div className="empty-playlist-card" />
             </div>
           )}
         </div>

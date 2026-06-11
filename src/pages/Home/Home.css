@@ -93,3 +93,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Replaced .empty-play-box with specific emulated item placeholders */
+.empty-artist-card {
+  flex: 1;
+  max-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-artist-img {
+  width: 85%;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-playlist-card {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}

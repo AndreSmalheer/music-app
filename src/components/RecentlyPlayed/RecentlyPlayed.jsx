@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../Skeleton/Skeleton";
-import EmptyState from "../EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../MediaPlayer/MediaPlayer";
 
@@ -93,13 +92,11 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
             </motion.div>
           ))
         ) : (
-          <EmptyState
-            minimal={true}
-            iconKey="song"
-          />
+          <div className="empty-track-card">
+            <div className="empty-track-cover" />
+          </div>
         )}
-      </div>
-
+        </div>
     </div>
   );
 }
