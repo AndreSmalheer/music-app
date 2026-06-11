@@ -5,16 +5,19 @@ import "./Onboarding.css";
 
 const steps = [
   {
-    title: "Welcome to MusicApp",
-    description: "The ultimate destination for music lovers. Experience sound like never before.",
+    title: "Explore Music",
+    description: "Browse and search your favorite artists and tracks effortlessly.",
+    image: "/icons/explore.svg",
   },
   {
-    title: "Curated for You",
-    description: "Our advanced engine learns your unique taste to curate playlists that resonate with your mood.",
+    title: "Create Playlists",
+    description: "Build your own collection by creating custom playlists.",
+    image: "/icons/playlist.svg",
   },
   {
-    title: "Listen Anywhere",
-    description: "Download your favorite tracks and enjoy uninterrupted music, even without an internet connection.",
+    title: "Create Account",
+    description: "Join us to save your favorites and access your library anywhere.",
+    type: "form",
   },
 ];
 
@@ -53,8 +56,21 @@ function Onboarding() {
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
+          {steps[currentStep].type !== "form" && (
+            <div className="onboarding-image-wrapper">
+              <div className="onboarding-image-placeholder" />
+            </div>
+          )}
+          
           <h1>{steps[currentStep].title}</h1>
           <p>{steps[currentStep].description}</p>
+
+          {steps[currentStep].type === "form" && (
+            <div className="onboarding-form">
+              <input type="email" placeholder="Email" className="onboarding-input" />
+              <input type="password" placeholder="Password" className="onboarding-input" />
+            </div>
+          )}
 
           <div className="onboarding-actions">
             {currentStep > 0 && (
@@ -63,7 +79,7 @@ function Onboarding() {
               </button>
             )}
             <button className="onboarding-button primary" onClick={handleNext}>
-              {currentStep === steps.length - 1 ? "Get Started" : "Next"}
+              {currentStep === steps.length - 1 ? "Create Account" : "Next"}
             </button>
           </div>
         </motion.div>
