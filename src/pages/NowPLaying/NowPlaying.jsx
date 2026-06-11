@@ -654,14 +654,29 @@ function NowPlaying() {
     "Sleep Timer",
   ];
 
+  const isYoutube = !!currentTrack.youtubeId;
+
   return (
     <>
       <div className="now-playing-page">
-        <img
-          className="album-cover"
-          src={currentTrack.coverSrc}
-          alt="Album Cover"
-        />
+        {isYoutube ? (
+          <div className="youtube-player-wrapper">
+            <iframe
+              key={currentTrack.youtubeId}
+              className="youtube-player-iframe"
+              src={`https://www.youtube-nocookie.com/embed/${currentTrack.youtubeId}?autoplay=1&rel=0`}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title={currentTrack.title}
+            />
+          </div>
+        ) : (
+          <img
+            className="album-cover"
+            src={currentTrack.coverSrc}
+            alt="Album Cover"
+          />
+        )}
 
         <div className="now-playing-info">
           <div className="now-playing-text">

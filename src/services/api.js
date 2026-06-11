@@ -3,7 +3,9 @@
 // Hier zit ook de enige plek waar backend-velden (_id, thumbnail, filePath) worden
 // vertaald naar de korte UI-velden (id, cover/img, src).
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// In dev stuurt Vite de /api/* calls via de proxy naar localhost:3001.
+// In productie (Capacitor) moet VITE_API_URL naar de echte server wijzen.
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // ---- low-level helpers --------------------------------------------------
 
@@ -189,4 +191,23 @@ export async function search(q) {
     artists: (data.artists || []).map(toUiArtist),
     playlists: (data.playlists || []).map(toUiPlaylist),
   };
+}
+
+// ---- YouTube ------------------------------------------------------------
+
+// Geeft een lijst van { youtubeId, title, artist, thumbnail, type: "youtube" }
+export async function searchYoutube(q) {
+  const data = await getJSON(`/api/youtube/search?q=${encodeURIComponent(q)}`);
+  return data.map((item) => ({
+    id: item.youtubeId,
+    youtubeId: item.youtubeId,
+    title: item.title,
+    artist: item.artist,
+    cover: item.thumbnail,
+    img: item.thumbnail,
+    src: "",
+    type: "youtube",
+    duration: 0,
+    durationLabel: "",
+  }));
 }

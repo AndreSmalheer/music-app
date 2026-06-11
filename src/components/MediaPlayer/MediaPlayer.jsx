@@ -65,16 +65,23 @@ function MediaPlayer({ children }) {
     artist = "Unknown",
     coverSrc = "",
     index = -1,
+    youtubeId = null,
   ) => {
     if (!audioPlayerRef.current) return;
 
-    audioPlayerRef.current.src = src;
+    // YouTube tracks hebben geen lokale audio — audio element leeg laten
+    if (!youtubeId) {
+      audioPlayerRef.current.src = src;
+    } else {
+      audioPlayerRef.current.src = "";
+    }
 
     const track = {
       src,
       title,
       artist,
       coverSrc,
+      youtubeId,
     };
 
     setCurrentTrack(track);
@@ -95,6 +102,12 @@ function MediaPlayer({ children }) {
     }
 
     updateMediaSession(title, artist, coverSrc);
+
+    // YouTube tracks spelen via iframe in NowPlaying — audio element niet nodig
+    if (youtubeId) {
+      setIsPlaying(true);
+      return;
+    }
 
     try {
       await audioPlayerRef.current.play();

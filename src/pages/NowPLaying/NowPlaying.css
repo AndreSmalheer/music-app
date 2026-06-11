@@ -22,6 +22,21 @@
   flex-shrink: 1;
 }
 
+.youtube-player-wrapper {
+  width: min(80vw, 38vh, 320px);
+  aspect-ratio: 16 / 9;
+  border-radius: 11px;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+
+.youtube-player-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
 .now-playing-info {
   width: min(100%, 320px);
   display: flex;

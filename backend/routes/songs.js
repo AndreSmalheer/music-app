@@ -4,7 +4,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import Song from "../models/Song.js";
+import Artist from "../models/Artist.js";
 import upload from "../middleware/upload.js";
+
+// Zoekt artiest op naam op, maakt hem aan als hij niet bestaat, en voegt songId toe.
+async function syncArtist(artistName, songId) {
+  if (!artistName || artistName === "Unknown") return;
+  await Artist.findOneAndUpdate(
+    { name: artistName },
+    { $addToSet: { songs: songId } },
+    { upsert: true, new: true },
+  );
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = Router();
@@ -56,6 +67,7 @@ router.post(
         duration: Number(req.body.duration) || 0,
       });
 
+      await syncArtist(song.artist, song._id);
       res.status(201).json(song);
     } catch (err) {
       next(err);
@@ -81,9 +93,9 @@ router.post("/download", async (req, res, next) => {
       type: "youtube",
       youtubeId,
       thumbnail,
-      // filePath wordt gevuld zodra de echte download-stap is gebouwd
     });
 
+    await syncArtist(song.artist, song._id);
     res.status(201).json(song);
   } catch (err) {
     next(err);
@@ -100,6 +112,14 @@ router.delete("/:id", async (req, res, next) => {
     if (song.filePath?.startsWith("/uploads/")) {
       const filePath = path.join(__dirname, "..", song.filePath);
       fs.promises.unlink(filePath).catch(() => {});
+    }
+
+    // Song uit artiest verwijderen
+    if (song.artist && song.artist !== "Unknown") {
+      await Artist.findOneAndUpdate(
+        { name: song.artist },
+        { $pull: { songs: song._id } },
+      );
     }
 
     res.json({ success: true });
