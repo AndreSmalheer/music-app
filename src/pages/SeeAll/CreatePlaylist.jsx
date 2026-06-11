@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "../../components/Skeleton/Skeleton";
+import { createPlaylist } from "../../services/api";
 import "./CreatePlaylist.css";
 
 function CreatePlaylist() {
@@ -9,12 +10,26 @@ function CreatePlaylist() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [cover, setCover] = useState(null);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleCreate = async () => {
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      // cover is een base64 data-URL uit de file-input; we slaan 'm op als thumbnail.
+      const playlist = await createPlaylist({ name: name.trim(), thumbnail: cover });
+      navigate(`/playlist/${playlist.id}`);
+    } catch (err) {
+      console.error("Playlist aanmaken mislukt:", err);
+      setSaving(false);
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -94,11 +109,13 @@ function CreatePlaylist() {
             >
               Cancel
             </motion.button>
-            <motion.button 
+            <motion.button
               className="btn-create-confirm"
               whileTap={{ scale: 0.95 }}
+              onClick={handleCreate}
+              disabled={saving || !name.trim()}
             >
-              Create Playlist
+              {saving ? "Creating..." : "Create Playlist"}
             </motion.button>
           </div>
         </div>

@@ -5,9 +5,8 @@ import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
+import { getPlaylists } from "../../services/api";
 import "./SeeAll.css";
-
-const playlists = [];
 
 function PlusIcon() {
   return (
@@ -22,10 +21,23 @@ function SeeAllPlaylists() {
   const { showOptions } = useModal();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [playlists, setPlaylists] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
+    let active = true;
+    (async () => {
+      try {
+        const data = await getPlaylists();
+        if (active) setPlaylists(data);
+      } catch (err) {
+        console.error("Playlists laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const navigate = useNavigate();
@@ -77,7 +89,7 @@ function SeeAllPlaylists() {
 
               <div className="playlist-card-full__info">
                 <p className="playlist-card-full__title">{playlist.title}</p>
-                <p className="playlist-card-full__subtitle">24 songs</p>
+                <p className="playlist-card-full__subtitle">{playlist.songCount} songs</p>
               </div>
             </motion.div>
           ))

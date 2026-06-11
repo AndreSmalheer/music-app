@@ -6,8 +6,7 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../MediaPlayer/MediaPlayer";
-
-const placeholderTracks = []; // Changed to empty for testing
+import { getRecent, addRecent } from "../../services/api";
 
 function ArrowBtn() {
   return (
@@ -26,20 +25,39 @@ function ArrowBtn() {
   );
 }
 
-function RecentlyPlayed({ tracks = placeholderTracks }) {
+function RecentlyPlayed({ tracks: tracksProp }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [tracks, setTracks] = useState(tracksProp || []);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
-  
+
 
   const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
-  }, []);
+    // Als de parent expliciet tracks meegeeft, die gebruiken; anders zelf ophalen.
+    if (tracksProp) {
+      setTracks(tracksProp);
+      setIsLoading(false);
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const data = await getRecent();
+        if (active) setTracks(data);
+      } catch (err) {
+        console.error("Recently played laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [tracksProp]);
 
   const menuOptions = [
     "Add to Playlist",
@@ -49,7 +67,8 @@ function RecentlyPlayed({ tracks = placeholderTracks }) {
   ];
 
   const handleTrackClick = (track) => {
-    playSong("music/test.mp3", track.title, "Various Artists", track.cover);
+    playSong(track.src, track.title, track.artist, track.cover);
+    if (track.id) addRecent(track.id).catch(() => {});
     navigate("/now-playing");
   };
 

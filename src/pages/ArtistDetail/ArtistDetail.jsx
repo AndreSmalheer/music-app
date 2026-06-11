@@ -1,20 +1,14 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import { getArtist, addRecent } from "../../services/api";
 import "./ArtistDetail.css";
 
-const topTracks = Array.from({ length: 5 }, (_, i) => ({
-  id: i,
-  title: `Popular Track ${i + 1}`,
-  artist: "Artist Name",
-  duration: "3:45",
-  cover: "/indieblog-best-album-covers-2010s-07 4.png",
-}));
-
+// Discography is decoratief: er is (bewust) geen albums-collection in de backend.
 const albums = [
   { id: 1, title: "The Masterpiece", year: "2024", cover: "/covers/test-cover.jpg" },
   { id: 2, title: "Echoes of Silence", year: "2022", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
@@ -23,22 +17,39 @@ const albums = [
 ];
 
 function ArtistDetail() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const [isLoading, setIsLoading] = useState(true);
+  const [artist, setArtist] = useState(null);
+  const [topTracks, setTopTracks] = useState([]);
   const longPressProps = useLongPress(() => showOptions(["Go to Radio", "Share", "Add to Playlist", "Report"], (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    let active = true;
+    (async () => {
+      try {
+        const data = await getArtist(id);
+        if (!active) return;
+        setArtist(data);
+        setTopTracks(data?.songs || []);
+      } catch (err) {
+        console.error("Artiest laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handlePlaySong = (song) => {
-    playSong("music/test.mp3", song.title, song.artist, song.cover);
+    if (!song) return;
+    playSong(song.src, song.title, song.artist, song.cover);
+    if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
@@ -55,12 +66,12 @@ function ArtistDetail() {
       ) : (
         <div className="artist-hero">
           <img
-            src="/covers/test-cover.jpg"
+            src={artist?.img || "/covers/test-cover.jpg"}
             alt="Artist Profile"
             className="artist-hero-img"
           />
           <div className="artist-hero-overlay">
-            <h1 className="artist-hero-name">Artist Name</h1>
+            <h1 className="artist-hero-name">{artist?.name || "Artist"}</h1>
             <p className="artist-hero-listeners">1,234,567 Monthly Listeners</p>
           </div>
         </div>
@@ -111,7 +122,7 @@ function ArtistDetail() {
                     <div className="artist-song-info">
                       <p className="artist-song-title">{track.title}</p>
                     </div>
-                    <span className="artist-song-duration">{track.duration}</span>
+                    <span className="artist-song-duration">{track.durationLabel}</span>
                   </motion.div>
                 ))}
           </div>

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { downloadFromYoutube } from "../../services/api";
 import "./Download.css";
 
 function EditIcon() {
@@ -23,16 +25,37 @@ function EditIcon() {
 function Download() {
   const [url, setUrl] = useState("");
   const [showMetadata, setShowMetadata] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [selectedCover, setSelectedCover] = useState("covers/test-cover.jpg");
   const [metadata, setMetadata] = useState({
     title: "Awesome Song Name",
     artist: "Great Artist",
   });
+  const navigate = useNavigate();
 
   const handleSubmit = () => {
     if (url.trim() === "") return;
     if (url.includes("youtube.com/") || url.includes("youtu.be/")) {
       setShowMetadata(true);
+    }
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await downloadFromYoutube({
+        url,
+        title: metadata.title,
+        artist: metadata.artist,
+        // alleen een echte gekozen cover (base64) meesturen
+        thumbnail: selectedCover.startsWith("data:") ? selectedCover : undefined,
+      });
+      // gelukt: terug naar home
+      navigate("/");
+    } catch (err) {
+      console.error("Opslaan mislukt:", err);
+      setSaving(false);
     }
   };
 
@@ -141,8 +164,13 @@ function Download() {
               >
                 Cancel
               </motion.button>
-              <motion.button className="btn-save" whileTap={{ scale: 0.95 }}>
-                Save
+              <motion.button
+                className="btn-save"
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save"}
               </motion.button>
             </div>
           </motion.div>

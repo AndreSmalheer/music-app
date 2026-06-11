@@ -1,22 +1,17 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
+import { getPlaylist, addRecent } from "../../services/api";
 import "./PlaylistDetail.css";
 
-const songsList = Array.from({ length: 10 }, (_, i) => ({
-  id: i,
-  title: `Playlist Track ${i + 1}`,
-  artist: "Artist Name",
-  duration: "3:45",
-  cover: "/indieblog-best-album-covers-2010s-07 4.png",
-}));
-
 function PlaylistDetail() {
+  const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
+  const [playlist, setPlaylist] = useState(null);
   const [songs, setSongs] = useState([]);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
@@ -39,34 +34,51 @@ function PlaylistDetail() {
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSongs(songsList);
-      setIsLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
+    let active = true;
+    (async () => {
+      try {
+        const data = await getPlaylist(id);
+        if (!active) return;
+        setPlaylist(data);
+        setSongs(data?.songs || []);
+      } catch (err) {
+        console.error("Playlist laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handlePlaySong = (song) => {
-    playSong("music/test.mp3", song.title, song.artist, song.cover);
+    if (!song) return;
+    playSong(song.src, song.title, song.artist, song.cover);
+    if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
+
+  const totalMinutes = Math.round(
+    songs.reduce((sum, s) => sum + (s.duration || 0), 0) / 60,
+  );
 
   return (
     <div className="playlist-detail-page">
       <div className="playlist-header">
         <div className="playlist-header-content">
           <img
-            src="/indieblog-best-album-covers-2010s-07 4.png"
+            src={playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"}
             alt="Playlist Cover"
             className="playlist-main-cover"
           />
           <div className="playlist-info">
-            <h1 className="playlist-title">Playlist Title</h1>
+            <h1 className="playlist-title">{playlist?.title || "Playlist"}</h1>
             <p className="playlist-description">
               A curated selection of the best visual design test tracks.
             </p>
             <div className="playlist-stats">
-              <span>10 songs</span> • <span>38 mins</span>
+              <span>{songs.length} songs</span> • <span>{totalMinutes} mins</span>
             </div>
           </div>
         </div>
@@ -125,7 +137,7 @@ function PlaylistDetail() {
                   <p className="song-row-title">{song.title}</p>
                   <p className="song-row-artist">{song.artist}</p>
                 </div>
-                <span className="song-duration">{song.duration}</span>
+                <span className="song-duration">{song.durationLabel}</span>
               </motion.div>
             ))}
       </div>

@@ -1,22 +1,44 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import "./SeeAll.css";
 import { useModal } from "../../context/ModalContext";
 import useLongPress from "../../hooks/useLongPress";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
-
-const songs = [];
+import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import { getRecent, addRecent } from "../../services/api";
 
 function SeeAll() {
   const { showOptions } = useModal();
+  const { playSong } = useContext(PlayerContext);
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [songs, setSongs] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
+    let active = true;
+    (async () => {
+      try {
+        const data = await getRecent();
+        if (active) setSongs(data);
+      } catch (err) {
+        console.error("Recent songs laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const handlePlaySong = (song) => {
+    playSong(song.src, song.title, song.artist, song.cover);
+    if (song.id) addRecent(song.id).catch(() => {});
+    navigate("/now-playing");
+  };
 
   const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
   const tapFeedback = { scale: 0.98 };
@@ -59,6 +81,7 @@ function SeeAll() {
               className="see-all-recent-song"
               {...longPressProps}
               whileTap={tapFeedback}
+              onClick={() => handlePlaySong(song)}
             >
               <div className="see-all-recent-song-album-cover">
                 <img
@@ -84,7 +107,10 @@ function SeeAll() {
 
               <div
                 className="options-container-see-all"
-                onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showOptions(menuOptions, (opt) => console.log(opt));
+                }}
               >
                 <span></span>
                 <span></span>

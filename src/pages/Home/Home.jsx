@@ -6,11 +6,8 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
+import { getArtists, getPlaylists } from "../../services/api";
 import "./Home.css";
-
-const placeholderArtists = [];
-
-const placeholderPlaylists = []; // Changed to empty for testing
 
 function ArrowBtn() {
   return (
@@ -31,6 +28,8 @@ function ArrowBtn() {
 
 function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [artists, setArtists] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -40,8 +39,25 @@ function Home() {
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
+    let active = true;
+    (async () => {
+      try {
+        const [artistsData, playlistsData] = await Promise.all([
+          getArtists(),
+          getPlaylists(),
+        ]);
+        if (!active) return;
+        setArtists(artistsData);
+        setPlaylists(playlistsData);
+      } catch (err) {
+        console.error("Home laden mislukt:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -67,8 +83,8 @@ function Home() {
                 <Skeleton height="1rem" style={{ marginTop: "10px", width: "60px" }} />
               </div>
             ))
-          ) : placeholderArtists.length > 0 ? (
-            placeholderArtists.map((artist) => (
+          ) : artists.length > 0 ? (
+            artists.map((artist) => (
               <motion.div
                 key={artist.id}
                 className="artist-card"
@@ -107,8 +123,8 @@ function Home() {
                 <Skeleton height="1rem" style={{ flex: 1, margin: "0 10px" }} />
               </div>
             ))
-          ) : placeholderPlaylists.length > 0 ? (
-            placeholderPlaylists.map((playlist) => (
+          ) : playlists.length > 0 ? (
+            playlists.map((playlist) => (
               <motion.div
                 key={playlist.id}
                 className="playlist-card"
