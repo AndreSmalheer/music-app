@@ -20,8 +20,10 @@ import youtubeRouter from "./routes/youtube.js";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 
 // Geüploade MP3's en covers statisch serveren onder /uploads
@@ -54,8 +56,8 @@ app.use((err, req, res, next) => {
 // Start: eerst DB, dan pas luisteren
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Backend draait op http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Backend draait op http://0.0.0.0:${PORT}`);
     });
   })
   .catch((err) => {
