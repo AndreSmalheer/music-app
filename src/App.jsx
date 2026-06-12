@@ -22,6 +22,7 @@ import Settings from "./pages/Settings/Settings";
 import Onboarding from "./pages/Onboarding/Onboarding";
 import EditPlaylist from "./pages/EditPlaylist/EditPlaylist";
 import DesktopUnsupported from "./components/DesktopUnsupported/DesktopUnsupported";
+import LoadingScreen from "./components/LoadingScreen/LoadingScreen";
 import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { useState } from "react";
 import { ModalProvider } from "./context/ModalContext";
@@ -187,22 +188,30 @@ function AppContent() {
 }
 
 function App() {
-  const [serverOnline, setServerOnline] = useState(false);
+  const [serverOnline, setServerOnline] = useState(true);
   const [loading, setLoading] = useState(true);
 
+  const performHealthCheck = async () => {
+    const isOnline = await checkHealth();
+    setServerOnline(isOnline);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    checkHealth().then((isOnline) => {
-      setServerOnline(isOnline);
-      setLoading(false);
-    });
+    performHealthCheck();
+
+    const interval = setInterval(performHealthCheck, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  if (loading) return null;
+  if (loading) return <LoadingScreen />;
 
   return (
     <>
       {!serverOnline ? (
-        <ServerOffline />
+        <ModalProvider>
+          <ServerOffline onRetry={performHealthCheck} />
+        </ModalProvider>
       ) : (
         <MediaPlayer>
           <ModalProvider>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactDOM from "react-dom";
 import "./ModalOverlay.css";
@@ -6,6 +7,14 @@ import "../ConfirmModal/ConfirmModal.css";
 import "../OptionsMenu/OptionsMenu.css";
 
 function ModalOverlay({ isOpen, onClose, type, data }) {
+  const [inputValue, setInputValue] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setInputValue("");
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleStopPropagation = (e) => e.stopPropagation();
@@ -13,14 +22,14 @@ function ModalOverlay({ isOpen, onClose, type, data }) {
   const modalContent = (
     <AnimatePresence>
       <motion.div
-        className={type === "confirm" ? "confirm-overlay" : "options-overlay"}
+        className={type === "confirm" || type === "input" ? "confirm-overlay" : "options-overlay"}
         onClick={onClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className={type === "confirm" ? "confirm-modal" : "options-menu"}
+          className={type === "confirm" || type === "input" ? "confirm-modal" : "options-menu"}
           onClick={handleStopPropagation}
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
@@ -43,6 +52,28 @@ function ModalOverlay({ isOpen, onClose, type, data }) {
               <div className="confirm-actions">
                 <button className="confirm-btn confirm-btn--yes" onClick={() => { data.onConfirm(); onClose(); }}>
                   Delete
+                </button>
+                <button className="confirm-btn confirm-btn--no" onClick={onClose}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : type === "input" ? (
+            <>
+              <div className="confirm-header">
+                <div className="confirm-handle"></div>
+                <h2 className="confirm-title">{data.title}</h2>
+              </div>
+              <input
+                className="input-field"
+                type="text"
+                placeholder={data.placeholder}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+              <div className="confirm-actions">
+                <button className="confirm-btn confirm-btn--yes" onClick={() => { data.onSave(inputValue); onClose(); }}>
+                  Save
                 </button>
                 <button className="confirm-btn confirm-btn--no" onClick={onClose}>
                   Cancel

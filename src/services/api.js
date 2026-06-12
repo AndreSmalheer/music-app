@@ -104,10 +104,27 @@ export function toUiPlaylist(playlist) {
 // ---- Health Check -----------------------------------------------------
 
 export async function checkHealth() {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const res = await fetch(`${BASE_URL}/api/health`);
-    return res.ok;
-  } catch {
+    const res = await fetch(`${BASE_URL}/api/health`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.error("Health check failed - Status:", res.status);
+      return false;
+    }
+
+    const data = await res.json();
+    return data && data.status === "ok";
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    console.error("Health check error caught:", error.message);
     return false;
   }
 }

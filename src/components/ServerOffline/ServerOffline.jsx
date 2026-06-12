@@ -1,12 +1,26 @@
 import "./ServerOffline.css";
+import { useModal } from "../../context/ModalContext";
 
 function ServerOffline({ onRetry }) {
+  const { showInput } = useModal();
+
   function handleRetry() {
     if (onRetry) {
       onRetry();
     } else {
       window.location.reload();
     }
+  }
+
+  function handleChangeUrl() {
+    showInput(
+      "Change Server URL",
+      "Enter new server URL",
+      (newUrl) => {
+        console.log("New URL:", newUrl);
+        // TODO: Handle URL change logic
+      }
+    );
   }
 
   return (
@@ -19,9 +33,14 @@ function ServerOffline({ onRetry }) {
           your connection or try again in a moment.
         </p>
 
-        <button className="retry-button" onClick={handleRetry}>
-          Try Again
-        </button>
+        <div className="offline-actions">
+          <button className="retry-button" onClick={handleRetry}>
+            Try Again
+          </button>
+          <button className="change-url-button" onClick={handleChangeUrl}>
+            Change Server URL
+          </button>
+        </div>
       </div>
     </div>
   );

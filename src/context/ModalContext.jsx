@@ -18,6 +18,14 @@ export function ModalProvider({ children }) {
     });
   };
 
+  const showInput = (title, placeholder, onSave) => {
+    setModalState({
+      isOpen: true,
+      type: "input",
+      data: { title, placeholder, onSave },
+    });
+  };
+
   const showOptions = (options, onOptionClick) => {
     setModalState({
       isOpen: true,
@@ -31,7 +39,7 @@ export function ModalProvider({ children }) {
   };
 
   return (
-    <ModalContext.Provider value={{ showConfirm, showOptions, hideModal }}>
+    <ModalContext.Provider value={{ showConfirm, showInput, showOptions, hideModal }}>
       {children}
       <ModalOverlay
         isOpen={modalState.isOpen}
