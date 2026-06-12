@@ -101,6 +101,17 @@ export function toUiPlaylist(playlist) {
   };
 }
 
+// ---- Health Check -----------------------------------------------------
+
+export async function checkHealth() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // ---- Songs --------------------------------------------------------------
 
 export async function getSongs() {
@@ -122,7 +133,12 @@ export async function uploadSong(formData) {
 }
 
 export async function downloadFromYoutube({ url, title, artist, thumbnail }) {
-  const song = await postJSON("/api/songs/download", { url, title, artist, thumbnail });
+  const song = await postJSON("/api/songs/download", {
+    url,
+    title,
+    artist,
+    thumbnail,
+  });
   return toUiTrack(song);
 }
 
@@ -142,7 +158,9 @@ export async function getPlaylist(id) {
 }
 
 export async function createPlaylist({ name, thumbnail, songs }) {
-  return toUiPlaylist(await postJSON("/api/playlists", { name, thumbnail, songs }));
+  return toUiPlaylist(
+    await postJSON("/api/playlists", { name, thumbnail, songs }),
+  );
 }
 
 export async function updatePlaylist(id, data) {

@@ -1,0 +1,49 @@
+.offline-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: var(--spacing-horizontal);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.offline-card {
+  background-color: var(--bg-secondary);
+  padding: 32px;
+  border-radius: var(--border-radius-large);
+  max-width: 400px;
+  width: 100%;
+}
+
+.offline-title {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.offline-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.retry-button {
+  background-color: var(--btn-default);
+  color: var(--bg-primary);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--border-radius-large);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.retry-button:active {
+  transform: scale(0.98);
+  background-color: var(--btn-active);
+  color: white;
+}

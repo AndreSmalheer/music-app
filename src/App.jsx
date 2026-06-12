@@ -7,7 +7,9 @@ import Footer from "./components/Footer/Footer";
 import Header from "./components/Header/Header";
 import Home from "./pages/Home/Home";
 import Search from "./pages/Search/Search";
-import MediaPlayer, { PlayerContext } from "./components/MediaPlayer/MediaPlayer";
+import MediaPlayer, {
+  PlayerContext,
+} from "./components/MediaPlayer/MediaPlayer";
 import NowPlaying from "./pages/NowPLaying/NowPlaying";
 import SeeAll from "./pages/SeeAll/SeeAll";
 import SeeAllArtists from "./pages/SeeAll/SeeAllArtists";
@@ -20,7 +22,10 @@ import Settings from "./pages/Settings/Settings";
 import Onboarding from "./pages/Onboarding/Onboarding";
 import EditPlaylist from "./pages/EditPlaylist/EditPlaylist";
 import DesktopUnsupported from "./components/DesktopUnsupported/DesktopUnsupported";
-import { useState} from "react";
+import ServerOffline from "./components/ServerOffline/ServerOffline";
+import { useState } from "react";
+import { ModalProvider } from "./context/ModalContext";
+import { checkHealth } from "./services/api";
 
 function PageWrapper({ children }) {
   return (
@@ -31,9 +36,9 @@ function PageWrapper({ children }) {
       transition={{
         type: "spring",
         stiffness: 300,
-        damping: 30
+        damping: 30,
       }}
-      style={{ height: '100%' }}
+      style={{ height: "100%" }}
     >
       {children}
     </motion.div>
@@ -146,10 +151,7 @@ function AppContent() {
               }
             />
 
-            <Route
-              path="/download"
-              element={<Download />}
-            />
+            <Route path="/download" element={<Download />} />
 
             <Route
               path="/settings"
@@ -184,15 +186,31 @@ function AppContent() {
   );
 }
 
-import { ModalProvider } from "./context/ModalContext";
-
 function App() {
+  const [serverOnline, setServerOnline] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkHealth().then((isOnline) => {
+      setServerOnline(isOnline);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return null;
+
   return (
-    <MediaPlayer>
-      <ModalProvider>
-        <AppContent />
-      </ModalProvider>
-    </MediaPlayer>
+    <>
+      {!serverOnline ? (
+        <ServerOffline />
+      ) : (
+        <MediaPlayer>
+          <ModalProvider>
+            <AppContent />
+          </ModalProvider>
+        </MediaPlayer>
+      )}
+    </>
   );
 }
 
