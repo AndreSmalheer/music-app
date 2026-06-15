@@ -76,7 +76,7 @@ router.post(
 );
 
 // POST /api/songs/download — YouTube-URL → MP3
-// TODO: implementeer de daadwerkelijke download (bijv. ytdl-core + ffmpeg).
+// TODO: implementeer de daadwerkelijke download (bijv. yt-dlp + ffmpeg).
 // Voor nu slaat dit alleen de metadata op zodat de frontend al gekoppeld kan worden.
 router.post("/download", async (req, res, next) => {
   try {

@@ -1,4 +1,5 @@
 import { useRef, useState, createContext, useEffect } from "react";
+import { getYoutubeStreamUrl } from "../../services/api";
 
 export const PlayerContext = createContext();
 
@@ -69,15 +70,12 @@ function MediaPlayer({ children }) {
   ) => {
     if (!audioPlayerRef.current) return;
 
-    // YouTube tracks hebben geen lokale audio — audio element leeg laten
-    if (!youtubeId) {
-      audioPlayerRef.current.src = src;
-    } else {
-      audioPlayerRef.current.src = "";
-    }
+    // Als het een YouTube track is, halen we de stream URL op
+    const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
+    audioPlayerRef.current.src = finalSrc;
 
     const track = {
-      src,
+      src: finalSrc,
       title,
       artist,
       coverSrc,
@@ -90,7 +88,7 @@ function MediaPlayer({ children }) {
       setCurrentIndex(index);
     } else {
       setQueue((prev) => {
-        const exists = prev.findIndex((t) => t.src === src);
+        const exists = prev.findIndex((t) => t.src === finalSrc);
         if (exists !== -1) {
           setCurrentIndex(exists);
           return prev;
@@ -102,12 +100,6 @@ function MediaPlayer({ children }) {
     }
 
     updateMediaSession(title, artist, coverSrc);
-
-    // YouTube tracks spelen via iframe in NowPlaying — audio element niet nodig
-    if (youtubeId) {
-      setIsPlaying(true);
-      return;
-    }
 
     try {
       await audioPlayerRef.current.play();
@@ -122,7 +114,7 @@ function MediaPlayer({ children }) {
     if (currentIndex < queue.length - 1) {
       const nextIndex = currentIndex + 1;
       const track = queue[nextIndex];
-      playSong(track.src, track.title, track.artist, track.coverSrc, nextIndex);
+      playSong(track.src, track.title, track.artist, track.coverSrc, nextIndex, track.youtubeId);
     }
   };
 
@@ -130,7 +122,7 @@ function MediaPlayer({ children }) {
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       const track = queue[prevIndex];
-      playSong(track.src, track.title, track.artist, track.coverSrc, prevIndex);
+      playSong(track.src, track.title, track.artist, track.coverSrc, prevIndex, track.youtubeId);
     }
   };
 

@@ -1,9 +1,12 @@
 import { Router } from "express";
+import { create } from 'youtube-dl-exec';
 
 const router = Router();
+const youtubedl = create('yt-dlp');
 
 // GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's via de Data API v3
 router.get("/search", async (req, res, next) => {
+// ... (rest of search route unchanged)
   try {
     const q = (req.query.q || "").trim();
     if (!q) return res.json([]);
@@ -33,6 +36,46 @@ router.get("/search", async (req, res, next) => {
     }));
 
     res.json(results);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/youtube/stream/:videoId — streamt audio van YouTube
+router.get("/stream/:videoId", async (req, res, next) => {
+  try {
+    const { videoId } = req.params;
+    if (!videoId) return res.status(400).json({ error: "Geen videoId" });
+
+    // yt-dlp streamt meestal webm (opus) of m4a (aac). 
+    // We kunnen de browser laten beslissen hoe het te decoderen, maar audio/mpeg is een veilige gok voor de meeste audio tags.
+    // Eigenlijk is het beter om de content-type niet hard te coderen als we de bron niet zeker weten,
+    // maar audio/mpeg werkt vaak zelfs voor andere formats in moderne browsers.
+    res.setHeader("Content-Type", "audio/mpeg");
+
+    const subprocess = youtubedl.exec(videoId, {
+      output: '-',
+      format: 'bestaudio',
+    });
+
+    subprocess.stdout.pipe(res);
+
+    subprocess.stderr.on('data', (data) => {
+      // Optioneel: log yt-dlp output voor debugging
+      // console.log(`yt-dlp: ${data}`);
+    });
+
+    subprocess.on('error', (err) => {
+      console.error("yt-dlp Stream Error:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Stream fout" });
+      }
+    });
+
+    // Zorg ervoor dat het proces stopt als de client de verbinding verbreekt
+    req.on('close', () => {
+      subprocess.kill();
+    });
   } catch (err) {
     next(err);
   }

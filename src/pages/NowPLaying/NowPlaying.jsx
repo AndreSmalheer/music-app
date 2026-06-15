@@ -5,6 +5,27 @@ import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { downloadFromYoutube } from "../../services/api";
+
+function DownloadIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 function FavrouteIcon({ filled }) {
   const outerPath =
     "M450.898 166.353C447.028 154.037 439.298 143.292 428.849 135.709C418.401 128.126 405.79 124.106 392.88 124.245H310.233L285.131 46.0054C281.183 33.6899 273.427 22.9463 262.979 15.3238C252.531 7.70136 239.933 3.59399 227 3.59399C214.067 3.59399 201.469 7.70136 191.021 15.3238C180.573 22.9463 172.817 33.6899 168.869 46.0054L143.767 124.245H61.1197C48.2516 124.263 35.7183 128.347 25.3101 135.915C14.9019 143.482 7.15126 154.144 3.16515 166.379C-0.820957 178.615 -0.8386 191.797 3.11474 204.043C7.06808 216.288 14.7902 226.972 25.1781 234.567L92.4457 283.75L66.8704 362.954C62.7373 375.238 62.685 388.529 66.7211 400.846C70.7573 413.162 78.6658 423.845 89.2677 431.3C99.688 438.995 112.316 443.117 125.269 443.053C138.222 442.988 150.808 438.739 161.151 430.941L227 382.476L292.868 430.884C303.269 438.535 315.829 442.69 328.741 442.753C341.653 442.816 354.252 438.783 364.728 431.234C375.203 423.685 383.015 413.008 387.04 400.74C391.066 388.471 391.097 375.242 387.13 362.954L361.554 283.75L428.898 234.567C439.404 227.067 447.217 216.384 451.179 204.099C455.141 191.813 455.043 178.578 450.898 166.353";
@@ -656,27 +677,29 @@ function NowPlaying() {
 
   const isYoutube = !!currentTrack.youtubeId;
 
+  const handleDownload = async () => {
+    if (!currentTrack.youtubeId) return;
+    try {
+      await downloadFromYoutube({
+        url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        thumbnail: currentTrack.coverSrc,
+      });
+      // Je zou hier een toast of feedback kunnen toevoegen
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
+
   return (
     <>
       <div className="now-playing-page">
-        {isYoutube ? (
-          <div className="youtube-player-wrapper">
-            <iframe
-              key={currentTrack.youtubeId}
-              className="youtube-player-iframe"
-              src={`https://www.youtube-nocookie.com/embed/${currentTrack.youtubeId}?autoplay=1&rel=0`}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title={currentTrack.title}
-            />
-          </div>
-        ) : (
-          <img
-            className="album-cover"
-            src={currentTrack.coverSrc}
-            alt="Album Cover"
-          />
-        )}
+        <img
+          className="album-cover"
+          src={currentTrack.coverSrc}
+          alt="Album Cover"
+        />
 
         <div className="now-playing-info">
           <div className="now-playing-text">
@@ -685,14 +708,25 @@ function NowPlaying() {
           </div>
 
           <div className="now-playing-actions">
-            <div
-              className={`favroute-btn ${favroute ? "active" : ""}`}
-              onClick={() => setFavroute(!favroute)}
-            >
-              <FavrouteIcon filled={favroute} />
-            </div>
+            {isYoutube ? (
+              <div className="favroute-btn" onClick={handleDownload}>
+                <DownloadIcon />
+              </div>
+            ) : (
+              <div
+                className={`favroute-btn ${favroute ? "active" : ""}`}
+                onClick={() => setFavroute(!favroute)}
+              >
+                <FavrouteIcon filled={favroute} />
+              </div>
+            )}
 
-            <div className="options-btn" onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}>
+            <div
+              className="options-btn"
+              onClick={() =>
+                showOptions(menuOptions, (opt) => console.log(opt))
+              }
+            >
               <OptionsIcon />
             </div>
           </div>
@@ -885,12 +919,8 @@ function NowPlaying() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      
     </>
   );
 }
 
 export default NowPlaying;
-
-

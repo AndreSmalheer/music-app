@@ -246,3 +246,7 @@ export async function searchYoutube(q) {
     durationLabel: "",
   }));
 }
+
+export function getYoutubeStreamUrl(videoId) {
+  return `${BASE_URL}/api/youtube/stream/${videoId}`;
+}
