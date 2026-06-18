@@ -18,6 +18,7 @@ import CreatePlaylist from "./pages/SeeAll/CreatePlaylist";
 import PlaylistDetail from "./pages/PlaylistDetail/PlaylistDetail";
 import ArtistDetail from "./pages/ArtistDetail/ArtistDetail";
 import Download from "./pages/Download/Download";
+import Radio from "./pages/Radio/Radio";
 import Settings from "./pages/Settings/Settings";
 import Onboarding from "./pages/Onboarding/Onboarding";
 import EditPlaylist from "./pages/EditPlaylist/EditPlaylist";
@@ -175,6 +176,14 @@ function AppContent() {
               element={
                 <PageWrapper>
                   <EditPlaylist />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/radio"
+              element={
+                <PageWrapper>
+                  <Radio />
                 </PageWrapper>
               }
             />
