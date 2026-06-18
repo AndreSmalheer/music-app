@@ -2,7 +2,19 @@ import { Router } from "express";
 import { create } from 'youtube-dl-exec';
 
 const router = Router();
-const youtubedl = create('yt-dlp');
+
+// Belangrijk: lazily aanmaken. In ES modules draaien de imports van server.js
+// VOORDAT server.js zelf dotenv config() aanroept. Als we hier op moduleniveau
+// process.env.YTDLP_PATH zouden lezen, is die nog leeg en valt yt-dlp terug op
+// PATH ('yt-dlp'). Door dit pas bij het eerste request te doen, is .env geladen.
+let _youtubedl;
+function getYoutubedl() {
+  if (!_youtubedl) {
+    // Gebruik het expliciete pad uit .env (YTDLP_PATH), anders 'yt-dlp' van PATH
+    _youtubedl = create(process.env.YTDLP_PATH || 'yt-dlp');
+  }
+  return _youtubedl;
+}
 
 // GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's via de Data API v3
 router.get("/search", async (req, res, next) => {
@@ -53,7 +65,7 @@ router.get("/stream/:videoId", async (req, res, next) => {
     // maar audio/mpeg werkt vaak zelfs voor andere formats in moderne browsers.
     res.setHeader("Content-Type", "audio/mpeg");
 
-    const subprocess = youtubedl.exec(videoId, {
+    const subprocess = getYoutubedl().exec(videoId, {
       output: '-',
       format: 'bestaudio',
     });
@@ -65,10 +77,20 @@ router.get("/stream/:videoId", async (req, res, next) => {
       // console.log(`yt-dlp: ${data}`);
     });
 
-    subprocess.on('error', (err) => {
+    // youtube-dl-exec geeft ook een promise terug; als yt-dlp niet gevonden wordt
+    // (ENOENT) of crasht, moeten we die rejection afvangen — anders crasht de
+    // hele backend op een unhandledRejection.
+    subprocess.catch((err) => {
       console.error("yt-dlp Stream Error:", err);
       if (!res.headersSent) {
-        res.status(500).json({ error: "Stream fout" });
+        const enoent = err?.code === "ENOENT";
+        res.status(500).json({
+          error: enoent
+            ? "yt-dlp niet gevonden. Installeer het of zet YTDLP_PATH in backend/.env."
+            : "Stream fout",
+        });
+      } else {
+        res.end();
       }
     });
 
