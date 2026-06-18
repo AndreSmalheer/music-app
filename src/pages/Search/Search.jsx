@@ -37,15 +37,12 @@ function Search() {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const [local, youtube] = await Promise.all([
-          searchApi(q),
-          searchYoutube(q),
-        ]);
+        const local = await searchApi(q);
         setSearchResults({
-          topResults: [...local.songs.slice(0, 1), ...youtube.slice(0, 1)],
+          topResults: [...local.songs.slice(0, 1)],
           songs: local.songs,
           artists: local.artists,
-          youtube,
+          youtube: [],
         });
       } catch (err) {
         console.error("Zoeken mislukt:", err);
