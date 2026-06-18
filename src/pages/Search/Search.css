@@ -252,3 +252,16 @@
   border-radius: 4px;
   flex-shrink: 0;
 }
+
+.search-placeholder {
+  margin-top: 80px;
+  color: #bfbfbf;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.search-placeholder h1 {
+  font-size: 24px;
+  font-weight: 500;
+  opacity: 0.8;
+}
