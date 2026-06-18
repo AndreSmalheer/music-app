@@ -605,10 +605,12 @@ function NowPlaying() {
     handlePrevious,
     handleVolumeChange,
     reorderQueue,
+    repeatMode,
+    shuffle,
+    toggleRepeat,
+    toggleShuffle,
   } = useContext(PlayerContext);
 
-  const [repeatMode, setRepeatMode] = useState("off");
-  const [shuffle, setShuffle] = useState(false);
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const [queueOpen, setQueueOpen] = useState(false);
@@ -638,15 +640,10 @@ function NowPlaying() {
     reorderQueue(newQueue);
   };
 
-  const toggleRepeat = (e) => {
+  const onRepeatClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    setRepeatMode((prev) => {
-      if (prev === "off") return "repeat";
-      if (prev === "repeat") return "repeat-one";
-      return "off";
-    });
+    toggleRepeat();
   };
 
   const isActive = repeatMode !== "off";
@@ -660,12 +657,17 @@ function NowPlaying() {
   }
 
   const formatTime = (time) => {
+    if (!Number.isFinite(time)) return "0:00";
     const absoluteTime = Math.max(0, time);
-    if (isNaN(absoluteTime)) return "0:00";
     const minutes = Math.floor(absoluteTime / 60);
     const seconds = Math.floor(absoluteTime % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  // Bij streams kan duration Infinity/NaN zijn — val dan terug op de huidige tijd
+  // zodat de slider en resterende-tijd niet kapotgaan.
+  const hasKnownDuration = Number.isFinite(duration) && duration > 0;
+  const safeDuration = hasKnownDuration ? duration : 0;
 
   const menuOptions = [
     "Add to Playlist",
@@ -735,9 +737,9 @@ function NowPlaying() {
         <div className="progress-bar">
           <Slider
             value={currentTime}
-            max={duration || 1}
+            max={safeDuration || 1}
             onChange={(val) => {
-              if (audioPlayerRef.current) {
+              if (audioPlayerRef.current && hasKnownDuration) {
                 audioPlayerRef.current.currentTime = val;
               }
             }}
@@ -750,7 +752,7 @@ function NowPlaying() {
               {formatTime(currentTime)}
             </div>
             <div className="progress-time progress-time-end">
-              -{formatTime(duration - currentTime)}
+              {hasKnownDuration ? `-${formatTime(safeDuration - currentTime)}` : "Live"}
             </div>
           </div>
         </div>
@@ -761,7 +763,7 @@ function NowPlaying() {
               className={`control control--repeat media-control-button ${
                 isActive ? "active" : ""
               }`}
-              onClick={toggleRepeat}
+              onClick={onRepeatClick}
               aria-label="Repeat"
             >
               {repeatMode === "repeat-one" ? <Repeat1 /> : <Repeat />}
@@ -815,7 +817,7 @@ function NowPlaying() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShuffle((prev) => !prev);
+                toggleShuffle();
               }}
               aria-label="Shuffle"
             >

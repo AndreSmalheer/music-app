@@ -35,7 +35,7 @@ function SeeAll() {
   }, []);
 
   const handlePlaySong = (song) => {
-    playSong(song.src, song.title, song.artist, song.cover);
+    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };

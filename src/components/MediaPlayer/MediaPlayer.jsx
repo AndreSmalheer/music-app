@@ -29,6 +29,15 @@ function MediaPlayer({ children }) {
   const [volume, setVolume] = useState(1);
   const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  // off → niet herhalen, repeat → hele wachtrij herhalen, repeat-one → dit nummer herhalen
+  const [repeatMode, setRepeatMode] = useState("off");
+  const [shuffle, setShuffle] = useState(false);
+
+  const toggleRepeat = () =>
+    setRepeatMode((prev) =>
+      prev === "off" ? "repeat" : prev === "repeat" ? "repeat-one" : "off",
+    );
+  const toggleShuffle = () => setShuffle((prev) => !prev);
 
   const handleVolumeChange = (newVolume) => {
     const v = Math.max(0, Math.min(1, newVolume));
@@ -110,20 +119,67 @@ function MediaPlayer({ children }) {
     }
   };
 
-  const handleNext = () => {
-    if (currentIndex < queue.length - 1) {
-      const nextIndex = currentIndex + 1;
-      const track = queue[nextIndex];
-      playSong(track.src, track.title, track.artist, track.coverSrc, nextIndex, track.youtubeId);
+  // Bepaalt welke index als volgende speelt; houdt rekening met shuffle en repeat.
+  const getNextIndex = () => {
+    if (queue.length === 0) return -1;
+    if (shuffle && queue.length > 1) {
+      let r = currentIndex;
+      while (r === currentIndex) r = Math.floor(Math.random() * queue.length);
+      return r;
     }
+    if (currentIndex < queue.length - 1) return currentIndex + 1;
+    if (repeatMode === "repeat") return 0; // hele wachtrij opnieuw
+    return -1; // einde
+  };
+
+  const playIndex = (index) => {
+    const track = queue[index];
+    if (!track) return;
+    playSong(track.src, track.title, track.artist, track.coverSrc, index, track.youtubeId);
+  };
+
+  const handleNext = () => {
+    const nextIndex = getNextIndex();
+    if (nextIndex !== -1) playIndex(nextIndex);
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
-      const prevIndex = currentIndex - 1;
-      const track = queue[prevIndex];
-      playSong(track.src, track.title, track.artist, track.coverSrc, prevIndex, track.youtubeId);
+    if (queue.length === 0) return;
+    // Meer dan 3s gespeeld? Dan eerst dit nummer herstarten (zoals Spotify).
+    if (audioPlayerRef.current && audioPlayerRef.current.currentTime > 3) {
+      audioPlayerRef.current.currentTime = 0;
+      return;
     }
+    if (currentIndex > 0) {
+      playIndex(currentIndex - 1);
+    } else if (repeatMode === "repeat") {
+      playIndex(queue.length - 1);
+    } else if (audioPlayerRef.current) {
+      audioPlayerRef.current.currentTime = 0;
+    }
+  };
+
+  // Wordt aangeroepen als een nummer is afgelopen.
+  const handleEnded = () => {
+    if (repeatMode === "repeat-one") {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.currentTime = 0;
+        audioPlayerRef.current.play().catch(() => {});
+      }
+      return;
+    }
+    const nextIndex = getNextIndex();
+    if (nextIndex !== -1) {
+      playIndex(nextIndex);
+    } else {
+      setIsPlaying(false);
+    }
+  };
+
+  // Surface laadfouten (bv. ontbrekend MP3-bestand of onbereikbare stream).
+  const handleAudioError = () => {
+    console.error("Audio kon niet geladen/afgespeeld worden:", currentTrack?.title);
+    setIsPlaying(false);
   };
 
   const reorderQueue = (newQueue) => {
@@ -156,7 +212,7 @@ function MediaPlayer({ children }) {
     };
 
     setHandlers();
-  }, [handlePlay, handlePause, handleNext, handlePrevious, queue, currentIndex]);
+  }, [handlePlay, handlePause, handleNext, handlePrevious, queue, currentIndex, shuffle, repeatMode]);
 
   const value = {
     audioPlayerRef,
@@ -167,11 +223,15 @@ function MediaPlayer({ children }) {
     volume,
     queue,
     currentIndex,
+    repeatMode,
+    shuffle,
     handlePlay,
     handlePause,
     handleNext,
     handlePrevious,
     handleVolumeChange,
+    toggleRepeat,
+    toggleShuffle,
     playSong,
     reorderQueue,
   };
@@ -182,6 +242,8 @@ function MediaPlayer({ children }) {
         ref={audioPlayerRef}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
+        onEnded={handleEnded}
+        onError={handleAudioError}
       />
       {children}
     </PlayerContext.Provider>

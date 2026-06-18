@@ -20,26 +20,57 @@
   margin: 0;
 }
 
-.home-section__list {
+/* Horizontaal scrollbare rij (gedeeld door artiesten + nummers).
+   Vaste itembreedtes + scroll-snap zorgen voor nette, gelijke kaarten
+   en een vloeiende scroll-animatie op touch. */
+.home-section__list,
+.popular-list {
   display: flex;
-  gap: 12px;
-  padding-left: 6px;
+  gap: 14px;
+  padding: 0 6px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.home-section__list::-webkit-scrollbar,
+.popular-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Nummer-kaartjes: allemaal even breed, vierkante cover */
+.popular-list .track-card {
+  flex: 0 0 120px;
+  max-width: 120px;
+  scroll-snap-align: start;
+}
+
+.popular-list .track-card__cover {
+  width: 120px;
+  height: 120px;
+  aspect-ratio: 1/1;
+  object-fit: cover;
 }
 
 .artist-card {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  flex: 1;
-  max-width: 100px;
+  flex: 0 0 90px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
+  scroll-snap-align: start;
 }
 
 .artist-card__img {
-  width: 85%;
+  width: 90px;
+  height: 90px;
   aspect-ratio: 1/1;
   object-fit: cover;
   border-radius: 50%;

@@ -6,8 +6,19 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import { getArtists, getPlaylists } from "../../services/api";
+import { getArtists, getPlaylists, getSongs, addRecent } from "../../services/api";
 import "./Home.css";
+
+// Husselt een array (Fisher-Yates) zodat we elke keer een andere selectie
+// "populaire" nummers kunnen tonen.
+function shuffle(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 function ArrowBtn() {
   return (
@@ -30,6 +41,7 @@ function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [artists, setArtists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
+  const [popular, setPopular] = useState([]);
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -38,17 +50,33 @@ function Home() {
   const longPressProps = useLongPress(() => showOptions(menuOptions, (option) => console.log(option)));
   const tapFeedback = { scale: 0.98 };
 
+  const handleSongClick = (song) => {
+    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    if (song.id) addRecent(song.id).catch(() => {});
+    navigate("/now-playing");
+  };
+
+  // Verberg een kapotte/ontbrekende afbeelding zodat de placeholder-achtergrond
+  // van de kaart zichtbaar blijft in plaats van een gebroken-afbeelding-icoon.
+  const handleImgError = (e) => {
+    e.currentTarget.style.visibility = "hidden";
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [artistsData, playlistsData] = await Promise.all([
+        const [artistsData, playlistsData, songsData] = await Promise.all([
           getArtists(),
           getPlaylists(),
+          getSongs(),
         ]);
         if (!active) return;
-        setArtists(artistsData);
         setPlaylists(playlistsData);
+        // Pak een paar willekeurige artiesten/nummers als "Popular" zodat de
+        // gebruiker meteen iets kan afspelen zonder te zoeken.
+        setArtists(shuffle(artistsData).slice(0, 6));
+        setPopular(shuffle(songsData).slice(0, 6));
       } catch (err) {
         console.error("Home laden mislukt:", err);
       } finally {
@@ -66,7 +94,46 @@ function Home() {
 
       <section className="home-section">
         <div className="home-section__header">
-          <h2 className="home-section__title">Recent Artists</h2>
+          <h2 className="home-section__title">Popular nummers</h2>
+        </div>
+        <div className="popular-list">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="track-card">
+                <Skeleton height="110px" borderRadius="11px" />
+                <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+              </div>
+            ))
+          ) : popular.length > 0 ? (
+            popular.map((song) => (
+              <motion.div
+                key={song.id}
+                className="track-card"
+                {...longPressProps}
+                whileTap={tapFeedback}
+                onClick={() => handleSongClick(song)}
+              >
+                <img
+                  className="track-card__cover"
+                  src={song.cover}
+                  alt={song.title}
+                  loading="lazy"
+                  onError={handleImgError}
+                />
+                <p className="track-card__title">{song.title}</p>
+              </motion.div>
+            ))
+          ) : (
+            <div className="empty-track-card">
+              <div className="empty-track-cover" />
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="home-section">
+        <div className="home-section__header">
+          <h2 className="home-section__title">Popular artiesten</h2>
           <button
             className="recently-played__arrow"
             aria-label="See all artists"
@@ -92,7 +159,13 @@ function Home() {
                 whileTap={tapFeedback}
                 onClick={() => navigate(`/artist/${artist.id}`)}
               >
-                <img src={artist.img} alt={artist.name} className="artist-card__img" />
+                <img
+                  src={artist.img}
+                  alt={artist.name}
+                  className="artist-card__img"
+                  loading="lazy"
+                  onError={handleImgError}
+                />
                 <p className="artist-card__name">{artist.name}</p>
               </motion.div>
             ))
