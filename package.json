@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail \"node backend/server.js\" \"wait-on http://localhost:3001/api/health && vite --host\"",
+    "dev": "concurrently --kill-others-on-fail \"npm --prefix backend run dev\" \"wait-on http://localhost:3001/api/health && vite --host\"",
     "dev:frontend": "vite --host",
-    "dev:backend": "node backend/server.js",
+    "dev:backend": "npm --prefix backend run dev",
     "install:all": "npm install && cd backend && npm install",
     "build": "vite build",
     "lint": "eslint .",

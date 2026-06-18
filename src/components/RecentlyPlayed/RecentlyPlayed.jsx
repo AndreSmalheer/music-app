@@ -67,7 +67,7 @@ function RecentlyPlayed({ tracks: tracksProp }) {
   ];
 
   const handleTrackClick = (track) => {
-    playSong(track.src, track.title, track.artist, track.cover);
+    playSong(track.src, track.title, track.artist, track.cover, -1, track.youtubeId || null);
     if (track.id) addRecent(track.id).catch(() => {});
     navigate("/now-playing");
   };

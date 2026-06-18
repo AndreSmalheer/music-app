@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { create } from 'youtube-dl-exec';
+import { Readable } from "node:stream";
 
 const router = Router();
 
@@ -53,53 +54,104 @@ router.get("/search", async (req, res, next) => {
   }
 });
 
-// GET /api/youtube/stream/:videoId — streamt audio van YouTube
+// ---- Audio-URL resolven + cachen --------------------------------------
+//
+// Voor een werkende tijdbalk/seeking moet de browser de totale lengte kennen
+// (Content-Length) én Range-requests kunnen doen. yt-dlp's eigen pipe-stream
+// geeft dat niet. Daarom vragen we yt-dlp alleen om de DIRECTE audio-URL van
+// de YouTube-CDN (googlevideo) — die ondersteunt Content-Length + Range — en
+// proxyen we die zelf, met de Range-header van de browser doorgegeven.
+
+const formatCache = new Map(); // videoId -> { url, mime, expires }
+
+function mimeForExt(ext) {
+  if (ext === "m4a" || ext === "mp4") return "audio/mp4";
+  if (ext === "webm") return "audio/webm";
+  if (ext === "mp3") return "audio/mpeg";
+  return "audio/mpeg";
+}
+
+async function resolveAudio(videoId) {
+  const cached = formatCache.get(videoId);
+  if (cached && cached.expires > Date.now()) return cached;
+
+  // m4a (aac) heeft de voorkeur: breed ondersteund (ook Safari/iOS) en seekbaar.
+  const info = await getYoutubedl()(
+    `https://www.youtube.com/watch?v=${videoId}`,
+    {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noPlaylist: true,
+      format: "bestaudio[ext=m4a]/bestaudio",
+    },
+  );
+
+  if (!info || !info.url) throw new Error("Geen audio-URL gevonden");
+
+  // Verloop: gebruik 'expire' uit de URL (unix-seconden) indien aanwezig,
+  // anders max 1 uur cachen.
+  let expires = Date.now() + 60 * 60 * 1000;
+  const m = /[?&]expire=(\d+)/.exec(info.url);
+  if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
+
+  const resolved = { url: info.url, mime: mimeForExt(info.ext), expires };
+  formatCache.set(videoId, resolved);
+  return resolved;
+}
+
+// Haalt de upstream-stream op; bij een verlopen URL (403/410) één keer opnieuw resolven.
+async function fetchUpstream(videoId, rangeHeader, allowRetry = true) {
+  const audio = await resolveAudio(videoId);
+  const headers = {};
+  if (rangeHeader) headers.Range = rangeHeader;
+
+  const upstream = await fetch(audio.url, { headers });
+  if ((upstream.status === 403 || upstream.status === 410) && allowRetry) {
+    formatCache.delete(videoId);
+    return fetchUpstream(videoId, rangeHeader, false);
+  }
+  return { audio, upstream };
+}
+
+// GET /api/youtube/stream/:videoId — proxyt YouTube-audio met Range-support,
+// zodat de tijdbalk werkt en je kunt seeken.
 router.get("/stream/:videoId", async (req, res, next) => {
   try {
     const { videoId } = req.params;
     if (!videoId) return res.status(400).json({ error: "Geen videoId" });
 
-    // yt-dlp streamt meestal webm (opus) of m4a (aac). 
-    // We kunnen de browser laten beslissen hoe het te decoderen, maar audio/mpeg is een veilige gok voor de meeste audio tags.
-    // Eigenlijk is het beter om de content-type niet hard te coderen als we de bron niet zeker weten,
-    // maar audio/mpeg werkt vaak zelfs voor andere formats in moderne browsers.
-    res.setHeader("Content-Type", "audio/mpeg");
+    const { audio, upstream } = await fetchUpstream(videoId, req.headers.range);
 
-    const subprocess = getYoutubedl().exec(videoId, {
-      output: '-',
-      format: 'bestaudio',
+    if (!upstream.ok && upstream.status !== 206) {
+      return res.status(502).json({ error: "Upstream stream fout" });
+    }
+
+    // Status spiegelen: 200 (hele body) of 206 (partial → seeking).
+    res.status(upstream.status);
+    for (const h of ["content-length", "content-range", "accept-ranges", "content-type"]) {
+      const v = upstream.headers.get(h);
+      if (v) res.setHeader(h, v);
+    }
+    if (!upstream.headers.get("accept-ranges")) res.setHeader("Accept-Ranges", "bytes");
+    if (!upstream.headers.get("content-type")) res.setHeader("Content-Type", audio.mime);
+
+    const nodeStream = Readable.fromWeb(upstream.body);
+    nodeStream.on("error", () => {
+      if (res.headersSent) res.end();
     });
+    // Stop de stream als de client de verbinding verbreekt (bv. ander nummer).
+    req.on("close", () => nodeStream.destroy());
 
-    subprocess.stdout.pipe(res);
-
-    subprocess.stderr.on('data', (data) => {
-      // Optioneel: log yt-dlp output voor debugging
-      // console.log(`yt-dlp: ${data}`);
-    });
-
-    // youtube-dl-exec geeft ook een promise terug; als yt-dlp niet gevonden wordt
-    // (ENOENT) of crasht, moeten we die rejection afvangen — anders crasht de
-    // hele backend op een unhandledRejection.
-    subprocess.catch((err) => {
-      console.error("yt-dlp Stream Error:", err);
-      if (!res.headersSent) {
-        const enoent = err?.code === "ENOENT";
-        res.status(500).json({
-          error: enoent
-            ? "yt-dlp niet gevonden. Installeer het of zet YTDLP_PATH in backend/.env."
-            : "Stream fout",
-        });
-      } else {
-        res.end();
-      }
-    });
-
-    // Zorg ervoor dat het proces stopt als de client de verbinding verbreekt
-    req.on('close', () => {
-      subprocess.kill();
-    });
+    nodeStream.pipe(res);
   } catch (err) {
-    next(err);
+    if (err?.code === "ENOENT" && !res.headersSent) {
+      return res.status(500).json({
+        error: "yt-dlp niet gevonden. Installeer het of zet YTDLP_PATH in backend/.env.",
+      });
+    }
+    console.error("yt-dlp Stream Error:", err);
+    if (!res.headersSent) return res.status(500).json({ error: "Stream fout" });
+    res.end();
   }
 });
 
