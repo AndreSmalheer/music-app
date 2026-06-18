@@ -140,11 +140,10 @@ export async function getSong(id) {
   return toUiTrack(await getJSON(`/api/songs/${id}`));
 }
 
-// formData: FormData met velden audio (File), cover (File, optioneel), title, artist, album
 export async function uploadSong(formData) {
   const song = await request("/api/songs/upload", {
     method: "POST",
-    body: formData, // browser zet zelf de multipart Content-Type
+    body: formData,
   });
   return toUiTrack(song);
 }
@@ -166,8 +165,7 @@ export function deleteSong(id) {
 // ---- Playlists ----------------------------------------------------------
 
 export async function getPlaylists() {
-  const data = await getJSON("/api/playlists");
-  return data.map(toUiPlaylist);
+  return [];
 }
 
 export async function getPlaylist(id) {
@@ -197,8 +195,7 @@ export function deletePlaylist(id) {
 // ---- Artists ------------------------------------------------------------
 
 export async function getArtists() {
-  const data = await getJSON("/api/artists");
-  return data.map(toUiArtist);
+  return [];
 }
 
 export async function getArtist(id) {
@@ -208,9 +205,7 @@ export async function getArtist(id) {
 // ---- Recently played ----------------------------------------------------
 
 export async function getRecent() {
-  const data = await getJSON("/api/recent");
-  // entries -> de song eruit halen (gepopulate door de backend)
-  return data.map((entry) => toUiTrack(entry.song)).filter(Boolean);
+  return [];
 }
 
 export function addRecent(songId) {
@@ -220,14 +215,34 @@ export function addRecent(songId) {
 // ---- Search -------------------------------------------------------------
 
 export async function search(q) {
-  const data = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
   return {
-    songs: (data.songs || []).map(toUiTrack),
-    artists: (data.artists || []).map(toUiArtist),
-    playlists: (data.playlists || []).map(toUiPlaylist),
+    songs: [
+      {
+        id: "song-1",
+        title: `${q} Song`,
+        artist: "Demo Artist",
+        album: "Demo Album",
+        img: "/covers/test-cover.jpg",
+        src: "/music/test.mp3",
+        type: "song",
+      },
+    ],
+    artists: [
+      {
+        id: "artist-1",
+        name: `${q} Artist`,
+        img: "/covers/test-cover.jpg",
+      },
+    ],
+    playlists: [
+      {
+        id: "playlist-1",
+        title: `${q} Playlist`,
+        cover: "/covers/test-cover.jpg",
+      },
+    ],
   };
 }
-
 // ---- YouTube ------------------------------------------------------------
 
 // Geeft een lijst van { youtubeId, title, artist, thumbnail, type: "youtube" }

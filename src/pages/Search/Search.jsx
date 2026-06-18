@@ -7,9 +7,13 @@ import EmptyState from "../../components/EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import { search as searchApi, searchYoutube, addRecent } from "../../services/api";
+import {
+  search as searchApi,
+  searchYoutube,
+  addRecent,
+} from "../../services/api";
 
-const TAGS = ["All", "Songs", "YouTube", "Artists", "Playlists"];
+const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
 
 function Search() {
@@ -26,7 +30,6 @@ function Search() {
   );
   const tapFeedback = { scale: 0.98 };
 
-  // Debounced zoeken: 400ms na de laatste toetsaanslag.
   useEffect(() => {
     const q = query.trim();
     if (!q) {
@@ -37,15 +40,13 @@ function Search() {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const [local, youtube] = await Promise.all([
-          searchApi(q),
-          searchYoutube(q),
-        ]);
+        const local = await searchApi(q);
+
         setSearchResults({
-          topResults: [...local.songs.slice(0, 1), ...youtube.slice(0, 1)],
+          topResults: local.songs.slice(0, 1),
           songs: local.songs,
           artists: local.artists,
-          youtube,
+          youtube: [],
         });
       } catch (err) {
         console.error("Zoeken mislukt:", err);
@@ -59,10 +60,16 @@ function Search() {
 
   const showSongs = activeTag === "All" || activeTag === "Songs";
   const showArtists = activeTag === "All" || activeTag === "Artists";
-  const showYoutube = activeTag === "All" || activeTag === "YouTube";
 
   const handlePlaySong = (song) => {
-    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
     if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
@@ -217,72 +224,6 @@ function Search() {
                     alignLeft="true"
                   />
                 )}
-              </div>
-            </div>
-          )}
-
-          {showYoutube && (
-            <div className="result-section result-songs">
-              <h3>YouTube</h3>
-              <div className="songs-container">
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="song"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        padding: "10px",
-                      }}
-                    >
-                      <Skeleton width="50px" height="50px" borderRadius="6px" />
-                      <div style={{ flex: 1 }}>
-                        <Skeleton width="70%" height="1rem" />
-                        <Skeleton
-                          width="40%"
-                          height="0.8rem"
-                          style={{ marginTop: "0.5rem" }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                ) : searchResults.youtube.length > 0 ? (
-                  searchResults.youtube.map((song) => (
-                    <motion.div
-                      key={song.youtubeId}
-                      className="song"
-                      {...longPressProps}
-                      whileTap={tapFeedback}
-                      onClick={() => handlePlaySong(song)}
-                    >
-                      <div className="album-cover-search-result">
-                        <img
-                          src={song.img}
-                          alt={song.title}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            borderRadius: "6px",
-                          }}
-                        />
-                      </div>
-                      <div className="search-song-info">
-                        <h2 className="search-song-title">{song.title}</h2>
-                        <div className="search-song-artist">{song.artist}</div>
-                      </div>
-                      <div className="yt-badge">YT</div>
-                    </motion.div>
-                  ))
-                ) : query.trim() ? (
-                  <EmptyState
-                    title="Geen YouTube resultaten"
-                    subtitle="Probeer een andere zoekterm"
-                    alignLeft="true"
-                  />
-                ) : null}
               </div>
             </div>
           )}

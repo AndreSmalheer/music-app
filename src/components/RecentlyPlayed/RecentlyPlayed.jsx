@@ -32,8 +32,9 @@ function RecentlyPlayed({ tracks: tracksProp }) {
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
 
-
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, (opt) => console.log(opt)),
+  );
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -115,11 +116,9 @@ function RecentlyPlayed({ tracks: tracksProp }) {
             <div className="empty-track-cover" />
           </div>
         )}
-        </div>
+      </div>
     </div>
   );
 }
 
 export default RecentlyPlayed;
-
-
