@@ -221,9 +221,12 @@ export function addRecent(songId) {
 
 export async function search(q) {
   const data = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
+
   return {
-    songs: (data.songs || []).map(toUiTrack),
+    songs: (data.songs || []).filter((song) => !song.youtubeId).map(toUiTrack),
+
     artists: (data.artists || []).map(toUiArtist),
+
     playlists: (data.playlists || []).map(toUiPlaylist),
   };
 }

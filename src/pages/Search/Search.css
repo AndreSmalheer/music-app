@@ -265,3 +265,38 @@
   font-weight: 500;
   opacity: 0.8;
 }
+
+.search-yt-button {
+  margin-top: 20px;
+  padding: 10px 24px;
+
+  background-color: #c696fb;
+  color: #121212;
+
+  border: none;
+  border-radius: 20px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .search-yt-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.search-yt-button:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}

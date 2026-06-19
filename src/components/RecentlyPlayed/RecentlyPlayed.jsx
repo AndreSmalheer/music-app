@@ -25,19 +25,19 @@ function ArrowBtn() {
   );
 }
 
-function RecentlyPlayed({ tracks: tracksProp }) {
+function RecentlyPlayed({ tracks: tracksProp, InculdeYt = false }) {
   const [isLoading, setIsLoading] = useState(true);
   const [tracks, setTracks] = useState(tracksProp || []);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
 
-
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, (opt) => console.log(opt)),
+  );
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
-    // Als de parent expliciet tracks meegeeft, die gebruiken; anders zelf ophalen.
     if (tracksProp) {
       setTracks(tracksProp);
       setIsLoading(false);
@@ -47,7 +47,12 @@ function RecentlyPlayed({ tracks: tracksProp }) {
     (async () => {
       try {
         const data = await getRecent();
-        if (active) setTracks(data);
+        if (!InculdeYt) {
+          const filtered = data.filter((track) => !track.youtubeId);
+          if (active) setTracks(filtered);
+        } else {
+          if (active) setTracks(data);
+        }
       } catch (err) {
         console.error("Recently played laden mislukt:", err);
       } finally {
@@ -67,7 +72,14 @@ function RecentlyPlayed({ tracks: tracksProp }) {
   ];
 
   const handleTrackClick = (track) => {
-    playSong(track.src, track.title, track.artist, track.cover, -1, track.youtubeId || null);
+    playSong(
+      track.src,
+      track.title,
+      track.artist,
+      track.cover,
+      -1,
+      track.youtubeId || null,
+    );
     if (track.id) addRecent(track.id).catch(() => {});
     navigate("/now-playing");
   };
@@ -75,11 +87,11 @@ function RecentlyPlayed({ tracks: tracksProp }) {
   return (
     <div className="recently-played">
       <div className="recently-played__header">
-        <h2 className="recently-played__title">Recently Played</h2>
+        <h2 className="recently-played__title">Onlangs afgespeeld</h2>
         <button
           className="recently-played__arrow"
           aria-label="See all"
-          onClick={() => navigate("/see-all")}
+          onClick={() => navigate(`/see-all?includeYt=${InculdeYt}`)}
         >
           <ArrowBtn />
         </button>
@@ -115,11 +127,9 @@ function RecentlyPlayed({ tracks: tracksProp }) {
             <div className="empty-track-cover" />
           </div>
         )}
-        </div>
+      </div>
     </div>
   );
 }
 
 export default RecentlyPlayed;
-
-

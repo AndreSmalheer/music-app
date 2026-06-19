@@ -1,19 +1,23 @@
 import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { searchYoutube } from "../../services/api";
 import "./Radio.css";
 
 function Radio() {
-  const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
+
+  const [query, setQuery] = useState(searchParams.get("query") || "");
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
   const { playSong } = useContext(PlayerContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const q = query.trim();
+
     if (!q) {
       setResults([]);
       setIsLoading(false);
@@ -21,6 +25,7 @@ function Radio() {
     }
 
     setIsLoading(true);
+
     const timer = setTimeout(async () => {
       try {
         const youtubeResults = await searchYoutube(q);
@@ -32,6 +37,7 @@ function Radio() {
         setIsLoading(false);
       }
     }, 400);
+
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -44,6 +50,7 @@ function Radio() {
       -1,
       song.youtubeId || null,
     );
+
     navigate("/now-playing");
   };
 
@@ -59,7 +66,7 @@ function Radio() {
         />
       </div>
 
-      {!query.trim() && <RecentlyPlayed />}
+      {!query.trim() && <RecentlyPlayed InculdeYt={true} />}
 
       <section className="radio-section">
         <div className="radio-section__header">
@@ -79,6 +86,7 @@ function Radio() {
                 onClick={() => handlePlaySong(song)}
               >
                 <img src={song.img} alt={song.title} />
+
                 <div className="info">
                   <h3>{song.title}</h3>
                   <p>{song.artist}</p>

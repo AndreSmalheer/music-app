@@ -8,11 +8,16 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { getRecent, addRecent } from "../../services/api";
+import { useSearchParams } from "react-router-dom";
 
 function SeeAll() {
   const { showOptions } = useModal();
   const { playSong } = useContext(PlayerContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const includeYt = searchParams.get("includeYt") === "true" || false;
+  console.log(includeYt);
 
   const [isLoading, setIsLoading] = useState(true);
   const [songs, setSongs] = useState([]);
@@ -22,7 +27,12 @@ function SeeAll() {
     (async () => {
       try {
         const data = await getRecent();
-        if (active) setSongs(data);
+        if (!includeYt) {
+          const filtered = data.filter((track) => !track.youtubeId);
+          if (active) setSongs(filtered);
+        } else {
+          if (active) setSongs(data);
+        }
       } catch (err) {
         console.error("Recent songs laden mislukt:", err);
       } finally {
@@ -35,12 +45,21 @@ function SeeAll() {
   }, []);
 
   const handlePlaySong = (song) => {
-    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, (opt) => console.log(opt)),
+  );
   const tapFeedback = { scale: 0.98 };
 
   const menuOptions = [
@@ -53,12 +72,22 @@ function SeeAll() {
   if (isLoading) {
     return (
       <div className="see-all-page">
-        <Skeleton width="150px" height="32px" style={{ marginBottom: "20px" }} />
+        <Skeleton
+          width="150px"
+          height="32px"
+          style={{ marginBottom: "20px" }}
+        />
         <div className="see-all-recent-songs-container">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="see-all-recent-song" style={{ gap: "10px", display: "flex", alignItems: "center" }}>
+            <div
+              key={i}
+              className="see-all-recent-song"
+              style={{ gap: "10px", display: "flex", alignItems: "center" }}
+            >
               <Skeleton width="60px" height="60px" borderRadius="6px" />
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "5px" }}
+              >
                 <Skeleton width="150px" height="20px" />
                 <Skeleton width="100px" height="16px" />
               </div>
