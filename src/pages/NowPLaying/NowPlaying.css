@@ -433,3 +433,107 @@
   width: 100%;
   height: 100%;
 }
+
+/* YouTube loading skeleton */
+
+.now-playing-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: clamp(8px, 2vh, 20px) 16px;
+  box-sizing: border-box;
+  gap: clamp(4px, 1.5vh, 24px);
+  overflow: hidden;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+.skeleton-album {
+  width: min(80vw, 38vh, 320px);
+  aspect-ratio: 1 / 1;
+  border-radius: 11px;
+}
+
+.skeleton-info {
+  width: min(100%, 320px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-title {
+  width: 180px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.skeleton-artist {
+  width: 110px;
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-actions {
+  width: 70px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.skeleton-progress {
+  width: min(100%, 320px);
+  height: 5px;
+  border-radius: 10px;
+}
+
+.skeleton-controls {
+  width: min(100%, 420px);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.skeleton-control-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.skeleton-control-btn.small {
+  width: 32px;
+  height: 32px;
+}
+
+.skeleton-control-btn.play {
+  width: 60px;
+  height: 60px;
+}
+
+.skeleton-volume {
+  width: min(100%, 320px);
+  height: 20px;
+  border-radius: 10px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

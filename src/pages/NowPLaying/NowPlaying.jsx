@@ -1,6 +1,6 @@
 import "./NowPlaying.css";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
-import { useContext, useState } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -614,6 +614,22 @@ function NowPlaying() {
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const [queueOpen, setQueueOpen] = useState(false);
+  const [YtAudio, setIsYtAdui] = useState(false);
+  const [ytLoading, setYtLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentTrack?.youtubeId) {
+      setYtLoading(true);
+
+      const timer = setTimeout(() => {
+        setYtLoading(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setYtLoading(false);
+    }
+  }, [currentTrack]);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);
@@ -694,6 +710,35 @@ function NowPlaying() {
     }
   };
 
+  if (ytLoading) {
+    return (
+      <div className="now-playing-loading">
+        <div className="skeleton skeleton-album"></div>
+
+        <div className="skeleton-info">
+          <div className="skeleton-text">
+            <div className="skeleton skeleton-title"></div>
+            <div className="skeleton skeleton-artist"></div>
+          </div>
+
+          <div className="skeleton skeleton-actions"></div>
+        </div>
+
+        <div className="skeleton skeleton-progress"></div>
+
+        <div className="skeleton-controls">
+          <div className="skeleton skeleton-control-btn small"></div>
+          <div className="skeleton skeleton-control-btn"></div>
+          <div className="skeleton skeleton-control-btn play"></div>
+          <div className="skeleton skeleton-control-btn"></div>
+          <div className="skeleton skeleton-control-btn small"></div>
+        </div>
+
+        <div className="skeleton skeleton-volume"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="now-playing-page">
@@ -752,7 +797,9 @@ function NowPlaying() {
               {formatTime(currentTime)}
             </div>
             <div className="progress-time progress-time-end">
-              {hasKnownDuration ? `-${formatTime(safeDuration - currentTime)}` : "Live"}
+              {hasKnownDuration
+                ? `-${formatTime(safeDuration - currentTime)}`
+                : "Live"}
             </div>
           </div>
         </div>
