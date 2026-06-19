@@ -5,7 +5,12 @@
 
 // In dev stuurt Vite de /api/* calls via de proxy naar localhost:3001.
 // In productie (Capacitor) moet VITE_API_URL naar de echte server wijzen.
-const BASE_URL = import.meta.env.VITE_API_URL || "";
+export let BASE_URL = localStorage.getItem("SERVER_URL") || import.meta.env.VITE_API_URL || "";
+
+export function setBaseUrl(url) {
+  localStorage.setItem("SERVER_URL", url);
+  BASE_URL = url;
+}
 
 // ---- low-level helpers --------------------------------------------------
 

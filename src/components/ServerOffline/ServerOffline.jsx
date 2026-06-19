@@ -1,5 +1,6 @@
 import "./ServerOffline.css";
 import { useModal } from "../../context/ModalContext";
+import { setBaseUrl } from "../../services/api";
 
 function ServerOffline({ onRetry }) {
   const { showInput } = useModal();
@@ -15,10 +16,18 @@ function ServerOffline({ onRetry }) {
   function handleChangeUrl() {
     showInput(
       "Change Server URL",
-      "Enter new server URL",
+      "http://",
       (newUrl) => {
-        console.log("New URL:", newUrl);
-        // TODO: Handle URL change logic
+        if (newUrl) {
+          let formattedUrl = newUrl.trim();
+          if (!/^https?:\/\//i.test(formattedUrl)) {
+            formattedUrl = "http://" + formattedUrl;
+          }
+          setBaseUrl(formattedUrl);
+          if (onRetry) {
+            onRetry();
+          }
+        }
       }
     );
   }
