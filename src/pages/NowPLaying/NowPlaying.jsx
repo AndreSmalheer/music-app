@@ -5,7 +5,10 @@ import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { downloadFromYoutube } from "../../services/api";
+import { downloadYoutubeToLibrary } from "../../services/api";
+
+const MotionButton = motion.button;
+const MotionDiv = motion.div;
 
 function DownloadIcon() {
   return (
@@ -22,6 +25,23 @@ function DownloadIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 }
@@ -614,8 +634,10 @@ function NowPlaying() {
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const [queueOpen, setQueueOpen] = useState(false);
-  const [YtAudio, setIsYtAdui] = useState(false);
   const [ytLoading, setYtLoading] = useState(false);
+  const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
+  const [downloadInFlight, setDownloadInFlight] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
     if (currentTrack?.youtubeId) {
@@ -630,6 +652,16 @@ function NowPlaying() {
       setYtLoading(false);
     }
   }, [currentTrack]);
+
+  useEffect(() => {
+    if (!downloadSuccess) return undefined;
+
+    const timer = setTimeout(() => {
+      setDownloadSuccess(false);
+    }, 2200);
+
+    return () => clearTimeout(timer);
+  }, [downloadSuccess]);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);
@@ -696,17 +728,26 @@ function NowPlaying() {
   const isYoutube = !!currentTrack.youtubeId;
 
   const handleDownload = async () => {
-    if (!currentTrack.youtubeId) return;
+    if (!currentTrack.youtubeId || downloadInFlight) return;
     try {
-      await downloadFromYoutube({
+      setDownloadInFlight(true);
+      const savedSong = await downloadYoutubeToLibrary({
         url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
         title: currentTrack.title,
         artist: currentTrack.artist,
         thumbnail: currentTrack.coverSrc,
       });
-      // Je zou hier een toast of feedback kunnen toevoegen
+
+      setDownloadConfirmOpen(false);
+      setDownloadSuccess(true);
+
+      if (savedSong?.id) {
+        console.log("Saved to local library:", savedSong.id);
+      }
     } catch (err) {
       console.error("Download failed:", err);
+    } finally {
+      setDownloadInFlight(false);
     }
   };
 
@@ -756,9 +797,15 @@ function NowPlaying() {
 
           <div className="now-playing-actions">
             {isYoutube ? (
-              <div className="favroute-btn" onClick={handleDownload}>
+              <MotionButton
+                type="button"
+                className="download-btn"
+                onClick={() => setDownloadConfirmOpen(true)}
+                whileTap={{ scale: 0.92 }}
+                aria-label="Download to library"
+              >
                 <DownloadIcon />
-              </div>
+              </MotionButton>
             ) : (
               <div
                 className={`favroute-btn ${favroute ? "active" : ""}`}
@@ -904,15 +951,68 @@ function NowPlaying() {
       </div>
 
       <AnimatePresence>
+        {downloadConfirmOpen && (
+          <MotionDiv
+            className="download-overlay"
+            onClick={() => !downloadInFlight && setDownloadConfirmOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <MotionDiv
+              className="download-sheet"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <div className="download-sheet__handle" />
+              <h2 className="download-sheet__title">Download to library</h2>
+              <p className="download-sheet__text">
+                Save this track as a local file so it shows up in your library.
+              </p>
+              <div className="download-sheet__actions">
+                <button
+                  className="download-sheet__btn download-sheet__btn--cancel"
+                  onClick={() => setDownloadConfirmOpen(false)}
+                  disabled={downloadInFlight}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="download-sheet__btn download-sheet__btn--confirm"
+                  onClick={handleDownload}
+                  disabled={downloadInFlight}
+                >
+                  {downloadInFlight ? "Downloading..." : "Download"}
+                </button>
+              </div>
+            </MotionDiv>
+          </MotionDiv>
+        )}
+
+        {downloadSuccess && (
+          <MotionDiv
+            className="download-toast"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          >
+            <CheckIcon />
+            <span>Saved to local library</span>
+          </MotionDiv>
+        )}
+
         {queueOpen && (
-          <motion.div
+          <MotionDiv
             className="queue-overlay"
             onClick={() => setQueueOpen(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div
+            <MotionDiv
               className="queue-modal"
               onClick={(e) => e.stopPropagation()}
               initial={{ y: "100%" }}
@@ -964,8 +1064,8 @@ function NowPlaying() {
                   )}
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </MotionDiv>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </>

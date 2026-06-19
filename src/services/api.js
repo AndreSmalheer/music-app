@@ -59,6 +59,7 @@ export function formatDuration(seconds = 0) {
 
 export function toUiTrack(song) {
   if (!song) return null;
+  const isYoutubeTrack = !!song.youtubeId;
   return {
     id: song._id,
     title: song.title,
@@ -68,8 +69,11 @@ export function toUiTrack(song) {
     durationLabel: formatDuration(song.duration ?? 0),
     cover: assetUrl(song.thumbnail),
     img: assetUrl(song.thumbnail),
-    src: assetUrl(song.filePath),
+    src: isYoutubeTrack
+      ? getYoutubeStreamUrl(song.youtubeId)
+      : assetUrl(song.filePath),
     youtubeId: song.youtubeId,
+    sourceYoutubeId: song.sourceYoutubeId,
     type: song.type,
   };
 }
@@ -81,6 +85,8 @@ export function toUiArtist(artist) {
     name: artist.name,
     img: assetUrl(artist.thumbnail),
     cover: assetUrl(artist.thumbnail),
+    isYoutubeArtist: !!artist.isYoutubeArtist,
+    type: artist.isYoutubeArtist ? "youtube-artist" : "artist",
     songs: (artist.songs || []).map((s) =>
       typeof s === "object" ? toUiTrack(s) : s,
     ),
@@ -133,7 +139,7 @@ export async function checkHealth() {
 
 export async function getSongs() {
   const data = await getJSON("/api/songs");
-  return data.map(toUiTrack);
+  return data.filter((song) => !song.youtubeId).map(toUiTrack);
 }
 
 export async function getSong(id) {
@@ -151,6 +157,16 @@ export async function uploadSong(formData) {
 
 export async function downloadFromYoutube({ url, title, artist, thumbnail }) {
   const song = await postJSON("/api/songs/download", {
+    url,
+    title,
+    artist,
+    thumbnail,
+  });
+  return toUiTrack(song);
+}
+
+export async function downloadYoutubeToLibrary({ url, title, artist, thumbnail }) {
+  const song = await postJSON("/api/songs/download-local", {
     url,
     title,
     artist,
@@ -201,6 +217,11 @@ export async function getArtists() {
   return data.map(toUiArtist);
 }
 
+export async function getYoutubeArtists() {
+  const data = await getJSON("/api/artists?source=youtube");
+  return data.map(toUiArtist);
+}
+
 export async function getArtist(id) {
   return toUiArtist(await getJSON(`/api/artists/${id}`));
 }
@@ -225,7 +246,9 @@ export async function search(q) {
   return {
     songs: (data.songs || []).filter((song) => !song.youtubeId).map(toUiTrack),
 
-    artists: (data.artists || []).map(toUiArtist),
+    artists: (data.artists || [])
+      .filter((artist) => !artist.isYoutubeArtist)
+      .map(toUiArtist),
 
     playlists: (data.playlists || []).map(toUiPlaylist),
   };

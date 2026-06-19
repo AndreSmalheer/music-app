@@ -6,7 +6,15 @@ const router = Router();
 // GET /api/artists — alle artiesten
 router.get("/", async (req, res, next) => {
   try {
-    const artists = await Artist.find().sort({ name: 1 });
+    const source = req.query.source || "local";
+    const filter =
+      source === "youtube" || source === "yt"
+        ? { isYoutubeArtist: true }
+        : source === "all"
+          ? {}
+          : { isYoutubeArtist: { $ne: true } };
+
+    const artists = await Artist.find(filter).sort({ name: 1 });
     res.json(artists);
   } catch (err) {
     next(err);

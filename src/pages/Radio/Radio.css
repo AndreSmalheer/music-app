@@ -91,3 +91,7 @@
 .radio-searching-text {
   color: white;
 }
+
+.radio-song-item.artist img {
+  border-radius: 50%;
+}

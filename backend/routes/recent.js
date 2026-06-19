@@ -7,7 +7,7 @@ const router = Router();
 router.get("/", async (req, res, next) => {
   try {
     const recent = await RecentlyPlayed.find()
-      .sort({ playedAt: -1 })
+      .sort({ lastPlayed: -1, playedAt: -1 })
       .limit(20)
       .populate("song");
     res.json(recent);
@@ -22,7 +22,12 @@ router.post("/", async (req, res, next) => {
     const { song } = req.body;
     if (!song) return res.status(400).json({ error: "song (id) is verplicht" });
 
-    const entry = await RecentlyPlayed.create({ song, playedAt: new Date() });
+    const now = new Date();
+    const entry = await RecentlyPlayed.findOneAndUpdate(
+      { song },
+      { $set: { lastPlayed: now, playedAt: now }, $setOnInsert: { song } },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
     res.status(201).json(entry);
   } catch (err) {
     next(err);

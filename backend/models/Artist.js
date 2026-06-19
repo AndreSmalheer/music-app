@@ -8,4 +8,6 @@ const artistSchema = new mongoose.Schema({
   isYoutubeArtist: { type: Boolean, default: false },
 });
 
+artistSchema.index({ name: 1, isYoutubeArtist: 1 }, { unique: true });
+
 export default mongoose.model("Artist", artistSchema);

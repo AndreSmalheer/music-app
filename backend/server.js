@@ -25,6 +25,7 @@ app.use(express.json());
 
 // Geüploade MP3's en covers statisch serveren onder /uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/music", express.static(path.join(__dirname, "..", "public", "music")));
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -45,7 +46,7 @@ app.use((req, res) => {
 });
 
 // Centrale error-handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || "Serverfout" });
 });

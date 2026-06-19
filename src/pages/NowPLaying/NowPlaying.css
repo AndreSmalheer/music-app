@@ -79,10 +79,26 @@
 }
 
 .favroute-btn svg,
+.download-btn svg,
 .options-btn svg {
   width: clamp(20px, 5vw, 28px);
   height: clamp(20px, 5vw, 28px);
   color: var(--text-primary);
+}
+
+.download-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .progress-bar {
@@ -432,6 +448,98 @@
 .utiletie-btn svg {
   width: 100%;
   height: 100%;
+}
+
+.download-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.download-sheet {
+  width: 100%;
+  max-width: 500px;
+  background: var(--bg-secondary);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 28px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.download-sheet__handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto 16px;
+}
+
+.download-sheet__title {
+  margin: 0 0 10px;
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.download-sheet__text {
+  margin: 0 0 22px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.download-sheet__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.download-sheet__btn {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.download-sheet__btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.download-sheet__btn--cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.download-sheet__btn--confirm {
+  background: #2ecc71;
+  color: #101010;
+}
+
+.download-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: rgba(20, 20, 20, 0.96);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.download-toast svg {
+  width: 20px;
+  height: 20px;
+  color: #2ecc71;
 }
 
 /* YouTube loading skeleton */

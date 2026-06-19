@@ -15,8 +15,12 @@ router.get("/", async (req, res, next) => {
     const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 
     const [songs, artists, playlists] = await Promise.all([
-      Song.find({ $or: [{ title: rx }, { artist: rx }, { album: rx }] }).limit(20),
-      Artist.find({ name: rx }).limit(20),
+      Song.find({
+        type: { $ne: "youtube" },
+        youtubeId: { $exists: false },
+        $or: [{ title: rx }, { artist: rx }, { album: rx }],
+      }).limit(20),
+      Artist.find({ name: rx, isYoutubeArtist: { $ne: true } }).limit(20),
       Playlist.find({ name: rx }).limit(20),
     ]);
 

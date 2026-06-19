@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Search.css";
@@ -9,7 +8,6 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
 import {
   search as searchApi,
-  searchYoutube,
   addRecent,
 } from "../../services/api";
 
@@ -59,17 +57,10 @@ function Search() {
 
   const showSongs = activeTag === "All" || activeTag === "Songs";
   const showArtists = activeTag === "All" || activeTag === "Artists";
-  const noResults =
-    !isLoading &&
-    searchResults.topResults.length === 0 &&
-    searchResults.songs.length === 0 &&
-    searchResults.artists.length === 0 &&
-    searchResults.youtube.length === 0;
-
   const handlePlaySong = (song) => {
     console.log(song);
     if (song.youtubeId) {
-      consolge.log("Yt song");
+      console.log("Yt song");
     }
 
     console.log("local song");

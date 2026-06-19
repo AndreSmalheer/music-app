@@ -25,7 +25,11 @@ function ArrowBtn() {
   );
 }
 
-function RecentlyPlayed({ tracks: tracksProp, InculdeYt = false }) {
+function RecentlyPlayed({
+  tracks: tracksProp,
+  InculdeYt = false,
+  YtSearchStyling = false,
+}) {
   const [isLoading, setIsLoading] = useState(true);
   const [tracks, setTracks] = useState(tracksProp || []);
   const navigate = useNavigate();
@@ -85,7 +89,9 @@ function RecentlyPlayed({ tracks: tracksProp, InculdeYt = false }) {
   };
 
   return (
-    <div className="recently-played">
+    <div
+      className={`recently-played ${YtSearchStyling ? "yt-search-styling" : ""}`}
+    >
       <div className="recently-played__header">
         <h2 className="recently-played__title">Onlangs afgespeeld</h2>
         <button

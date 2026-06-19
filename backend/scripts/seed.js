@@ -78,9 +78,21 @@ async function seed() {
 
   // Recently played (3 entries, nieuwste laatst toegevoegd)
   await RecentlyPlayed.create([
-    { song: songs[0]._id, playedAt: new Date(Date.now() - 3 * 3600e3) },
-    { song: songs[2]._id, playedAt: new Date(Date.now() - 2 * 3600e3) },
-    { song: songs[4]._id, playedAt: new Date(Date.now() - 1 * 3600e3) },
+    {
+      song: songs[0]._id,
+      playedAt: new Date(Date.now() - 3 * 3600e3),
+      lastPlayed: new Date(Date.now() - 3 * 3600e3),
+    },
+    {
+      song: songs[2]._id,
+      playedAt: new Date(Date.now() - 2 * 3600e3),
+      lastPlayed: new Date(Date.now() - 2 * 3600e3),
+    },
+    {
+      song: songs[4]._id,
+      playedAt: new Date(Date.now() - 1 * 3600e3),
+      lastPlayed: new Date(Date.now() - 1 * 3600e3),
+    },
   ]);
 
   console.log("✅ Seed klaar:");

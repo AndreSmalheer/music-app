@@ -1,20 +1,86 @@
 import { Router } from "express";
 import fs from "node:fs";
+import { createWriteStream } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { create } from "youtube-dl-exec";
 
 import Song from "../models/Song.js";
 import Artist from "../models/Artist.js";
 import upload from "../middleware/upload.js";
 
-// Zoekt artiest op naam op, maakt hem aan als hij niet bestaat, en voegt songId toe.
-async function syncArtist(artistName, songId) {
+// Zoekt artiest op naam + bron op, maakt hem aan als hij niet bestaat, en voegt songId toe.
+async function syncArtist(artistName, songId, { isYoutubeArtist = false, thumbnail } = {}) {
   if (!artistName || artistName === "Unknown") return;
+
+  const update = {
+    $addToSet: { songs: songId },
+    $setOnInsert: { name: artistName, isYoutubeArtist },
+  };
+
+  if (thumbnail) {
+    update.$set = { thumbnail };
+  }
+
   await Artist.findOneAndUpdate(
-    { name: artistName },
-    { $addToSet: { songs: songId } },
+    { name: artistName, isYoutubeArtist },
+    update,
     { upsert: true, new: true },
   );
+}
+
+let _youtubedl;
+function getYoutubedl() {
+  if (!_youtubedl) {
+    _youtubedl = create(process.env.YTDLP_PATH || "yt-dlp");
+  }
+  return _youtubedl;
+}
+
+const downloadCache = new Map();
+
+function mimeForExt(ext) {
+  if (ext === "m4a" || ext === "mp4") return "audio/mp4";
+  if (ext === "webm") return "audio/webm";
+  if (ext === "mp3") return "audio/mpeg";
+  return "audio/mpeg";
+}
+
+async function resolveAudio(videoId) {
+  const cached = downloadCache.get(videoId);
+  if (cached && cached.expires > Date.now()) return cached;
+
+  const info = await getYoutubedl()(`https://www.youtube.com/watch?v=${videoId}`, {
+    dumpSingleJson: true,
+    noWarnings: true,
+    noPlaylist: true,
+    format: "bestaudio[ext=m4a]/bestaudio",
+  });
+
+  if (!info?.url) throw new Error("Geen audio-URL gevonden");
+
+  let expires = Date.now() + 60 * 60 * 1000;
+  const match = /[?&]expire=(\d+)/.exec(info.url);
+  if (match) {
+    expires = Math.min(expires, parseInt(match[1], 10) * 1000 - 60 * 1000);
+  }
+
+  const resolved = { url: info.url, ext: info.ext, mime: mimeForExt(info.ext), expires };
+  downloadCache.set(videoId, resolved);
+  return resolved;
+}
+
+async function downloadAudioToFile(videoId, filePath) {
+  const { url } = await resolveAudio(videoId);
+  const response = await fetch(url);
+  if (!response.ok || !response.body) {
+    throw new Error("Kon YouTube-audio niet downloaden");
+  }
+
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+  await pipeline(Readable.fromWeb(response.body), createWriteStream(filePath));
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -67,7 +133,10 @@ router.post(
         duration: Number(req.body.duration) || 0,
       });
 
-      await syncArtist(song.artist, song._id);
+      await syncArtist(song.artist, song._id, {
+        isYoutubeArtist: false,
+        thumbnail: song.thumbnail,
+      });
       res.status(201).json(song);
     } catch (err) {
       next(err);
@@ -86,16 +155,97 @@ router.post("/download", async (req, res, next) => {
     // YouTube video-id uit de URL halen
     const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
     const youtubeId = match ? match[1] : undefined;
+    if (!youtubeId) {
+      return res.status(400).json({ error: "Geen geldige YouTube video-id gevonden" });
+    }
 
-    const song = await Song.create({
-      title: title || "Unknown",
-      artist: artist || "Unknown",
-      type: "youtube",
-      youtubeId,
-      thumbnail,
-    });
+    const song = await Song.findOneAndUpdate(
+      { youtubeId },
+      {
+        $set: {
+          title: title || "Unknown",
+          artist: artist || "Unknown",
+          type: "youtube",
+          youtubeId,
+          thumbnail,
+        },
+        $setOnInsert: {
+          addedAt: new Date(),
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
 
-    await syncArtist(song.artist, song._id);
+    if (song.artist && song.artist !== "Unknown") {
+      await syncArtist(song.artist, song._id, {
+        isYoutubeArtist: true,
+        thumbnail: song.thumbnail,
+      });
+    }
+
+    res.status(201).json(song);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/songs/download-local — YouTube-URL → lokaal bestand + Song in library
+router.post("/download-local", async (req, res, next) => {
+  try {
+    const { url, title, artist, thumbnail } = req.body;
+    if (!url) return res.status(400).json({ error: "Geen YouTube-URL ontvangen" });
+
+    const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
+    const youtubeId = match ? match[1] : undefined;
+    if (!youtubeId) {
+      return res.status(400).json({ error: "Geen geldige YouTube video-id gevonden" });
+    }
+
+    const existing = await Song.findOne({ sourceYoutubeId: youtubeId });
+    const publicMusicDir = path.join(__dirname, "..", "..", "public", "music", "downloads");
+
+    if (existing?.filePath) {
+      const existingPath = path.join(__dirname, "..", "..", "public", existing.filePath.replace(/^\//, ""));
+      if (fs.existsSync(existingPath)) {
+        res.status(200).json(existing);
+        return;
+      }
+    }
+
+    const { ext } = await resolveAudio(youtubeId);
+    const fileName = `${youtubeId}.${ext || "m4a"}`;
+    const absoluteFilePath = path.join(publicMusicDir, fileName);
+    const relativeFilePath = `/music/downloads/${fileName}`;
+
+    await downloadAudioToFile(youtubeId, absoluteFilePath);
+
+    const song = await Song.findOneAndUpdate(
+      { sourceYoutubeId: youtubeId },
+      {
+        $set: {
+          title: title || "Unknown",
+          artist: artist || "Unknown",
+          album: undefined,
+          type: "mp3",
+          filePath: relativeFilePath,
+          sourceYoutubeId: youtubeId,
+          youtubeId: undefined,
+          thumbnail,
+        },
+        $setOnInsert: {
+          addedAt: new Date(),
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+
+    if (song.artist && song.artist !== "Unknown") {
+      await syncArtist(song.artist, song._id, {
+        isYoutubeArtist: false,
+        thumbnail: song.thumbnail,
+      });
+    }
+
     res.status(201).json(song);
   } catch (err) {
     next(err);
@@ -114,10 +264,15 @@ router.delete("/:id", async (req, res, next) => {
       fs.promises.unlink(filePath).catch(() => {});
     }
 
+    if (song.filePath?.startsWith("/music/")) {
+      const filePath = path.join(__dirname, "..", "..", "public", song.filePath.replace(/^\//, ""));
+      fs.promises.unlink(filePath).catch(() => {});
+    }
+
     // Song uit artiest verwijderen
     if (song.artist && song.artist !== "Unknown") {
       await Artist.findOneAndUpdate(
-        { name: song.artist },
+        { name: song.artist, isYoutubeArtist: song.type === "youtube" || !!song.youtubeId },
         { $pull: { songs: song._id } },
       );
     }

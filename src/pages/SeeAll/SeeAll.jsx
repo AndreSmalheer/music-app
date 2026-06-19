@@ -100,7 +100,7 @@ function SeeAll() {
 
   return (
     <div className="see-all-page">
-      <h1 className="see-all-title">Recent Songs</h1>
+      <h1 className="see-all-title">Onlangs afgespeeld</h1>
 
       <div className="see-all-recent-songs-container">
         {songs.length > 0 ? (
