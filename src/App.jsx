@@ -199,6 +199,7 @@ function AppContent() {
 function App() {
   const [serverOnline, setServerOnline] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [onBoardingComplete, SetOnBoardingComplete] = useState(true);
 
   const performHealthCheck = async () => {
     const isOnline = await checkHealth();
@@ -218,7 +219,9 @@ function App() {
 
   return (
     <>
-      {!serverOnline ? (
+      {!onBoardingComplete ? (
+        <Onboarding />
+      ) : !serverOnline ? (
         <ModalProvider>
           <ServerOffline onRetry={performHealthCheck} />
         </ModalProvider>
