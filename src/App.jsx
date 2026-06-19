@@ -204,6 +204,7 @@ function App() {
     const isOnline = await checkHealth();
     setServerOnline(isOnline);
     setLoading(false);
+    return isOnline;
   };
 
   useEffect(() => {

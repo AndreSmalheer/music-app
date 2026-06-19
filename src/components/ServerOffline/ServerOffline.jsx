@@ -6,10 +6,19 @@ import { BASE_URL, setBaseUrl } from "../../services/api";
 function ServerOffline({ onRetry }) {
   const { showInput } = useModal();
   const [statusMessage, setStatusMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(true);
 
-  function handleRetry() {
+  async function handleRetry() {
+    setStatusMessage("");
     if (onRetry) {
-      onRetry();
+      const isOnline = await onRetry();
+      if (!isOnline) {
+        setIsSuccess(false);
+        setStatusMessage("Failed to connect to the server. Please try again.");
+        setTimeout(() => {
+          setStatusMessage("");
+        }, 3000);
+      }
     } else {
       window.location.reload();
     }
@@ -19,22 +28,32 @@ function ServerOffline({ onRetry }) {
     showInput(
       "Change Server URL",
       "http://",
-      (newUrl) => {
+      async (newUrl) => {
         if (newUrl) {
           let formattedUrl = newUrl.trim();
           if (!/^https?:\/\//i.test(formattedUrl)) {
             formattedUrl = "http://" + formattedUrl;
           }
           setBaseUrl(formattedUrl);
-          setStatusMessage(
-            `Server URL updated to ${formattedUrl} successfully!`,
-          );
+          setIsSuccess(true);
+          setStatusMessage(`Server URL updated to ${formattedUrl} successfully!`);
+          setTimeout(() => {
+            setStatusMessage("");
+          }, 3000);
+
           if (onRetry) {
-            onRetry();
+            const isOnline = await onRetry();
+            if (!isOnline) {
+              setIsSuccess(false);
+              setStatusMessage("Failed to connect to the server with the new URL.");
+              setTimeout(() => {
+                setStatusMessage("");
+              }, 3000);
+            }
           }
         }
       },
-      BASE_URL,
+      BASE_URL
     );
   }
 
@@ -61,7 +80,12 @@ function ServerOffline({ onRetry }) {
         </div>
 
         {statusMessage && (
-          <p className="offline-status-message">{statusMessage}</p>
+          <p
+            className="offline-status-message"
+            style={{ color: isSuccess ? "#4caf50" : "#f44336" }}
+          >
+            {statusMessage}
+          </p>
         )}
       </div>
     </div>
