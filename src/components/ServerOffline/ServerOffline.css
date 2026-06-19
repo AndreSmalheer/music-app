@@ -46,7 +46,9 @@
   font-family: var(--font-primary);
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
 }
 
 .retry-button:active {
@@ -64,10 +66,19 @@
   font-family: var(--font-primary);
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .change-url-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
+}
+
+.offline-status-message {
+  color: #4caf50;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  text-align: center;
 }

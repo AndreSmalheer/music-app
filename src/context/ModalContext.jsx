@@ -18,11 +18,11 @@ export function ModalProvider({ children }) {
     });
   };
 
-  const showInput = (title, placeholder, onSave) => {
+  const showInput = (title, placeholder, onSave, defaultValue = "") => {
     setModalState({
       isOpen: true,
       type: "input",
-      data: { title, placeholder, onSave },
+      data: { title, placeholder, onSave, defaultValue },
     });
   };
 

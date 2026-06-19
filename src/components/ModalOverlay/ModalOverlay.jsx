@@ -11,9 +11,9 @@ function ModalOverlay({ isOpen, onClose, type, data }) {
 
   useEffect(() => {
     if (isOpen) {
-      setInputValue("");
+      setInputValue(data.defaultValue || "");
     }
-  }, [isOpen]);
+  }, [isOpen, data.defaultValue]);
 
   if (!isOpen) return null;
 

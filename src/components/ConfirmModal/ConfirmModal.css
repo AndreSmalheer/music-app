@@ -62,8 +62,8 @@
 }
 
 .confirm-btn--yes {
-  background-color: #ff3b30;
-  color: white;
+  background-color: var(--btn-default);
+  color: var(--bg-primary);
 }
 
 .confirm-btn--no {
