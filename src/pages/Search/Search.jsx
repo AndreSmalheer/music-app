@@ -6,10 +6,8 @@ import EmptyState from "../../components/EmptyState/EmptyState";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import {
-  search as searchApi,
-  addRecent,
-} from "../../services/api";
+import { search as searchApi, addRecent } from "../../services/api";
+import { AnimatePresence, motion } from "framer-motion";
 
 const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };

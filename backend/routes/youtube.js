@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { create } from 'youtube-dl-exec';
+import { create } from "youtube-dl-exec";
 import { Readable } from "node:stream";
 
 const router = Router();
@@ -12,30 +12,78 @@ let _youtubedl;
 function getYoutubedl() {
   if (!_youtubedl) {
     // Gebruik het expliciete pad uit .env (YTDLP_PATH), anders 'yt-dlp' van PATH
-    _youtubedl = create(process.env.YTDLP_PATH || 'yt-dlp');
+    _youtubedl = create(process.env.YTDLP_PATH || "yt-dlp");
   }
   return _youtubedl;
 }
 
 // GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's via de Data API v3
 router.get("/search", async (req, res, next) => {
-// ... (rest of search route unchanged)
   try {
     const q = (req.query.q || "").trim();
-    if (!q) return res.json([]);
+
+    if (!q) {
+      return res.json([]);
+    }
 
     const key = process.env.YOUTUBE_API_KEY;
-    if (!key) return res.status(500).json({ error: "YOUTUBE_API_KEY ontbreekt" });
+
+    if (!key) {
+      return res.status(500).json({
+        error: "YOUTUBE_API_KEY ontbreekt",
+      });
+    }
+
+    const urlMatch = q.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    );
+
+    if (urlMatch) {
+      const videoId = urlMatch[1];
+
+      const url =
+        `https://www.googleapis.com/youtube/v3/videos` +
+        `?part=snippet&id=${videoId}&key=${key}`;
+
+      const ytRes = await fetch(url);
+
+      if (!ytRes.ok) {
+        const err = await ytRes.json().catch(() => ({}));
+
+        return res.status(ytRes.status).json({
+          error: err?.error?.message || "YouTube API fout",
+        });
+      }
+
+      const data = await ytRes.json();
+
+      const results = (data.items || []).map((item) => ({
+        youtubeId: item.id,
+        title: item.snippet.title,
+        artist: item.snippet.channelTitle,
+        thumbnail:
+          item.snippet.thumbnails?.medium?.url ||
+          item.snippet.thumbnails?.default?.url,
+        type: "youtube",
+      }));
+
+      return res.json(results);
+    }
 
     const url =
       `https://www.googleapis.com/youtube/v3/search` +
       `?part=snippet&type=video&videoCategoryId=10` +
-      `&q=${encodeURIComponent(q)}&maxResults=15&key=${key}`;
+      `&q=${encodeURIComponent(q)}` +
+      `&maxResults=15&key=${key}`;
 
     const ytRes = await fetch(url);
+
     if (!ytRes.ok) {
       const err = await ytRes.json().catch(() => ({}));
-      return res.status(ytRes.status).json({ error: err?.error?.message || "YouTube API fout" });
+
+      return res.status(ytRes.status).json({
+        error: err?.error?.message || "YouTube API fout",
+      });
     }
 
     const data = await ytRes.json();
@@ -44,7 +92,9 @@ router.get("/search", async (req, res, next) => {
       youtubeId: item.id.videoId,
       title: item.snippet.title,
       artist: item.snippet.channelTitle,
-      thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
+      thumbnail:
+        item.snippet.thumbnails?.medium?.url ||
+        item.snippet.thumbnails?.default?.url,
       type: "youtube",
     }));
 
@@ -128,12 +178,19 @@ router.get("/stream/:videoId", async (req, res, next) => {
 
     // Status spiegelen: 200 (hele body) of 206 (partial → seeking).
     res.status(upstream.status);
-    for (const h of ["content-length", "content-range", "accept-ranges", "content-type"]) {
+    for (const h of [
+      "content-length",
+      "content-range",
+      "accept-ranges",
+      "content-type",
+    ]) {
       const v = upstream.headers.get(h);
       if (v) res.setHeader(h, v);
     }
-    if (!upstream.headers.get("accept-ranges")) res.setHeader("Accept-Ranges", "bytes");
-    if (!upstream.headers.get("content-type")) res.setHeader("Content-Type", audio.mime);
+    if (!upstream.headers.get("accept-ranges"))
+      res.setHeader("Accept-Ranges", "bytes");
+    if (!upstream.headers.get("content-type"))
+      res.setHeader("Content-Type", audio.mime);
 
     const nodeStream = Readable.fromWeb(upstream.body);
     nodeStream.on("error", () => {
@@ -146,7 +203,8 @@ router.get("/stream/:videoId", async (req, res, next) => {
   } catch (err) {
     if (err?.code === "ENOENT" && !res.headersSent) {
       return res.status(500).json({
-        error: "yt-dlp niet gevonden. Installeer het of zet YTDLP_PATH in backend/.env.",
+        error:
+          "yt-dlp niet gevonden. Installeer het of zet YTDLP_PATH in backend/.env.",
       });
     }
     console.error("yt-dlp Stream Error:", err);
