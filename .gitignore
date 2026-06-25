@@ -31,3 +31,5 @@ backend/uploads/*
 *.njsproj
 *.sln
 *.sw?
+
+downloads
