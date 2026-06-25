@@ -17,6 +17,8 @@ function Radio() {
   const [results, setResults] = useState([]);
   const [youtubeArtists, setYoutubeArtists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [searchOffset, setSearchOffset] = useState(10);
 
   const { playSong } = useContext(PlayerContext);
   const navigate = useNavigate();
@@ -35,7 +37,10 @@ function Radio() {
     const timer = setTimeout(async () => {
       try {
         const youtubeResults = await searchYoutube(q);
+
         setResults(youtubeResults);
+        setSearchOffset(10);
+        setShowMore(false);
       } catch (err) {
         console.error("YouTube search failed:", err);
         setResults([]);
@@ -92,6 +97,24 @@ function Radio() {
     }
   };
 
+  const visibleArtists = showMore
+    ? youtubeArtists
+    : youtubeArtists.slice(0, 10);
+
+  const visibleResults = results;
+
+  const handleShowMore = async () => {
+    try {
+      const moreResults = await searchYoutube(query, searchOffset);
+
+      setResults((prev) => [...prev, ...moreResults]);
+
+      setSearchOffset((prev) => prev + 10);
+    } catch (err) {
+      console.error("More YouTube results failed:", err);
+    }
+  };
+
   return (
     <div className="radio-page">
       <div className="radio-search-container">
@@ -104,7 +127,9 @@ function Radio() {
         />
       </div>
 
-      {!query.trim() && <RecentlyPlayed InculdeYt={true} YtSearchStyling={true} />}
+      {!query.trim() && (
+        <RecentlyPlayed InculdeYt={true} YtSearchStyling={true} />
+      )}
 
       <section className="radio-section">
         <div className="radio-section__header">
@@ -117,12 +142,12 @@ function Radio() {
           {isLoading ? (
             <p className="radio-searching-text">Searching...</p>
           ) : results.length > 0 ? (
-            results.map((song) => (
+            visibleResults.map((song) => (
               <div
                 key={song.youtubeId}
                 className="radio-song-item"
-              onClick={() => handlePlaySong(song)}
-            >
+                onClick={() => handlePlaySong(song)}
+              >
                 <img src={song.img} alt={song.title} />
 
                 <div className="info">
@@ -132,15 +157,18 @@ function Radio() {
               </div>
             ))
           ) : query.trim() ? (
-            <p>No results found.</p>
+            <p className="no-result-text">No results found.</p>
           ) : youtubeArtists.length > 0 ? (
-            youtubeArtists.map((artist) => (
+            visibleArtists.map((artist) => (
               <div
                 key={artist.id}
                 className="radio-song-item artist"
                 onClick={() => navigate(`/artist/${artist.id}`)}
               >
-                <img src={artist.img || "/covers/test-cover.jpg"} alt={artist.name} />
+                <img
+                  src={artist.img || "/covers/test-cover.jpg"}
+                  alt={artist.name}
+                />
 
                 <div className="info">
                   <h3>{artist.name}</h3>
@@ -153,6 +181,12 @@ function Radio() {
           )}
         </div>
       </section>
+
+      {query.trim() && results.length > 10 && (
+        <button className="show-more-btn" onClick={handleShowMore}>
+          Show More
+        </button>
+      )}
     </div>
   );
 }
