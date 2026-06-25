@@ -751,7 +751,7 @@ function NowPlaying() {
     }
   };
 
-  if (ytLoading) {
+  if (ytLoading && !isPlaying) {
     return (
       <div className="now-playing-loading">
         <div className="skeleton skeleton-album"></div>
