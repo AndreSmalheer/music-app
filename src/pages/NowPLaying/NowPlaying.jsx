@@ -667,6 +667,42 @@ function NowPlaying() {
   }, [currentTrack, audioPlayerRef]);
 
   useEffect(() => {
+    const audio = audioPlayerRef.current;
+
+    if (!currentTrack?.youtubeId || !audio) {
+      setYtLoading(false);
+      return;
+    }
+
+    const isNewTrack = loadedTrackRef.current !== currentTrack.youtubeId;
+
+    if (!isNewTrack) {
+      setYtLoading(false);
+      return;
+    }
+
+    loadedTrackRef.current = currentTrack.youtubeId;
+
+    setYtLoading(true);
+
+    const handlePlaying = () => {
+      setYtLoading(false);
+    };
+
+    const handleCanPlay = () => {
+      setYtLoading(false);
+    };
+
+    audio.addEventListener("playing", handlePlaying);
+    audio.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      audio.removeEventListener("playing", handlePlaying);
+      audio.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [currentTrack]);
+
+  useEffect(() => {
     if (!downloadSuccess) return undefined;
 
     const timer = setTimeout(() => {
