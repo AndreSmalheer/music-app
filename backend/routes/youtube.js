@@ -69,6 +69,13 @@ router.get("/search", async (req, res, next) => {
         type: "youtube",
       }));
 
+      if (paged) {
+        return res.json({
+          results,
+          nextPageToken: null,
+        });
+      }
+
       return res.json(results);
     }
 
