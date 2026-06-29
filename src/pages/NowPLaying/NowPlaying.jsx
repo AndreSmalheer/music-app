@@ -3,9 +3,13 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  Reorder,
+  useDragControls,
+} from "framer-motion";
 import { useRef } from "react";
-
 import { downloadYoutubeToLibrary } from "../../services/api";
 
 const MotionButton = motion.button;
@@ -610,6 +614,39 @@ function ReorderIcon() {
   );
 }
 
+function QueueItem({ track, index, currentIndex }) {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={track}
+      className={`queue-item ${index === currentIndex ? "now-playing" : ""}`}
+      dragListener={false}
+      dragControls={controls}
+      whileDrag={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+    >
+      <img src={track.coverSrc} alt="" className="queue-item-image" />
+
+      <div className="queue-item-info">
+        <p className="queue-item-title">{track.title}</p>
+        <p className="queue-item-artist">{track.artist}</p>
+      </div>
+
+      <div
+        className="queue-item-reorder"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          controls.start(e);
+        }}
+      >
+        <ReorderIcon />
+      </div>
+    </Reorder.Item>
+  );
+}
+
 function NowPlaying() {
   const {
     audioPlayerRef,
@@ -640,6 +677,7 @@ function NowPlaying() {
   const [downloadInFlight, setDownloadInFlight] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const loadedTrackRef = useRef(null);
+  const modalControls = useDragControls();
 
   useEffect(() => {
     const audio = audioPlayerRef.current;
@@ -1067,49 +1105,52 @@ function NowPlaying() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               drag="y"
+              dragListener={false}
+              dragControls={modalControls}
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.5 }}
               onDragEnd={(event, info) => {
                 if (info.offset.y > 100) setQueueOpen(false);
               }}
             >
-              <div className="queue-header">
+              {" "}
+              <div
+                className="queue-header"
+                onPointerDown={(e) => {
+                  modalControls.start(e);
+                }}
+              >
                 <div className="queue-handle"></div>
                 <h2 className="queue-title">Queue</h2>
               </div>
-              <div className="queue-content">
-                <div className="queue-list">
+              <div
+                className="queue-content"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <Reorder.Group
+                  axis="y"
+                  values={queue}
+                  onReorder={reorderQueue}
+                  className="queue-list"
+                  layoutScroll
+                >
                   {queue.length > 0 ? (
                     queue.map((track, index) => (
-                      <div
-                        key={`${track.src}-${index}`}
-                        className={`queue-item ${index === currentIndex ? "active" : ""}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, index)}
-                      >
-                        <img
-                          src={track.coverSrc}
-                          alt=""
-                          className="queue-item-image"
-                        />
-                        <div className="queue-item-info">
-                          <p className="queue-item-title">{track.title}</p>
-                          <p className="queue-item-artist">{track.artist}</p>
-                        </div>
-                        <div className="queue-item-reorder">
-                          <ReorderIcon />
-                        </div>
-                      </div>
+                      <QueueItem
+                        key={track.src}
+                        track={track}
+                        index={index}
+                        currentIndex={currentIndex}
+                      />
                     ))
                   ) : (
                     <div className="queue-empty-message">
                       Your queue is empty
                     </div>
                   )}
-                </div>
+                </Reorder.Group>
               </div>
             </MotionDiv>
           </MotionDiv>

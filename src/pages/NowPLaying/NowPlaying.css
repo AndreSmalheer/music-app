@@ -328,6 +328,7 @@
 
 .queue-content {
   overflow-y: auto;
+  max-height: 70vh;
   padding: 0 16px;
 }
 
@@ -344,6 +345,7 @@
   padding: 8px;
   border-radius: 12px;
   transition: background-color 0.2s ease;
+  touch-action: none;
 }
 
 .queue-item:active {
