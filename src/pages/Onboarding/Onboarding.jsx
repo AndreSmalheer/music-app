@@ -67,9 +67,7 @@ function Onboarding() {
       return;
     }
 
-    console.log("test account");
-
-    // navigate("/");
+    navigate("/");
   };
 
   const handleBack = () => {

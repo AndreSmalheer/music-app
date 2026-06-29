@@ -1,5 +1,6 @@
 import "./Settings.css";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Skeleton from "../../components/Skeleton/Skeleton";
 
 function ChevronRight() {
@@ -35,6 +36,7 @@ function SettingsSection({ title, children }) {
 
 function Settings() {
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 400);
@@ -99,7 +101,9 @@ function Settings() {
       </SettingsSection>
 
       <div className="logout-container">
-        <button className="btn-logout">Log Out</button>
+        <button className="btn-logout" onClick={() => navigate("/onboarding")}>
+          Log Out
+        </button>
       </div>
       
       <div className="settings-footer">

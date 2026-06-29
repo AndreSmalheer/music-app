@@ -26,6 +26,7 @@ function Download() {
   const [url, setUrl] = useState("");
   const [showMetadata, setShowMetadata] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [selectedCover, setSelectedCover] = useState("covers/test-cover.jpg");
   const [metadata, setMetadata] = useState({
     title: "Awesome Song Name",
@@ -43,6 +44,7 @@ function Download() {
   const handleSave = async () => {
     if (saving) return;
     setSaving(true);
+    setError("");
     try {
       await downloadFromYoutube({
         url,
@@ -55,6 +57,7 @@ function Download() {
       navigate("/");
     } catch (err) {
       console.error("Opslaan mislukt:", err);
+      setError("Download mislukt. Controleer de URL en probeer opnieuw.");
       setSaving(false);
     }
   };
@@ -155,6 +158,18 @@ function Download() {
                 />
               </div>
             </div>
+
+            {error && (
+              <p
+                style={{
+                  color: "#ff4d4f",
+                  fontSize: "14px",
+                  marginTop: "8px",
+                }}
+              >
+                {error}
+              </p>
+            )}
 
             <div className="download-actions">
               <motion.button
