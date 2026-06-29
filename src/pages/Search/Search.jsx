@@ -6,14 +6,20 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import { search as searchApi, addRecent } from "../../services/api";
+import {
+  searchYoutubePage,
+  downloadFromYoutube,
+  createYoutubeArtist,
+  addRecent,
+} from "../../services/api";
 import SongItem from "../../components/items/SongItem";
 import ArtistItem from "../../components/items/ArtistItems";
 
 const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
 
-// Genre-tegels: klikken zoekt op de genrenaam via de bestaande zoekfunctie.
+// Genre-tegels: klikken vult de zoekterm met de genrenaam; de pagina zoekt
+// daarmee direct op YouTube (zelfde flow als typen).
 const GENRES = [
   { name: "Pop", color: "#c0392b" },
   { name: "Hiphop", color: "#16a085" },
@@ -45,15 +51,19 @@ function Search() {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const local = await searchApi(q);
+        // Direct op YouTube zoeken — geen lokale DB-zoek meer die "geen
+        // resultaat" gaf. Resultaten zijn een mix van video's en kanalen.
+        const page = await searchYoutubePage(q);
+        const songs = page.results.filter((r) => r.type !== "youtube-artist");
+        const artists = page.results.filter((r) => r.type === "youtube-artist");
         setSearchResults({
-          topResults: [...local.songs.slice(0, 1)],
-          songs: local.songs,
-          artists: local.artists,
-          youtube: [],
+          topResults: songs.slice(0, 1),
+          songs,
+          artists,
+          youtube: songs,
         });
       } catch (err) {
-        console.error("Zoeken mislukt:", err);
+        console.error("YouTube zoeken mislukt:", err);
         setSearchResults(emptyResults);
       } finally {
         setIsLoading(false);
@@ -64,7 +74,9 @@ function Search() {
 
   const showSongs = activeTag === "All" || activeTag === "Songs";
   const showArtists = activeTag === "All" || activeTag === "Artists";
+
   const handlePlaySong = (song) => {
+    // Speel direct via streaming; metadata opslaan gebeurt op de achtergrond.
     playSong(
       song.src,
       song.title,
@@ -74,8 +86,33 @@ function Search() {
       song.youtubeId || null,
       searchResults.songs,
     );
-    if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
+
     navigate("/now-playing");
+
+    downloadFromYoutube({
+      url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
+      title: song.title,
+      artist: song.artist,
+      thumbnail: song.cover,
+    })
+      .then((savedSong) => {
+        if (savedSong?.id) addRecent(savedSong.id).catch(() => {});
+      })
+      .catch((err) => console.error("YouTube track opslaan mislukt:", err));
+  };
+
+  // YouTube-kanaal eerst in de DB opslaan, dan de artiestpagina openen.
+  const handleOpenYoutubeArtist = async (artist) => {
+    try {
+      const savedArtist = await createYoutubeArtist({
+        name: artist.name || artist.artist || artist.title,
+        thumbnail: artist.cover || artist.img,
+        youtubeChannelId: artist.youtubeChannelId,
+      });
+      navigate(`/artist/${savedArtist.id}`);
+    } catch (err) {
+      console.error("YouTube artiest openen mislukt:", err);
+    }
   };
 
   return (
@@ -134,15 +171,6 @@ function Search() {
             searchResults.youtube.length === 0 ? (
             <div className="search-placeholder">
               <h1>No results found</h1>
-
-              <button
-                className="search-yt-button"
-                onClick={() =>
-                  navigate(`/radio?query=${encodeURIComponent(query)}`)
-                }
-              >
-                Search on yt
-              </button>
             </div>
           ) : (
             <>
@@ -189,7 +217,7 @@ function Search() {
                       <ArtistItem
                         key={artist.id}
                         artist={artist}
-                        navigate={navigate}
+                        navigate={() => handleOpenYoutubeArtist(artist)}
                         showOptions={showOptions}
                         variant="artist"
                       />
