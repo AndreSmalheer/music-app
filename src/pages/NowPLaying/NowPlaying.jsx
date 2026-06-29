@@ -4,6 +4,7 @@ import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Slider from "../../components/Slider/Slider";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
 
 import { downloadYoutubeToLibrary } from "../../services/api";
 
@@ -638,33 +639,30 @@ function NowPlaying() {
   const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
   const [downloadInFlight, setDownloadInFlight] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const loadedTrackRef = useRef(null);
 
   useEffect(() => {
     const audio = audioPlayerRef.current;
 
     if (!currentTrack?.youtubeId || !audio) {
       setYtLoading(false);
+      loadedTrackRef.current = null;
       return;
     }
 
-    setYtLoading(true);
+    if (loadedTrackRef.current !== currentTrack.youtubeId) {
+      setYtLoading(true);
+      loadedTrackRef.current = currentTrack.youtubeId;
+    }
 
     const handlePlaying = () => {
       setYtLoading(false);
     };
 
-    const handleCanPlay = () => {
-      if (!audio.paused) {
-        setYtLoading(false);
-      }
-    };
-
     audio.addEventListener("playing", handlePlaying);
-    audio.addEventListener("canplay", handleCanPlay);
 
     return () => {
       audio.removeEventListener("playing", handlePlaying);
-      audio.removeEventListener("canplay", handleCanPlay);
     };
   }, [currentTrack, audioPlayerRef]);
 
