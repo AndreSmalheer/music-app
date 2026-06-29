@@ -76,11 +76,12 @@ function MediaPlayer({ children }) {
     coverSrc = "",
     index = -1,
     youtubeId = null,
+    newQueue = null,
   ) => {
     if (!audioPlayerRef.current) return;
 
-    // Als het een YouTube track is, halen we de stream URL op
     const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
+
     audioPlayerRef.current.src = finalSrc;
 
     const track = {
@@ -93,17 +94,36 @@ function MediaPlayer({ children }) {
 
     setCurrentTrack(track);
 
-    if (index !== -1) {
+    if (newQueue) {
+      const formattedQueue = newQueue.map((song) => ({
+        src: song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src,
+        title: song.title,
+        artist: song.artist,
+        coverSrc: song.cover,
+        youtubeId: song.youtubeId || null,
+      }));
+
+      const currentIndex = formattedQueue.findIndex(
+        (song) => song.src === finalSrc,
+      );
+
+      setQueue(formattedQueue);
+      setCurrentIndex(currentIndex !== -1 ? currentIndex : 0);
+    } else if (index !== -1) {
       setCurrentIndex(index);
     } else {
       setQueue((prev) => {
         const exists = prev.findIndex((t) => t.src === finalSrc);
+
         if (exists !== -1) {
           setCurrentIndex(exists);
           return prev;
         }
+
         const newQueue = [...prev, track];
+
         setCurrentIndex(newQueue.length - 1);
+
         return newQueue;
       });
     }
@@ -135,7 +155,14 @@ function MediaPlayer({ children }) {
   const playIndex = (index) => {
     const track = queue[index];
     if (!track) return;
-    playSong(track.src, track.title, track.artist, track.coverSrc, index, track.youtubeId);
+    playSong(
+      track.src,
+      track.title,
+      track.artist,
+      track.coverSrc,
+      index,
+      track.youtubeId,
+    );
   };
 
   const handleNext = () => {
@@ -178,7 +205,10 @@ function MediaPlayer({ children }) {
 
   // Surface laadfouten (bv. ontbrekend MP3-bestand of onbereikbare stream).
   const handleAudioError = () => {
-    console.error("Audio kon niet geladen/afgespeeld worden:", currentTrack?.title);
+    console.error(
+      "Audio kon niet geladen/afgespeeld worden:",
+      currentTrack?.title,
+    );
     setIsPlaying(false);
   };
 
@@ -212,7 +242,16 @@ function MediaPlayer({ children }) {
     };
 
     setHandlers();
-  }, [handlePlay, handlePause, handleNext, handlePrevious, queue, currentIndex, shuffle, repeatMode]);
+  }, [
+    handlePlay,
+    handlePause,
+    handleNext,
+    handlePrevious,
+    queue,
+    currentIndex,
+    shuffle,
+    repeatMode,
+  ]);
 
   const value = {
     audioPlayerRef,

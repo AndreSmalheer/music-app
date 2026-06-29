@@ -862,14 +862,14 @@ function NowPlaying() {
               </div>
             )}
 
-            <div
+            {/* <div
               className="options-btn"
               onClick={() =>
                 showOptions(menuOptions, (opt) => console.log(opt))
               }
             >
               <OptionsIcon />
-            </div>
+            </div> */}
           </div>
         </div>
 

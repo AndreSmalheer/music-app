@@ -8,12 +8,31 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { getArtist, addRecent } from "../../services/api";
 import "./ArtistDetail.css";
 
-// Discography is decoratief: er is (bewust) geen albums-collection in de backend.
 const albums = [
-  { id: 1, title: "The Masterpiece", year: "2024", cover: "/covers/test-cover.jpg" },
-  { id: 2, title: "Echoes of Silence", year: "2022", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
-  { id: 3, title: "Midnight City", year: "2021", cover: "/covers/test-cover.jpg" },
-  { id: 4, title: "Neon Nights", year: "2019", cover: "/indieblog-best-album-covers-2010s-07 4.png" },
+  {
+    id: 1,
+    title: "The Masterpiece",
+    year: "2024",
+    cover: "/covers/test-cover.jpg",
+  },
+  {
+    id: 2,
+    title: "Echoes of Silence",
+    year: "2022",
+    cover: "/indieblog-best-album-covers-2010s-07 4.png",
+  },
+  {
+    id: 3,
+    title: "Midnight City",
+    year: "2021",
+    cover: "/covers/test-cover.jpg",
+  },
+  {
+    id: 4,
+    title: "Neon Nights",
+    year: "2019",
+    cover: "/indieblog-best-album-covers-2010s-07 4.png",
+  },
 ];
 
 function ArtistDetail() {
@@ -24,8 +43,40 @@ function ArtistDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [artist, setArtist] = useState(null);
   const [topTracks, setTopTracks] = useState([]);
-  const longPressProps = useLongPress(() => showOptions(["Go to Radio", "Share", "Add to Playlist", "Report"], (opt) => console.log(opt)));
+  const longPressProps = useLongPress(() =>
+    showOptions(["Go to Radio", "Share", "Add to Playlist", "Report"], (opt) =>
+      console.log(opt),
+    ),
+  );
   const tapFeedback = { scale: 0.98 };
+
+  const shuffleTracks = (tracks) => {
+    const shuffled = [...tracks];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const random = Math.floor(Math.random() * (i + 1));
+
+      [shuffled[i], shuffled[random]] = [shuffled[random], shuffled[i]];
+    }
+
+    return shuffled;
+  };
+
+  const handleShuffle = () => {
+    const shuffled = [...topTracks].sort(() => Math.random() - 0.5);
+
+    playSong(
+      shuffled[0].src,
+      shuffled[0].title,
+      shuffled[0].artist,
+      shuffled[0].cover,
+      -1,
+      shuffled[0].youtubeId || null,
+      shuffled,
+    );
+
+    navigate("/now-playing");
+  };
 
   useEffect(() => {
     let active = true;
@@ -48,7 +99,14 @@ function ArtistDetail() {
 
   const handlePlaySong = (song) => {
     if (!song) return;
-    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
@@ -60,7 +118,11 @@ function ArtistDetail() {
           <Skeleton height="300px" borderRadius="0" />
           <div className="artist-hero-overlay">
             <Skeleton width="60%" height="2rem" />
-            <Skeleton width="40%" height="1rem" style={{ marginTop: "0.5rem" }} />
+            <Skeleton
+              width="40%"
+              height="1rem"
+              style={{ marginTop: "0.5rem" }}
+            />
           </div>
         </div>
       ) : (
@@ -89,18 +151,26 @@ function ArtistDetail() {
           <motion.button
             className="btn-artist-shuffle"
             whileTap={{ scale: 0.95 }}
-            onClick={() => handlePlaySong(topTracks[0])}
+            onClick={handleShuffle}
           >
             Shuffle
           </motion.button>
         </div>
 
         <section className="artist-section">
-          <h2 className="artist-section-title">Popular</h2>
+          <h2 className="artist-section-title">Nummers</h2>
           <div className="top-tracks-list">
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="artist-song-row" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <div
+                    key={i}
+                    className="artist-song-row"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1rem",
+                    }}
+                  >
                     <Skeleton width="20px" height="20px" />
                     <Skeleton width="50px" height="50px" />
                     <div style={{ flex: 1 }}>
@@ -118,17 +188,23 @@ function ArtistDetail() {
                     onClick={() => handlePlaySong(track)}
                   >
                     <span className="artist-song-index">{index + 1}</span>
-                    <img src={track.cover} alt="" className="artist-song-cover" />
+                    <img
+                      src={track.cover}
+                      alt=""
+                      className="artist-song-cover"
+                    />
                     <div className="artist-song-info">
                       <p className="artist-song-title">{track.title}</p>
                     </div>
-                    <span className="artist-song-duration">{track.durationLabel}</span>
+                    <span className="artist-song-duration">
+                      {track.durationLabel}
+                    </span>
                   </motion.div>
                 ))}
           </div>
         </section>
 
-        <section className="artist-section">
+        {/* <section className="artist-section">
           <h2 className="artist-section-title">Discography</h2>
           <div className="artist-albums-row">
             {albums.map((album) => (
@@ -137,20 +213,28 @@ function ArtistDetail() {
                 className="artist-album-card"
                 whileTap={{ scale: 0.95 }}
               >
-                <img src={album.cover} alt={album.title} className="artist-album-cover-img" />
+                <img
+                  src={album.cover}
+                  alt={album.title}
+                  className="artist-album-cover-img"
+                />
                 <p className="artist-album-title">{album.title}</p>
                 <p className="artist-album-year">{album.year}</p>
               </motion.div>
             ))}
           </div>
-        </section>
+        </section> */}
 
-        <section className="artist-section about-section">
+        {/* <section className="artist-section about-section">
           <h2 className="artist-section-title">About</h2>
           <div className="artist-bio-card">
-            <p>Artist Name is a multi-platinum award winning artist known for their innovative sound and captivating performances. This visual bio section explains their journey through the music industry.</p>
+            <p>
+              Artist Name is a multi-platinum award winning artist known for
+              their innovative sound and captivating performances. This visual
+              bio section explains their journey through the music industry.
+            </p>
           </div>
-        </section>
+        </section> */}
       </div>
     </div>
   );
