@@ -1,50 +1,74 @@
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
+import ArtistItem from "../../components/items/ArtistItems";
 import { getArtists } from "../../services/api";
 import "./SeeAll.css";
 
 function SeeAllArtists() {
   const { showOptions } = useModal();
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
   const [artists, setArtists] = useState([]);
 
   useEffect(() => {
     let active = true;
+
     (async () => {
       try {
         const data = await getArtists();
-        if (active) setArtists(data);
+
+        if (active) {
+          setArtists(data);
+        }
       } catch (err) {
         console.error("Artiesten laden mislukt:", err);
       } finally {
-        if (active) setIsLoading(false);
+        if (active) {
+          setIsLoading(false);
+        }
       }
     })();
+
     return () => {
       active = false;
     };
   }, []);
 
-  const navigate = useNavigate();
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
-  const tapFeedback = { scale: 0.98 };
-
   if (isLoading) {
     return (
       <div className="see-all-page">
-        <Skeleton width="150px" height="32px" style={{ marginBottom: "20px" }} />
+        <Skeleton
+          width="150px"
+          height="32px"
+          style={{ marginBottom: "20px" }}
+        />
+
         <div className="artists-list-full">
           {[...Array(12)].map((_, i) => (
-            <div key={i} className="artist-card-full-list" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              key={i}
+              className="artist-card-full-list"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
               <Skeleton width="60px" height="60px" borderRadius="50%" />
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "5px",
+                }}
+              >
                 <Skeleton width="120px" height="20px" />
+
                 <Skeleton width="80px" height="16px" />
               </div>
             </div>
@@ -61,19 +85,13 @@ function SeeAllArtists() {
       {artists.length > 0 ? (
         <div className="artists-list-full">
           {artists.map((artist) => (
-            <motion.div
+            <ArtistItem
               key={artist.id}
-              className="artist-card-full-list"
-              {...longPressProps}
-              whileTap={tapFeedback}
-              onClick={() => navigate(`/artist/${artist.id}`)}
-            >
-              <img src={artist.img} alt={artist.name} className="artist-card-full-list__img" />
-              <div className="artist-card-full-list__info">
-                <p className="artist-card-full-list__name">{artist.name}</p>
-                <p className="artist-card-full-list__subtitle">Artist</p>
-              </div>
-            </motion.div>
+              artist={artist}
+              navigate={navigate}
+              showOptions={showOptions}
+              variant="list"
+            />
           ))}
         </div>
       ) : (

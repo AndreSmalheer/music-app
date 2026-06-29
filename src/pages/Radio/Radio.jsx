@@ -9,9 +9,14 @@ import {
   searchYoutube,
 } from "../../services/api";
 import "./Radio.css";
+import { useModal } from "../../context/ModalContext";
+import useLongPress from "../../hooks/useLongPress";
+import ArtistItem from "../../components/items/ArtistItems";
+import SongItem from "../../components/items/SongItem";
 
 function Radio() {
   const [searchParams] = useSearchParams();
+  const { showOptions } = useModal();
 
   const [query, setQuery] = useState(searchParams.get("query") || "");
   const [results, setResults] = useState([]);
@@ -143,38 +148,25 @@ function Radio() {
             <p className="radio-searching-text">Searching...</p>
           ) : results.length > 0 ? (
             visibleResults.map((song) => (
-              <div
+              <SongItem
                 key={song.youtubeId}
-                className="radio-song-item"
-                onClick={() => handlePlaySong(song)}
-              >
-                <img src={song.img} alt={song.title} />
-
-                <div className="info">
-                  <h3>{song.title}</h3>
-                  <p>{song.artist}</p>
-                </div>
-              </div>
+                song={song}
+                handlePlaySong={handlePlaySong}
+                showOptions={showOptions}
+                variant="radio"
+              />
             ))
           ) : query.trim() ? (
             <p className="no-result-text">No results found.</p>
           ) : youtubeArtists.length > 0 ? (
             visibleArtists.map((artist) => (
-              <div
+              <ArtistItem
                 key={artist.id}
-                className="radio-song-item artist"
-                onClick={() => navigate(`/artist/${artist.id}`)}
-              >
-                <img
-                  src={artist.img || "/covers/test-cover.jpg"}
-                  alt={artist.name}
-                />
-
-                <div className="info">
-                  <h3>{artist.name}</h3>
-                  <p>YouTube Artist</p>
-                </div>
-              </div>
+                artist={artist}
+                navigate={navigate}
+                showOptions={showOptions}
+                variant="artist"
+              />
             ))
           ) : (
             <div className="radio-section__list"></div>

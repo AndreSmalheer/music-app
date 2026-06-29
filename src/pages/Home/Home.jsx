@@ -2,12 +2,20 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
-import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import { getArtists, getPlaylists, getSongs, addRecent } from "../../services/api";
+import {
+  getArtists,
+  getPlaylists,
+  getSongs,
+  addRecent,
+} from "../../services/api";
 import "./Home.css";
+import ArtistItem from "../../components/items/ArtistItems";
+import { useModal } from "../../context/ModalContext";
+import SongItem from "../../components/items/SongItem";
+import PlaylistItem from "../../components/items/PlaylistItem";
 
 // Husselt een array (Fisher-Yates) zodat we elke keer een andere selectie
 // "populaire" nummers kunnen tonen.
@@ -47,17 +55,24 @@ function Home() {
   const navigate = useNavigate();
 
   const menuOptions = ["Play", "Add to Library", "Share"];
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (option) => console.log(option)));
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, (option) => console.log(option)),
+  );
   const tapFeedback = { scale: 0.98 };
 
   const handleSongClick = (song) => {
-    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
-  // Verberg een kapotte/ontbrekende afbeelding zodat de placeholder-achtergrond
-  // van de kaart zichtbaar blijft in plaats van een gebroken-afbeelding-icoon.
   const handleImgError = (e) => {
     e.currentTarget.style.visibility = "hidden";
   };
@@ -73,8 +88,6 @@ function Home() {
         ]);
         if (!active) return;
         setPlaylists(playlistsData);
-        // Pak een paar willekeurige artiesten/nummers als "Popular" zodat de
-        // gebruiker meteen iets kan afspelen zonder te zoeken.
         setArtists(shuffle(artistsData).slice(0, 6));
         setPopular(shuffle(songsData).slice(0, 6));
       } catch (err) {
@@ -96,32 +109,30 @@ function Home() {
         <div className="home-section__header">
           <h2 className="home-section__title">Popular nummers</h2>
         </div>
+
         <div className="popular-list">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="track-card">
                 <Skeleton height="110px" borderRadius="11px" />
-                <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+
+                <Skeleton
+                  height="1rem"
+                  style={{
+                    marginTop: "10px",
+                  }}
+                />
               </div>
             ))
           ) : popular.length > 0 ? (
             popular.map((song) => (
-              <motion.div
+              <SongItem
                 key={song.id}
-                className="track-card"
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => handleSongClick(song)}
-              >
-                <img
-                  className="track-card__cover"
-                  src={song.cover}
-                  alt={song.title}
-                  loading="lazy"
-                  onError={handleImgError}
-                />
-                <p className="track-card__title">{song.title}</p>
-              </motion.div>
+                song={song}
+                handlePlaySong={handleSongClick}
+                showOptions={showOptions}
+                variant="card"
+              />
             ))
           ) : (
             <div className="empty-track-card">
@@ -142,32 +153,27 @@ function Home() {
             <ArrowBtn />
           </button>
         </div>
+
         <div className="home-section__list">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="artist-card">
                 <Skeleton width="85px" height="85px" borderRadius="50%" />
-                <Skeleton height="1rem" style={{ marginTop: "10px", width: "60px" }} />
+                <Skeleton
+                  height="1rem"
+                  style={{ marginTop: "10px", width: "60px" }}
+                />
               </div>
             ))
           ) : artists.length > 0 ? (
             artists.map((artist) => (
-              <motion.div
+              <ArtistItem
                 key={artist.id}
-                className="artist-card"
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => navigate(`/artist/${artist.id}`)}
-              >
-                <img
-                  src={artist.img}
-                  alt={artist.name}
-                  className="artist-card__img"
-                  loading="lazy"
-                  onError={handleImgError}
-                />
-                <p className="artist-card__name">{artist.name}</p>
-              </motion.div>
+                artist={artist}
+                navigate={navigate}
+                showOptions={showOptions}
+                variant="home"
+              />
             ))
           ) : (
             <div className="empty-artist-card">
@@ -198,16 +204,13 @@ function Home() {
             ))
           ) : playlists.length > 0 ? (
             playlists.map((playlist) => (
-              <motion.div
+              <PlaylistItem
                 key={playlist.id}
-                className="playlist-card"
-                {...longPressProps}
-                whileTap={tapFeedback}
-                onClick={() => navigate(`/playlist/${playlist.id}`)}
-              >
-                <img src={playlist.cover} alt={playlist.title} className="playlist-card__cover" />
-                <p className="playlist-card__title">{playlist.title}</p>
-              </motion.div>
+                playlist={playlist}
+                navigate={navigate}
+                showOptions={showOptions}
+                variant="home"
+              />
             ))
           ) : (
             <div style={{ gridColumn: "1 / -1" }}>

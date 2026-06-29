@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import "./RecentlyPlayed.css";
 import { useNavigate } from "react-router-dom";
-import { useState, useContext, useEffect } from "react";
+import { useCallback, useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../MediaPlayer/MediaPlayer";
 import { getRecent, addRecent } from "../../services/api";
+import SongItem from "../items/SongItem";
 
 function ArrowBtn() {
   return (
@@ -32,14 +33,11 @@ function RecentlyPlayed({
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [tracks, setTracks] = useState(tracksProp || []);
+
   const navigate = useNavigate();
+
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
-
-  const longPressProps = useLongPress(() =>
-    showOptions(menuOptions, (opt) => console.log(opt)),
-  );
-  const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
     if (tracksProp) {
@@ -47,12 +45,16 @@ function RecentlyPlayed({
       setIsLoading(false);
       return;
     }
+
     let active = true;
+
     (async () => {
       try {
         const data = await getRecent();
+
         if (!InculdeYt) {
           const filtered = data.filter((track) => !track.youtubeId);
+
           if (active) setTracks(filtered);
         } else {
           if (active) setTracks(data);
@@ -63,37 +65,41 @@ function RecentlyPlayed({
         if (active) setIsLoading(false);
       }
     })();
+
     return () => {
       active = false;
     };
-  }, [tracksProp]);
+  }, [tracksProp, InculdeYt]);
 
-  const menuOptions = [
-    "Add to Playlist",
-    "Go to Album",
-    "View Artist",
-    "Share Song",
-  ];
+  const handleTrackClick = useCallback(
+    (track) => {
+      playSong(
+        track.src,
+        track.title,
+        track.artist,
+        track.cover,
+        -1,
+        track.youtubeId || null,
+      );
 
-  const handleTrackClick = (track) => {
-    playSong(
-      track.src,
-      track.title,
-      track.artist,
-      track.cover,
-      -1,
-      track.youtubeId || null,
-    );
-    if (track.id) addRecent(track.id).catch(() => {});
-    navigate("/now-playing");
-  };
+      if (track.id) {
+        addRecent(track.id).catch(() => {});
+      }
+
+      navigate("/now-playing");
+    },
+    [playSong, navigate],
+  );
 
   return (
     <div
-      className={`recently-played ${YtSearchStyling ? "yt-search-styling" : ""}`}
+      className={`recently-played ${
+        YtSearchStyling ? "yt-search-styling" : ""
+      }`}
     >
       <div className="recently-played__header">
         <h2 className="recently-played__title">Onlangs afgespeeld</h2>
+
         <button
           className="recently-played__arrow"
           aria-label="See all"
@@ -102,32 +108,28 @@ function RecentlyPlayed({
           <ArrowBtn />
         </button>
       </div>
+
       <div className="recently-played__list">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="track-card">
               <Skeleton height="140px" borderRadius="12px" />
+
               <Skeleton height="1rem" style={{ marginTop: "10px" }} />
             </div>
           ))
         ) : tracks.length > 0 ? (
-          tracks.slice(0, 3).map((track) => (
-            <motion.div
-              key={track.id}
-              className="track-card"
-              {...longPressProps}
-              whileTap={tapFeedback}
-              onClick={() => handleTrackClick(track)}
-            >
-              <motion.img
-                className="track-card__cover"
-                src={track.cover}
-                alt={track.title}
-                layoutId={`cover-${track.id}`}
+          tracks
+            .slice(0, 3)
+            .map((track) => (
+              <SongItem
+                key={track.id}
+                song={track}
+                handlePlaySong={handleTrackClick}
+                showOptions={showOptions}
+                variant="card"
               />
-              <p className="track-card__title">{track.title}</p>
-            </motion.div>
-          ))
+            ))
         ) : (
           <div className="empty-track-card">
             <div className="empty-track-cover" />

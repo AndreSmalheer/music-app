@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import "./Search.css";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
-import useLongPress from "../../hooks/useLongPress";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
 import { search as searchApi, addRecent } from "../../services/api";
-import { AnimatePresence, motion } from "framer-motion";
+import SongItem from "../../components/items/SongItem";
+import ArtistItem from "../../components/items/ArtistItems";
 
 const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
@@ -20,9 +20,6 @@ function Search() {
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
-  const longPressProps = useLongPress(() =>
-    showOptions(menuOptions, (opt) => console.log(opt)),
-  );
   const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
@@ -74,14 +71,6 @@ function Search() {
     if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
-
-  const menuOptions = [
-    "Add to Playlist",
-    "Go to Album",
-    "View Artist",
-    "Share Song",
-    "Sleep Timer",
-  ];
 
   return (
     <div className="search-page">
@@ -136,24 +125,14 @@ function Search() {
                 <h3>Top Result</h3>
 
                 <div className="result-container">
-                  {searchResults.topResults.map((result) => (
-                    <motion.div
-                      key={result.id}
-                      className="serach-result-album-cover"
-                      {...longPressProps}
-                      whileTap={tapFeedback}
-                    >
-                      <img
-                        src={result.img}
-                        alt={result.title}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          borderRadius: "12px",
-                        }}
-                      />
-                    </motion.div>
+                  {searchResults.topResults.map((song) => (
+                    <SongItem
+                      key={song.id}
+                      song={song}
+                      handlePlaySong={handlePlaySong}
+                      showOptions={showOptions}
+                      variant="card"
+                    />
                   ))}
                 </div>
               </div>
@@ -164,46 +143,13 @@ function Search() {
 
                   <div className="songs-container">
                     {searchResults.songs.map((song) => (
-                      <motion.div
+                      <SongItem
                         key={song.id}
-                        className="song"
-                        {...longPressProps}
-                        whileTap={tapFeedback}
-                        onClick={() => handlePlaySong(song)}
-                      >
-                        <div className="album-cover-search-result">
-                          <img
-                            src={song.img}
-                            alt={song.title}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              borderRadius: "6px",
-                            }}
-                          />
-                        </div>
-
-                        <div className="search-song-info">
-                          <h2 className="search-song-title">{song.title}</h2>
-
-                          <div className="search-song-artist">
-                            {song.artist}
-                          </div>
-                        </div>
-
-                        <div
-                          className="options-container"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            showOptions(menuOptions, (opt) => console.log(opt));
-                          }}
-                        >
-                          <span></span>
-                          <span></span>
-                          <span></span>
-                        </div>
-                      </motion.div>
+                        song={song}
+                        handlePlaySong={handlePlaySong}
+                        showOptions={showOptions}
+                        variant="search"
+                      />
                     ))}
                   </div>
                 </div>
@@ -215,28 +161,13 @@ function Search() {
 
                   <div className="artists-container-result">
                     {searchResults.artists.map((artist) => (
-                      <motion.div
+                      <ArtistItem
                         key={artist.id}
-                        className="result-artist"
-                        {...longPressProps}
-                        whileTap={tapFeedback}
-                        onClick={() => navigate(`/artist/${artist.id}`)}
-                      >
-                        <div className="result-artist-img">
-                          <img
-                            src={artist.img}
-                            alt={artist.name}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              borderRadius: "50%",
-                            }}
-                          />
-                        </div>
-
-                        <h3 className="result-artist-text">{artist.name}</h3>
-                      </motion.div>
+                        artist={artist}
+                        navigate={navigate}
+                        showOptions={showOptions}
+                        variant="artist"
+                      />
                     ))}
                   </div>
                 </div>

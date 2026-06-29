@@ -4,6 +4,7 @@
   height: 100%;
   padding: 10px 26px;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
