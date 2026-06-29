@@ -17,131 +17,154 @@ function getYoutubedl() {
   return _youtubedl;
 }
 
-// GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's via de Data API v3
+// Korte cache voor zoekresultaten (key -> { results, nextPageToken, expires }).
+// Voorkomt dat dezelfde zoekopdracht yt-dlp/de API onnodig opnieuw aanroept
+// (Home vuurt bv. bij elke load een zoekopdracht af).
+const searchCache = new Map();
+const SEARCH_TTL = 10 * 60 * 1000;
+
+// Standaard YouTube-thumbnail uit een videoId — werkt altijd, ook als de bron
+// (flat playlist van yt-dlp) zelf geen thumbnail-URL meegeeft.
+function thumbForVideo(id) {
+  return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+}
+
+// --- Zoeken via de YouTube Data API v3 (quota-gebonden) ------------------
+async function searchViaApi(q, pageToken) {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) throw new Error("YOUTUBE_API_KEY ontbreekt");
+
+  const videosUrl =
+    `https://www.googleapis.com/youtube/v3/search` +
+    `?part=snippet&type=video&videoCategoryId=10` +
+    `&q=${encodeURIComponent(q)}` +
+    `&maxResults=15` +
+    `${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}` +
+    `&key=${key}`;
+
+  const channelsUrl =
+    `https://www.googleapis.com/youtube/v3/search` +
+    `?part=snippet&type=channel` +
+    `&q=${encodeURIComponent(q)}` +
+    `&maxResults=5&key=${key}`;
+
+  const [channelsRes, ytRes] = await Promise.all([
+    pageToken ? Promise.resolve(null) : fetch(channelsUrl),
+    fetch(videosUrl),
+  ]);
+
+  if ((channelsRes && !channelsRes.ok) || !ytRes.ok) {
+    throw new Error("YouTube API fout (mogelijk quota)");
+  }
+
+  const [channelsData, data] = await Promise.all([
+    channelsRes ? channelsRes.json() : Promise.resolve({ items: [] }),
+    ytRes.json(),
+  ]);
+
+  const channelResults = (channelsData.items || []).map((item) => ({
+    youtubeChannelId: item.id.channelId,
+    title: item.snippet.channelTitle || item.snippet.title,
+    artist: item.snippet.channelTitle || item.snippet.title,
+    thumbnail:
+      item.snippet.thumbnails?.medium?.url ||
+      item.snippet.thumbnails?.default?.url,
+    type: "youtube-artist",
+  }));
+
+  const videoResults = (data.items || []).map((item) => ({
+    youtubeId: item.id.videoId,
+    title: item.snippet.title,
+    artist: item.snippet.channelTitle,
+    thumbnail:
+      item.snippet.thumbnails?.medium?.url ||
+      item.snippet.thumbnails?.default?.url,
+    type: "youtube",
+  }));
+
+  return {
+    results: [...channelResults, ...videoResults],
+    nextPageToken: data.nextPageToken || null,
+  };
+}
+
+// --- Zoeken via yt-dlp (geen quota; alleen video's, geen kanalen) ---------
+async function searchViaYtdlp(q, max = 15) {
+  const info = await getYoutubedl()(`ytsearch${max}:${q}`, {
+    dumpSingleJson: true,
+    flatPlaylist: true,
+    noWarnings: true,
+  });
+
+  const entries = Array.isArray(info?.entries) ? info.entries : [];
+  const results = entries
+    .filter((e) => e && e.id)
+    .map((e) => ({
+      youtubeId: e.id,
+      title: e.title || "Onbekend",
+      artist: e.channel || e.uploader || "",
+      thumbnail: thumbForVideo(e.id),
+      type: "youtube",
+    }));
+
+  return { results, nextPageToken: null };
+}
+
+// Eén video opzoeken (bij een geplakte YouTube-URL) via yt-dlp.
+async function videoViaYtdlp(videoId) {
+  const info = await getYoutubedl()(
+    `https://www.youtube.com/watch?v=${videoId}`,
+    { dumpSingleJson: true, noWarnings: true, noPlaylist: true, skipDownload: true },
+  );
+  return {
+    results: [
+      {
+        youtubeId: info?.id || videoId,
+        title: info?.title || "Onbekend",
+        artist: info?.channel || info?.uploader || "",
+        thumbnail: thumbForVideo(info?.id || videoId),
+        type: "youtube",
+      },
+    ],
+    nextPageToken: null,
+  };
+}
+
+// GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's. Probeert eerst de
+// Data API (geeft ook kanalen/artiesten); valt bij elke fout — vooral als de
+// dag-quota op is — automatisch terug op yt-dlp, dat geen quota kent.
 router.get("/search", async (req, res, next) => {
   try {
     const q = (req.query.q || "").trim();
     const pageToken = (req.query.pageToken || "").trim();
     const paged = req.query.paged === "true";
 
-    if (!q) {
-      return res.json([]);
-    }
+    const reply = (payload) =>
+      res.json(paged ? payload : payload.results);
 
-    const key = process.env.YOUTUBE_API_KEY;
+    if (!q) return reply({ results: [], nextPageToken: null });
 
-    if (!key) {
-      return res.status(500).json({
-        error: "YOUTUBE_API_KEY ontbreekt",
-      });
-    }
+    const cacheKey = `${q}::${pageToken}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) return reply(cached.payload);
 
     const urlMatch = q.match(
       /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
     );
 
+    let payload;
     if (urlMatch) {
-      const videoId = urlMatch[1];
-
-      const url =
-        `https://www.googleapis.com/youtube/v3/videos` +
-        `?part=snippet&id=${videoId}&key=${key}`;
-
-      const ytRes = await fetch(url);
-
-      if (!ytRes.ok) {
-        const err = await ytRes.json().catch(() => ({}));
-
-        return res.status(ytRes.status).json({
-          error: err?.error?.message || "YouTube API fout",
-        });
-      }
-
-      const data = await ytRes.json();
-
-      const results = (data.items || []).map((item) => ({
-        youtubeId: item.id,
-        title: item.snippet.title,
-        artist: item.snippet.channelTitle,
-        thumbnail:
-          item.snippet.thumbnails?.medium?.url ||
-          item.snippet.thumbnails?.default?.url,
-        type: "youtube",
-      }));
-
-      return res.json(results);
-    }
-
-    const videosUrl =
-      `https://www.googleapis.com/youtube/v3/search` +
-      `?part=snippet&type=video&videoCategoryId=10` +
-      `&q=${encodeURIComponent(q)}` +
-      `&maxResults=15` +
-      `${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}` +
-      `&key=${key}`;
-
-    const channelsUrl =
-      `https://www.googleapis.com/youtube/v3/search` +
-      `?part=snippet&type=channel` +
-      `&q=${encodeURIComponent(q)}` +
-      `&maxResults=5&key=${key}`;
-
-    const [channelsRes, ytRes] = await Promise.all([
-      pageToken ? Promise.resolve(null) : fetch(channelsUrl),
-      fetch(videosUrl),
-    ]);
-
-    if (channelsRes && !channelsRes.ok) {
-      const err = await channelsRes.json().catch(() => ({}));
-
-      return res.status(channelsRes.status).json({
-        error: err?.error?.message || "YouTube API fout",
+      payload = await videoViaYtdlp(urlMatch[1]);
+    } else {
+      // Probeer de Data API; bij falen (bv. quota) terugvallen op yt-dlp.
+      payload = await searchViaApi(q, pageToken).catch((err) => {
+        console.warn("Data API zoeken faalde, val terug op yt-dlp:", err.message);
+        return searchViaYtdlp(q);
       });
     }
 
-    if (!ytRes.ok) {
-      const err = await ytRes.json().catch(() => ({}));
-
-      return res.status(ytRes.status).json({
-        error: err?.error?.message || "YouTube API fout",
-      });
-    }
-
-    const [channelsData, data] = await Promise.all([
-      channelsRes ? channelsRes.json() : Promise.resolve({ items: [] }),
-      ytRes.json(),
-    ]);
-
-    const channelResults = (channelsData.items || []).map((item) => ({
-      youtubeChannelId: item.id.channelId,
-      title: item.snippet.channelTitle || item.snippet.title,
-      artist: item.snippet.channelTitle || item.snippet.title,
-      thumbnail:
-        item.snippet.thumbnails?.medium?.url ||
-        item.snippet.thumbnails?.default?.url,
-      type: "youtube-artist",
-    }));
-
-    const videoResults = (data.items || []).map((item) => ({
-      youtubeId: item.id.videoId,
-      title: item.snippet.title,
-      artist: item.snippet.channelTitle,
-      thumbnail:
-        item.snippet.thumbnails?.medium?.url ||
-        item.snippet.thumbnails?.default?.url,
-      type: "youtube",
-    }));
-
-    const results = [...channelResults, ...videoResults];
-
-    if (paged) {
-      return res.json({
-        results,
-        nextPageToken: data.nextPageToken || null,
-      });
-    }
-
-    res.json(results);
+    searchCache.set(cacheKey, { payload, expires: Date.now() + SEARCH_TTL });
+    reply(payload);
   } catch (err) {
     next(err);
   }
