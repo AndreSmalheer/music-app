@@ -363,3 +363,10 @@ export async function searchYoutubePage(q, pageToken = "") {
 export function getYoutubeStreamUrl(videoId) {
   return `${BASE_URL}/api/youtube/stream/${videoId}`;
 }
+
+// Warmt server-side de audio-URL-cache van een YouTube-video op, zodat afspelen
+// daarna vrijwel direct start. Best-effort: fouten worden genegeerd.
+export function prefetchYoutube(videoId) {
+  if (!videoId) return;
+  fetch(`${BASE_URL}/api/youtube/prefetch/${videoId}`).catch(() => {});
+}

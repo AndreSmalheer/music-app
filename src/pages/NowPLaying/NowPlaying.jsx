@@ -1,5 +1,8 @@
 import "./NowPlaying.css";
-import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import {
+  PlayerContext,
+  PlayerProgressContext,
+} from "../../components/MediaPlayer/MediaPlayer";
 import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +38,52 @@ import {
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
+
+const formatTime = (time) => {
+  if (!Number.isFinite(time)) return "0:00";
+  const absoluteTime = Math.max(0, time);
+  const minutes = Math.floor(absoluteTime / 60);
+  const seconds = Math.floor(absoluteTime % 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+};
+
+// De voortgangsbalk re-rendert ~4x/sec (currentTime). Door 'm in een eigen
+// component te zetten die als enige PlayerProgressContext leest, blijft de rest
+// van NowPlaying (wachtrij, iconen, framer-motion) buiten die re-render-cyclus.
+// Dat scheelt merkbaar lag bij het bedienen van de knoppen tijdens het afspelen.
+function ProgressBar({ audioPlayerRef, isPlaying, handlePlay }) {
+  const { currentTime, duration } = useContext(PlayerProgressContext);
+
+  const hasKnownDuration = Number.isFinite(duration) && duration > 0;
+  const safeDuration = hasKnownDuration ? duration : 0;
+
+  return (
+    <div className="progress-bar">
+      <Slider
+        value={currentTime}
+        max={safeDuration || 1}
+        onChange={(val) => {
+          if (audioPlayerRef.current && hasKnownDuration) {
+            audioPlayerRef.current.currentTime = val;
+          }
+        }}
+        onDragEnd={() => {
+          if (!isPlaying) handlePlay();
+        }}
+      />
+      <div className="progress-bar-times">
+        <div className="progress-time progress-time-start">
+          {formatTime(currentTime)}
+        </div>
+        <div className="progress-time progress-time-end">
+          {hasKnownDuration
+            ? `-${formatTime(safeDuration - currentTime)}`
+            : "Live"}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function QueueItem({ track, index, currentIndex }) {
   const controls = useDragControls();
@@ -73,8 +122,6 @@ function NowPlaying() {
   const {
     audioPlayerRef,
     isPlaying,
-    currentTime,
-    duration,
     currentTrack,
     volume,
     queue,
@@ -91,6 +138,8 @@ function NowPlaying() {
     toggleShuffle,
   } = useContext(PlayerContext);
 
+  // currentTime/duration leven in een aparte component (ProgressBar) zodat
+  // NowPlaying zelf niet 4x/sec mee re-rendert tijdens het afspelen.
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -213,17 +262,6 @@ function NowPlaying() {
       </div>
     );
   }
-
-  const formatTime = (time) => {
-    if (!Number.isFinite(time)) return "0:00";
-    const absoluteTime = Math.max(0, time);
-    const minutes = Math.floor(absoluteTime / 60);
-    const seconds = Math.floor(absoluteTime % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
-  const hasKnownDuration = Number.isFinite(duration) && duration > 0;
-  const safeDuration = hasKnownDuration ? duration : 0;
 
   const menuOptions = [
     "Add to Playlist",
@@ -359,30 +397,11 @@ function NowPlaying() {
             </div>
           </div>
 
-          <div className="progress-bar">
-            <Slider
-              value={currentTime}
-              max={safeDuration || 1}
-              onChange={(val) => {
-                if (audioPlayerRef.current && hasKnownDuration) {
-                  audioPlayerRef.current.currentTime = val;
-                }
-              }}
-              onDragEnd={() => {
-                if (!isPlaying) handlePlay();
-              }}
-            />
-            <div className="progress-bar-times">
-              <div className="progress-time progress-time-start">
-                {formatTime(currentTime)}
-              </div>
-              <div className="progress-time progress-time-end">
-                {hasKnownDuration
-                  ? `-${formatTime(safeDuration - currentTime)}`
-                  : "Live"}
-              </div>
-            </div>
-          </div>
+          <ProgressBar
+            audioPlayerRef={audioPlayerRef}
+            isPlaying={isPlaying}
+            handlePlay={handlePlay}
+          />
 
           <div className="player-controls">
             <div className="control-group control-group--main">

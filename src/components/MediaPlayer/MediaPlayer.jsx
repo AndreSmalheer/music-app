@@ -1,12 +1,24 @@
-import { useRef, useState, createContext, useEffect } from "react";
-import { getYoutubeStreamUrl } from "../../services/api";
+import {
+  useRef,
+  useState,
+  createContext,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { getYoutubeStreamUrl, prefetchYoutube } from "../../services/api";
 
 export const PlayerContext = createContext();
+// Aparte context puur voor de speel-voortgang (currentTime/duration). Deze
+// verandert ~4x/sec tijdens het afspelen. Door 'm los te trekken van de
+// hoofd-context re-rendert alleen wie de tijdbalk toont (NowPlaying), en niet
+// de Footer + elke pagina. Dat scheelt een hoop onnodige re-renders → minder lag.
+export const PlayerProgressContext = createContext();
 
 function MediaPlayer({ children }) {
   const audioPlayerRef = useRef(null);
 
-  const updateMediaSession = (title, artist, coverSrc) => {
+  const updateMediaSession = useCallback((title, artist, coverSrc) => {
     if (!("mediaSession" in navigator)) return;
 
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -20,7 +32,7 @@ function MediaPlayer({ children }) {
         },
       ],
     });
-  };
+  }, []);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -33,10 +45,29 @@ function MediaPlayer({ children }) {
   const [shuffle, setShuffle] = useState(false);
   const [originalQueue, setOriginalQueue] = useState(null);
 
-  const toggleRepeat = () =>
-    setRepeatMode((prev) =>
-      prev === "off" ? "repeat" : prev === "repeat" ? "repeat-one" : "off",
-    );
+  // Spiegelt de laatste state in een ref zodat de (stabiele) handlers altijd
+  // verse waarden lezen zonder dat hun identiteit elke render verandert.
+  // Update na commit: de handlers lezen 'm alleen bij user-/audio-events.
+  const latest = useRef({});
+  useEffect(() => {
+    latest.current = {
+      queue,
+      currentIndex,
+      shuffle,
+      repeatMode,
+      originalQueue,
+      currentTrack,
+      isPlaying,
+    };
+  });
+
+  const toggleRepeat = useCallback(
+    () =>
+      setRepeatMode((prev) =>
+        prev === "off" ? "repeat" : prev === "repeat" ? "repeat-one" : "off",
+      ),
+    [],
+  );
 
   const shuffleArray = (array) => {
     const newArray = [...array];
@@ -53,7 +84,7 @@ function MediaPlayer({ children }) {
     return newArray;
   };
 
-  const toggleShuffle = () => {
+  const toggleShuffle = useCallback(() => {
     setShuffle((prev) => {
       const newShuffle = !prev;
 
@@ -61,8 +92,9 @@ function MediaPlayer({ children }) {
         setQueue((currentQueue) => {
           setOriginalQueue(currentQueue);
 
-          const beforeCurrent = currentQueue.slice(0, currentIndex + 1);
-          const afterCurrent = currentQueue.slice(currentIndex + 1);
+          const idx = latest.current.currentIndex;
+          const beforeCurrent = currentQueue.slice(0, idx + 1);
+          const afterCurrent = currentQueue.slice(idx + 1);
 
           const shuffled = shuffleArray(afterCurrent);
 
@@ -70,8 +102,8 @@ function MediaPlayer({ children }) {
         });
       } else {
         setQueue((currentQueue) => {
-          if (originalQueue) {
-            return originalQueue;
+          if (latest.current.originalQueue) {
+            return latest.current.originalQueue;
           }
 
           return currentQueue;
@@ -80,158 +112,159 @@ function MediaPlayer({ children }) {
 
       return newShuffle;
     });
-  };
+  }, []);
 
-  const handleVolumeChange = (newVolume) => {
+  const handleVolumeChange = useCallback((newVolume) => {
     const v = Math.max(0, Math.min(1, newVolume));
     setVolume(v);
     if (audioPlayerRef.current) {
       audioPlayerRef.current.volume = v;
     }
-  };
+  }, []);
 
-  const handlePlay = async () => {
+  const handlePlay = useCallback(async () => {
     try {
       await audioPlayerRef.current?.play();
       setIsPlaying(true);
-
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-        navigator.mediaSession.setActionHandler(
-          "previoustrack",
-          handlePrevious,
-        );
-      }
     } catch (err) {
       console.log("Play error:", err);
     }
-  };
+  }, []);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     audioPlayerRef.current?.pause();
     setIsPlaying(false);
-  };
+  }, []);
 
-  const playSong = async (
-    src,
-    title = "Unknown",
-    artist = "Unknown",
-    coverSrc = "",
-    index = -1,
-    youtubeId = null,
-    newQueue = null,
-  ) => {
-    if (!audioPlayerRef.current) return;
+  const playSong = useCallback(
+    async (
+      src,
+      title = "Unknown",
+      artist = "Unknown",
+      coverSrc = "",
+      index = -1,
+      youtubeId = null,
+      newQueue = null,
+    ) => {
+      if (!audioPlayerRef.current) return;
 
-    const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
+      const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
 
-    audioPlayerRef.current.src = finalSrc;
+      audioPlayerRef.current.src = finalSrc;
 
-    const track = {
-      src: finalSrc,
-      title,
-      artist,
-      coverSrc,
-      youtubeId,
-    };
+      const track = {
+        src: finalSrc,
+        title,
+        artist,
+        coverSrc,
+        youtubeId,
+      };
 
-    setCurrentTrack(track);
+      setCurrentTrack(track);
 
-    if (newQueue) {
-      const formattedQueue = newQueue.map((song) => ({
-        src: song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src,
-        title: song.title,
-        artist: song.artist,
-        coverSrc: song.cover,
-        youtubeId: song.youtubeId || null,
-      }));
+      if (newQueue) {
+        const formattedQueue = newQueue.map((song) => ({
+          src: song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src,
+          title: song.title,
+          artist: song.artist,
+          coverSrc: song.cover,
+          youtubeId: song.youtubeId || null,
+        }));
 
-      const currentIndex = formattedQueue.findIndex(
-        (song) => song.src === finalSrc,
-      );
+        const matchIndex = formattedQueue.findIndex(
+          (song) => song.src === finalSrc,
+        );
 
-      setQueue(formattedQueue);
-      setCurrentIndex(currentIndex !== -1 ? currentIndex : 0);
-    } else if (index !== -1) {
-      setCurrentIndex(index);
-    } else {
-      setQueue((prev) => {
-        const exists = prev.findIndex((t) => t.src === finalSrc);
+        setQueue(formattedQueue);
+        setCurrentIndex(matchIndex !== -1 ? matchIndex : 0);
+      } else if (index !== -1) {
+        setCurrentIndex(index);
+      } else {
+        setQueue((prev) => {
+          const exists = prev.findIndex((t) => t.src === finalSrc);
 
-        if (exists !== -1) {
-          setCurrentIndex(exists);
-          return prev;
-        }
+          if (exists !== -1) {
+            setCurrentIndex(exists);
+            return prev;
+          }
 
-        const newQueue = [...prev, track];
+          const appended = [...prev, track];
 
-        setCurrentIndex(newQueue.length - 1);
+          setCurrentIndex(appended.length - 1);
 
-        return newQueue;
-      });
-    }
+          return appended;
+        });
+      }
 
-    updateMediaSession(title, artist, coverSrc);
+      updateMediaSession(title, artist, coverSrc);
 
-    try {
-      await audioPlayerRef.current.play();
-      setIsPlaying(true);
-    } catch (err) {
-      console.log("Autoplay blocked or error:", err);
-      setIsPlaying(false);
-    }
-  };
+      try {
+        await audioPlayerRef.current.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.log("Autoplay blocked or error:", err);
+        setIsPlaying(false);
+      }
+    },
+    [updateMediaSession],
+  );
 
   // Bepaalt welke index als volgende speelt; houdt rekening met shuffle en repeat.
-  const getNextIndex = () => {
-    if (queue.length === 0) return -1;
-    if (shuffle && queue.length > 1) {
-      let r = currentIndex;
-      while (r === currentIndex) r = Math.floor(Math.random() * queue.length);
+  const getNextIndex = useCallback(() => {
+    const { queue: q, currentIndex: ci, shuffle: sh, repeatMode: rm } =
+      latest.current;
+    if (q.length === 0) return -1;
+    if (sh && q.length > 1) {
+      let r = ci;
+      while (r === ci) r = Math.floor(Math.random() * q.length);
       return r;
     }
-    if (currentIndex < queue.length - 1) return currentIndex + 1;
-    if (repeatMode === "repeat") return 0; // hele wachtrij opnieuw
+    if (ci < q.length - 1) return ci + 1;
+    if (rm === "repeat") return 0; // hele wachtrij opnieuw
     return -1; // einde
-  };
+  }, []);
 
-  const playIndex = (index) => {
-    const track = queue[index];
-    if (!track) return;
-    playSong(
-      track.src,
-      track.title,
-      track.artist,
-      track.coverSrc,
-      index,
-      track.youtubeId,
-    );
-  };
+  const playIndex = useCallback(
+    (index) => {
+      const track = latest.current.queue[index];
+      if (!track) return;
+      playSong(
+        track.src,
+        track.title,
+        track.artist,
+        track.coverSrc,
+        index,
+        track.youtubeId,
+      );
+    },
+    [playSong],
+  );
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const nextIndex = getNextIndex();
     if (nextIndex !== -1) playIndex(nextIndex);
-  };
+  }, [getNextIndex, playIndex]);
 
-  const handlePrevious = () => {
-    if (queue.length === 0) return;
+  const handlePrevious = useCallback(() => {
+    const { queue: q, currentIndex: ci, repeatMode: rm } = latest.current;
+    if (q.length === 0) return;
     // Meer dan 3s gespeeld? Dan eerst dit nummer herstarten (zoals Spotify).
     if (audioPlayerRef.current && audioPlayerRef.current.currentTime > 3) {
       audioPlayerRef.current.currentTime = 0;
       return;
     }
-    if (currentIndex > 0) {
-      playIndex(currentIndex - 1);
-    } else if (repeatMode === "repeat") {
-      playIndex(queue.length - 1);
+    if (ci > 0) {
+      playIndex(ci - 1);
+    } else if (rm === "repeat") {
+      playIndex(q.length - 1);
     } else if (audioPlayerRef.current) {
       audioPlayerRef.current.currentTime = 0;
     }
-  };
+  }, [playIndex]);
 
   // Wordt aangeroepen als een nummer is afgelopen.
-  const handleEnded = () => {
-    if (repeatMode === "repeat-one") {
+  const handleEnded = useCallback(() => {
+    if (latest.current.repeatMode === "repeat-one") {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.currentTime = 0;
         audioPlayerRef.current.play().catch(() => {});
@@ -244,90 +277,113 @@ function MediaPlayer({ children }) {
     } else {
       setIsPlaying(false);
     }
-  };
+  }, [getNextIndex, playIndex]);
 
   // Surface laadfouten (bv. ontbrekend MP3-bestand of onbereikbare stream).
-  const handleAudioError = () => {
+  const handleAudioError = useCallback(() => {
     console.error(
       "Audio kon niet geladen/afgespeeld worden:",
-      currentTrack?.title,
+      latest.current.currentTrack?.title,
     );
     setIsPlaying(false);
-  };
+  }, []);
 
-  const reorderQueue = (newQueue) => {
+  const reorderQueue = useCallback((newQueue) => {
     setQueue(newQueue);
-    if (currentTrack) {
-      const newIndex = newQueue.findIndex((t) => t.src === currentTrack.src);
+    const track = latest.current.currentTrack;
+    if (track) {
+      const newIndex = newQueue.findIndex((t) => t.src === track.src);
       if (newIndex !== -1) {
         setCurrentIndex(newIndex);
       }
     }
-  };
+  }, []);
 
-  const onTimeUpdate = () => {
+  // Warm de cache voor het volgende YouTube-nummer alvast op, zodat skip en
+  // auto-advance vrijwel direct spelen i.p.v. ~4s op yt-dlp te wachten.
+  useEffect(() => {
+    const next = queue[currentIndex + 1];
+    if (next?.youtubeId) prefetchYoutube(next.youtubeId);
+  }, [queue, currentIndex]);
+
+  const onTimeUpdate = useCallback(() => {
     setCurrentTime(audioPlayerRef.current?.currentTime || 0);
-  };
+  }, []);
 
-  const onLoadedMetadata = () => {
+  const onLoadedMetadata = useCallback(() => {
     setDuration(audioPlayerRef.current?.duration || 0);
-  };
+  }, []);
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
 
-    const setHandlers = () => {
-      navigator.mediaSession.setActionHandler("play", handlePlay);
-      navigator.mediaSession.setActionHandler("pause", handlePause);
+    // De handlers zijn stabiel en lezen verse state via de ref, dus één keer
+    // registreren is genoeg.
+    navigator.mediaSession.setActionHandler("play", handlePlay);
+    navigator.mediaSession.setActionHandler("pause", handlePause);
+    navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+    navigator.mediaSession.setActionHandler("previoustrack", handlePrevious);
+  }, [handlePlay, handlePause, handleNext, handlePrevious]);
 
-      navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-      navigator.mediaSession.setActionHandler("previoustrack", handlePrevious);
-    };
+  // Hoofd-context: bevat GEEN currentTime/duration, zodat consumers niet
+  // 4x/sec mee re-renderen. Verandert alleen bij echte besturings-state.
+  const value = useMemo(
+    () => ({
+      audioPlayerRef,
+      isPlaying,
+      currentTrack,
+      volume,
+      queue,
+      currentIndex,
+      repeatMode,
+      shuffle,
+      handlePlay,
+      handlePause,
+      handleNext,
+      handlePrevious,
+      handleVolumeChange,
+      toggleRepeat,
+      toggleShuffle,
+      playSong,
+      reorderQueue,
+    }),
+    [
+      isPlaying,
+      currentTrack,
+      volume,
+      queue,
+      currentIndex,
+      repeatMode,
+      shuffle,
+      handlePlay,
+      handlePause,
+      handleNext,
+      handlePrevious,
+      handleVolumeChange,
+      toggleRepeat,
+      toggleShuffle,
+      playSong,
+      reorderQueue,
+    ],
+  );
 
-    setHandlers();
-  }, [
-    handlePlay,
-    handlePause,
-    handleNext,
-    handlePrevious,
-    queue,
-    currentIndex,
-    shuffle,
-    repeatMode,
-  ]);
-
-  const value = {
-    audioPlayerRef,
-    isPlaying,
-    currentTime,
-    duration,
-    currentTrack,
-    volume,
-    queue,
-    currentIndex,
-    repeatMode,
-    shuffle,
-    handlePlay,
-    handlePause,
-    handleNext,
-    handlePrevious,
-    handleVolumeChange,
-    toggleRepeat,
-    toggleShuffle,
-    playSong,
-    reorderQueue,
-  };
+  const progressValue = useMemo(
+    () => ({ currentTime, duration }),
+    [currentTime, duration],
+  );
 
   return (
     <PlayerContext.Provider value={value}>
-      <audio
-        ref={audioPlayerRef}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={handleEnded}
-        onError={handleAudioError}
-      />
-      {children}
+      <PlayerProgressContext.Provider value={progressValue}>
+        <audio
+          ref={audioPlayerRef}
+          onTimeUpdate={onTimeUpdate}
+          onLoadedMetadata={onLoadedMetadata}
+          onEnded={handleEnded}
+          onError={handleAudioError}
+        />
+        {children}
+      </PlayerProgressContext.Provider>
     </PlayerContext.Provider>
   );
 }

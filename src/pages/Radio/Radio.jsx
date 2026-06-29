@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Link2, Search, Plus } from "lucide-react";
+import { ChevronLeft, Search, Plus } from "lucide-react";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import {
@@ -78,37 +78,37 @@ function Radio() {
     };
   }, []);
 
-  const handlePlaySong = async (song) => {
+  const handlePlaySong = (song) => {
     if (song.type === "youtube-artist") {
       handleOpenYoutubeArtist(song);
       return;
     }
 
-    try {
-      const savedSong = await downloadFromYoutube({
-        url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
-        title: song.title,
-        artist: song.artist,
-        thumbnail: song.cover,
-      });
+    // Speel direct via streaming — wacht niet op de server-side download.
+    // Dat scheelt een hele resolve (~4s) op het kritieke pad.
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
 
-      playSong(
-        savedSong.src,
-        savedSong.title,
-        savedSong.artist,
-        savedSong.cover,
-        -1,
-        savedSong.youtubeId || null,
-      );
+    navigate("/now-playing");
 
-      if (savedSong.id) {
-        addRecent(savedSong.id).catch(() => {});
-      }
-
-      navigate("/now-playing");
-    } catch (err) {
-      console.error("YouTube track opslaan mislukt:", err);
-    }
+    // Metadata op de achtergrond opslaan + bij 'recent' zetten (best-effort).
+    // De download hergebruikt de gedeelde resolve-cache, dus geen tweede yt-dlp.
+    downloadFromYoutube({
+      url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
+      title: song.title,
+      artist: song.artist,
+      thumbnail: song.cover,
+    })
+      .then((savedSong) => {
+        if (savedSong?.id) addRecent(savedSong.id).catch(() => {});
+      })
+      .catch((err) => console.error("YouTube track opslaan mislukt:", err));
   };
 
   const handleOpenYoutubeArtist = async (artist) => {
@@ -159,25 +159,6 @@ function Radio() {
           <ChevronLeft size={26} />
         </button>
         <h1 className="radio-header__title">YouTube toevoegen</h1>
-      </div>
-
-      <div className="radio-paste">
-        <div className="radio-paste__label">Plak een link</div>
-        <div className="radio-paste__row">
-          <div className="radio-paste__input">
-            <Link2 size={18} />
-            <span>youtube.com/watch?v=...</span>
-          </div>
-          <button type="button" className="radio-paste__btn">
-            Plak
-          </button>
-        </div>
-      </div>
-
-      <div className="radio-divider">
-        <span className="radio-divider__line" />
-        <span className="radio-divider__text">OF ZOEK OP YOUTUBE</span>
-        <span className="radio-divider__line" />
       </div>
 
       <div className="radio-search-container">
