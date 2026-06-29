@@ -16,6 +16,7 @@ function ArrowBtn() {
 
 function RecentlyPlayed({
   tracks: tracksProp,
+  fallbackTracks = [],
   InculdeYt = false,
   YtSearchStyling = false,
 }) {
@@ -99,31 +100,39 @@ function RecentlyPlayed({
       </div>
 
       <div className="recently-played__list">
-        {isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="track-card">
-              <Skeleton height="140px" borderRadius="12px" />
+        {(() => {
+          // Echte recent-data heeft voorrang; is die er (nog) niet, dan tonen we
+          // de meegegeven placeholder-nummers zodat de rij niet leeg is.
+          const list = tracks.length > 0 ? tracks : fallbackTracks;
 
-              <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+          if (isLoading) {
+            return Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="track-card">
+                <Skeleton height="140px" borderRadius="12px" />
+
+                <Skeleton height="1rem" style={{ marginTop: "10px" }} />
+              </div>
+            ));
+          }
+
+          return list.length > 0 ? (
+            list
+              .slice(0, 3)
+              .map((track) => (
+                <SongItem
+                  key={track.id}
+                  song={track}
+                  handlePlaySong={handleTrackClick}
+                  showOptions={showOptions}
+                  variant="card"
+                />
+              ))
+          ) : (
+            <div className="empty-track-card">
+              <div className="empty-track-cover" />
             </div>
-          ))
-        ) : tracks.length > 0 ? (
-          tracks
-            .slice(0, 3)
-            .map((track) => (
-              <SongItem
-                key={track.id}
-                song={track}
-                handlePlaySong={handleTrackClick}
-                showOptions={showOptions}
-                variant="card"
-              />
-            ))
-        ) : (
-          <div className="empty-track-card">
-            <div className="empty-track-cover" />
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

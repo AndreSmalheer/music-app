@@ -10,13 +10,21 @@ import {
   getArtists,
   getPlaylists,
   getSongs,
+  getRecent,
   addRecent,
+  searchYoutube,
+  downloadFromYoutube,
 } from "../../services/api";
 import "./Home.css";
 import ArtistItem from "../../components/items/ArtistItems";
 import { useModal } from "../../context/ModalContext";
 import SongItem from "../../components/items/SongItem";
 import PlaylistItem from "../../components/items/PlaylistItem";
+import {
+  MOOD_TILES,
+  PLACEHOLDER_TRACKS,
+  gradientFor,
+} from "../../data/placeholderContent";
 
 // Husselt een array (Fisher-Yates) zodat we elke keer een andere selectie
 // "populaire" nummers kunnen tonen.
@@ -33,21 +41,25 @@ function ArrowBtn() {
   return <ArrowRight size={22} strokeWidth={2.5} />;
 }
 
-// Vaste gradient-set voor covers zonder afbeelding (zelfde sfeer als het ontwerp).
-const GRADIENTS = [
-  "linear-gradient(135deg,#3d348b,#7678ed)",
-  "linear-gradient(135deg,#0a4d68,#37b3a4)",
-  "linear-gradient(135deg,#b9375e,#e8836c)",
-  "linear-gradient(135deg,#704264,#bb8493)",
-  "linear-gradient(135deg,#1b3a4b,#3a7563)",
-  "linear-gradient(135deg,#264653,#2a9d8f)",
+// Zoektermen voor de "vulling"-nummers. Bij elke refresh kiezen we er willekeurig
+// één, zodat je steeds andere nummers ziet.
+const SEED_QUERIES = [
+  "top hits 2024",
+  "pop hits",
+  "hip hop 2024",
+  "dance hits",
+  "rock classics",
+  "chill music",
+  "indie pop",
+  "nederlandse hits",
+  "r&b hits",
+  "latin hits",
+  "viral songs",
+  "throwback hits",
 ];
 
-// Kies deterministisch een gradient op basis van een string (titel/naam).
-function gradientFor(str) {
-  let hash = 0;
-  for (const ch of String(str || "")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return GRADIENTS[hash % GRADIENTS.length];
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function Home() {
@@ -55,6 +67,12 @@ function Home() {
   const [artists, setArtists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [popular, setPopular] = useState([]);
+  // Echte YouTube-tracks (mét echte cover-thumbnails) om de Home te vullen
+  // zolang er nog geen eigen songs in de database staan.
+  const [realTracks, setRealTracks] = useState([]);
+  // Persoonlijke aanbevelingen, afgeleid van wat je laatst speelde.
+  const [recommended, setRecommended] = useState([]);
+  const [recentArtist, setRecentArtist] = useState("");
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -65,7 +83,12 @@ function Home() {
   );
   const tapFeedback = { scale: 0.98 };
 
+  // Echte YouTube-tracks als vulling; valt terug op placeholders als YouTube
+  // (nog) niets gaf, zodat de Home nooit leeg is.
+  const filler = realTracks.length > 0 ? realTracks : PLACEHOLDER_TRACKS;
+
   const handleSongClick = (song) => {
+    const queue = popular.length > 0 ? popular : filler;
     playSong(
       song.src,
       song.title,
@@ -73,14 +96,26 @@ function Home() {
       song.cover,
       -1,
       song.youtubeId || null,
-      popular,
+      queue,
     );
-    if (song.id) addRecent(song.id).catch(() => {});
-    navigate("/now-playing");
-  };
 
-  const handleImgError = (e) => {
-    e.currentTarget.style.visibility = "hidden";
+    navigate("/now-playing");
+
+    // YouTube-track: stream-first afspelen, op de achtergrond opslaan + recent.
+    if (song.youtubeId) {
+      downloadFromYoutube({
+        url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
+        title: song.title,
+        artist: song.artist,
+        thumbnail: song.cover,
+      })
+        .then((saved) => {
+          if (saved?.id) addRecent(saved.id).catch(() => {});
+        })
+        .catch(() => {});
+    } else if (song.id) {
+      addRecent(song.id).catch(() => {});
+    }
   };
 
   useEffect(() => {
@@ -95,13 +130,54 @@ function Home() {
         if (!active) return;
         setPlaylists(playlistsData);
         setArtists(shuffle(artistsData).slice(0, 6));
-        setPopular(shuffle(songsData).slice(0, 6));
+        setPopular(songsData.length > 0 ? shuffle(songsData).slice(0, 6) : []);
       } catch (err) {
         console.error("Home laden mislukt:", err);
       } finally {
         if (active) setIsLoading(false);
       }
     })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Echte nummers + covers van YouTube ophalen om de rijen te vullen. Bij elke
+  // refresh een willekeurige zoekterm + gehusseld, dus je ziet steeds andere
+  // nummers. Apart van de DB-fetch zodat de pagina meteen verschijnt.
+  useEffect(() => {
+    let active = true;
+    searchYoutube(pickRandom(SEED_QUERIES))
+      .then((results) => {
+        if (!active) return;
+        const songs = results.filter((r) => r.type !== "youtube-artist");
+        setRealTracks(shuffle(songs));
+      })
+      .catch((err) => console.error("YouTube-vulling laden mislukt:", err));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // "Speciaal voor jou" personaliseren: kijk naar je laatst afgespeelde nummer
+  // en haal meer nummers van die artiest op. Draait bij elke keer dat de Home
+  // opent, dus na het afspelen van een nummer past dit zich aan.
+  useEffect(() => {
+    let active = true;
+    getRecent()
+      .then((recent) => {
+        if (!active) return;
+        const last = recent.find((t) => t && t.artist);
+        if (!last) return;
+        setRecentArtist(last.artist);
+        return searchYoutube(last.artist);
+      })
+      .then((results) => {
+        if (!active || !results) return;
+        const songs = results.filter((r) => r.type !== "youtube-artist");
+        setRecommended(shuffle(songs));
+      })
+      .catch((err) => console.error("Aanbevelingen laden mislukt:", err));
     return () => {
       active = false;
     };
@@ -127,6 +203,28 @@ function Home() {
     })),
   ];
 
+  // Voorrang: eigen playlists/artiesten → persoonlijke aanbevelingen (op basis
+  // van wat je speelde) → algemene vulling. Zo past "Speciaal voor jou" zich aan.
+  const personalized =
+    recommended.length > 0 ? recommended : filler.slice(6, 14);
+  const displayRecommendations =
+    recommendations.length > 0
+      ? recommendations
+      : personalized.map((track) => ({
+          key: `fill-${track.id}`,
+          title: track.title,
+          sub: track.artist,
+          cover: track.cover,
+          gradient: track.gradient || gradientFor(track.title),
+          onClick: () => handleSongClick(track),
+        }));
+
+  // Titel toont waarom het wordt aanbevolen zodra het gepersonaliseerd is.
+  const specialTitle =
+    recommendations.length === 0 && recommended.length > 0 && recentArtist
+      ? `Omdat je naar ${recentArtist} luisterde`
+      : "Speciaal voor jou";
+
   return (
     <div className="home-page">
       <div className="home-topbar">
@@ -150,35 +248,46 @@ function Home() {
       </div>
 
       <div className="home-tiles">
-        {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="home-tile">
-                <Skeleton width="56px" height="56px" borderRadius="0" />
-                <Skeleton height="1rem" style={{ flex: 1, margin: "0 11px" }} />
-              </div>
-            ))
-          : popular.slice(0, 6).map((song) => (
-              <motion.button
-                key={song.id}
-                className="home-tile"
-                whileTap={tapFeedback}
-                onClick={() => handleSongClick(song)}
-              >
+        {MOOD_TILES.map((tile, i) => {
+          const cover = filler[i]?.cover;
+          return (
+            <motion.button
+              key={tile.name}
+              className="home-tile"
+              whileTap={tapFeedback}
+              onClick={() => navigate("/search")}
+            >
+              {cover ? (
                 <img
                   className="home-tile__cover"
-                  src={song.cover}
+                  src={cover}
                   alt=""
-                  onError={handleImgError}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling?.style.setProperty(
+                      "display",
+                      "block",
+                    );
+                  }}
                 />
-                <span className="home-tile__title">{song.title}</span>
-              </motion.button>
-            ))}
+              ) : null}
+              <span
+                className="home-tile__cover"
+                style={{
+                  background: tile.gradient,
+                  display: cover ? "none" : "block",
+                }}
+              />
+              <span className="home-tile__title">{tile.name}</span>
+            </motion.button>
+          );
+        })}
       </div>
 
-      <RecentlyPlayed />
+      <RecentlyPlayed InculdeYt={true} fallbackTracks={filler} />
 
       <section className="home-carousel">
-        <h2 className="home-carousel-title">Speciaal voor jou</h2>
+        <h2 className="home-carousel-title">{specialTitle}</h2>
         <div className="home-carousel__row">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
@@ -187,8 +296,8 @@ function Home() {
                 <Skeleton height="1rem" style={{ marginTop: "9px" }} />
               </div>
             ))
-          ) : recommendations.length > 0 ? (
-            recommendations.map((item) => (
+          ) : displayRecommendations.length > 0 ? (
+            displayRecommendations.map((item) => (
               <motion.button
                 key={item.key}
                 className="home-card"

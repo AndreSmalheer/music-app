@@ -5,6 +5,7 @@ import {
   getPlaylists,
   removeSongFromPlaylist,
 } from "../../services/api";
+import { gradientFor } from "../../data/placeholderContent";
 
 function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
   const menuOptions = ["Play", "Add to Playlist"];
@@ -56,6 +57,7 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
 
   // CARD STYLE
   if (variant === "card") {
+    const cover = song.cover || song.img;
     return (
       <motion.div
         className="track-card"
@@ -65,14 +67,35 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
         }}
         onClick={() => handlePlaySong(song)}
       >
-        <motion.img
-          className="track-card__cover"
-          src={song.cover || song.img}
-          alt={song.title}
-          layoutId={`cover-${song.id}`}
+        {cover ? (
+          <motion.img
+            className="track-card__cover"
+            src={cover}
+            alt={song.title}
+            layoutId={`cover-${song.id}`}
+            onError={(e) => {
+              // Val terug op de gradient als de afbeelding niet laadt.
+              e.currentTarget.style.display = "none";
+              e.currentTarget.nextElementSibling?.style.setProperty(
+                "display",
+                "block",
+              );
+            }}
+          />
+        ) : null}
+
+        <div
+          className="track-card__cover track-card__fallback"
+          style={{
+            background: song.gradient || gradientFor(song.title || song.id),
+            display: cover ? "none" : "block",
+          }}
         />
 
         <p className="track-card__title">{song.title}</p>
+        {song.artist ? (
+          <p className="track-card__artist">{song.artist}</p>
+        ) : null}
       </motion.div>
     );
   }
