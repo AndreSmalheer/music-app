@@ -98,13 +98,6 @@ function Home() {
         <div className="home-topbar__actions">
           <button
             className="home-icon-btn"
-            aria-label="Upload"
-            onClick={() => navigate("/upload")}
-          >
-            <Upload size={24} strokeWidth={1.9} />
-          </button>
-          <button
-            className="home-icon-btn"
             aria-label="Settings"
             onClick={() => navigate("/settings")}
           >

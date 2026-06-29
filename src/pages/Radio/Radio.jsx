@@ -163,25 +163,6 @@ function Radio() {
         <h1 className="radio-header__title">YouTube toevoegen</h1>
       </div>
 
-      <div className="radio-paste">
-        <div className="radio-paste__label">Plak een link</div>
-        <div className="radio-paste__row">
-          <div className="radio-paste__input">
-            <Link2 size={18} />
-            <span>youtube.com/watch?v=...</span>
-          </div>
-          <button type="button" className="radio-paste__btn">
-            Plak
-          </button>
-        </div>
-      </div>
-
-      <div className="radio-divider">
-        <span className="radio-divider__line" />
-        <span className="radio-divider__text">OF ZOEK OP YOUTUBE</span>
-        <span className="radio-divider__line" />
-      </div>
-
       <div className="radio-search-container">
         <Search className="radio-search-icon" size={19} />
         <input

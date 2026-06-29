@@ -33,79 +33,6 @@
   letter-spacing: -0.4px;
 }
 
-/* ---------- Plak een link ---------- */
-.radio-paste {
-  width: 100%;
-}
-
-.radio-paste__label {
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.radio-paste__row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.radio-paste__input {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9px;
-  padding: 13px 14px;
-  color: #7d7d80;
-  font-size: 14px;
-  font-weight: 500;
-  overflow: hidden;
-}
-
-.radio-paste__input span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.radio-paste__btn {
-  flex-shrink: 0;
-  background: var(--accent, #1ed15f);
-  color: var(--accent-text, #0c0c0e);
-  border: none;
-  border-radius: 9px;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-/* ---------- Divider ---------- */
-.radio-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 22px;
-  color: #6d6d70;
-}
-
-.radio-divider__line {
-  flex: 1;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.radio-divider__text {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
 /* ---------- Search ---------- */
 .radio-search-container {
   display: flex;
@@ -117,6 +44,7 @@
   padding: 12px 14px;
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: 15px;
 }
 
 .radio-search-container:focus-within {
