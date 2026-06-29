@@ -10,6 +10,7 @@ import {
   addRecent,
   removeSongFromPlaylist,
 } from "../../services/api";
+import { playTrackList } from "../../utils/playback";
 import "./PlaylistDetail.css";
 
 function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong }) {
@@ -78,43 +79,20 @@ function PlaylistDetail() {
       song.cover,
       -1,
       song.youtubeId || null,
+      songs,
     );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
-  const shuffleSongs = (songs) => {
-    const shuffled = [...songs];
-
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const random = Math.floor(Math.random() * (i + 1));
-
-      [shuffled[i], shuffled[random]] = [shuffled[random], shuffled[i]];
-    }
-
-    return shuffled;
+  // Speel de hele playlist vanaf het begin.
+  const handlePlayAll = () => {
+    playTrackList(songs, { playSong, navigate });
   };
 
+  // Speel de playlist in willekeurige volgorde.
   const handleShuffle = () => {
-    if (songs.length === 0) return;
-
-    const shuffled = shuffleSongs(songs);
-
-    playSong(
-      shuffled[0].src,
-      shuffled[0].title,
-      shuffled[0].artist,
-      shuffled[0].cover,
-      -1,
-      shuffled[0].youtubeId || null,
-      shuffled,
-    );
-
-    if (shuffled[0].id) {
-      addRecent(shuffled[0].id).catch(() => {});
-    }
-
-    navigate("/now-playing");
+    playTrackList(songs, { playSong, navigate, shuffle: true });
   };
 
   const handleRemoveSong = async (song) => {
@@ -159,7 +137,7 @@ function PlaylistDetail() {
           <motion.button
             className="btn-playlist-action play"
             whileTap={{ scale: 0.95 }}
-            onClick={() => handlePlaySong(songs[0])}
+            onClick={handlePlayAll}
           >
             Play
           </motion.button>

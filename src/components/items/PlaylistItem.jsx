@@ -1,8 +1,20 @@
 import { motion } from "framer-motion";
+import { useContext } from "react";
 import useLongPress from "../../hooks/useLongPress";
+import { PlayerContext } from "../MediaPlayer/MediaPlayer";
+import { playPlaylistById } from "../../utils/playback";
 
 function PlaylistItem({ playlist, navigate, showOptions, variant = "home" }) {
+  const { playSong } = useContext(PlayerContext);
   const menuOptions = ["Open", "Play", "Shuffle"];
+
+  const playPlaylist = async (shuffle) => {
+    try {
+      await playPlaylistById(playlist.id, { playSong, navigate, shuffle });
+    } catch (err) {
+      console.error("Playlist afspelen mislukt:", err);
+    }
+  };
 
   const handleMenuOption = (option) => {
     switch (option) {
@@ -11,11 +23,11 @@ function PlaylistItem({ playlist, navigate, showOptions, variant = "home" }) {
         break;
 
       case "Play":
-        console.log("playing");
+        playPlaylist(false);
         break;
 
       case "Shuffle":
-        console.log("shufeeling");
+        playPlaylist(true);
         break;
 
       default:

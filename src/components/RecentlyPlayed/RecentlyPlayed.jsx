@@ -80,6 +80,7 @@ function RecentlyPlayed({
         track.cover,
         -1,
         track.youtubeId || null,
+        tracks,
       );
 
       if (track.id) {
@@ -88,7 +89,7 @@ function RecentlyPlayed({
 
       navigate("/now-playing");
     },
-    [playSong, navigate],
+    [playSong, navigate, tracks],
   );
 
   return (

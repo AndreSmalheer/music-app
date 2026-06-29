@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import { getPlaylists } from "../../services/api";
+import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import { playPlaylistById } from "../../utils/playback";
 import "./SeeAll.css";
 
 function PlusIcon() {
@@ -17,8 +19,62 @@ function PlusIcon() {
   );
 }
 
+// Eén playlist-kaart met eigen long-press menu (Open/Play/Shuffle).
+function PlaylistCardFull({ playlist, navigate, showOptions, playSong }) {
+  const menuOptions = ["Open", "Play", "Shuffle"];
+
+  const playPlaylist = async (shuffle) => {
+    try {
+      await playPlaylistById(playlist.id, { playSong, navigate, shuffle });
+    } catch (err) {
+      console.error("Playlist afspelen mislukt:", err);
+    }
+  };
+
+  const handleMenuOption = (option) => {
+    switch (option) {
+      case "Open":
+        navigate(`/playlist/${playlist.id}`);
+        break;
+      case "Play":
+        playPlaylist(false);
+        break;
+      case "Shuffle":
+        playPlaylist(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const longPressProps = useLongPress(() =>
+    showOptions(menuOptions, handleMenuOption),
+  );
+
+  return (
+    <motion.div
+      className="playlist-card-full"
+      {...longPressProps}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => navigate(`/playlist/${playlist.id}`)}
+    >
+      <img
+        src={playlist.cover}
+        alt={playlist.title}
+        className="playlist-card-full__cover"
+      />
+
+      <div className="playlist-card-full__info">
+        <p className="playlist-card-full__title">{playlist.title}</p>
+        <p className="playlist-card-full__subtitle">{playlist.songCount} songs</p>
+      </div>
+    </motion.div>
+  );
+}
+
 function SeeAllPlaylists() {
   const { showOptions } = useModal();
+  const { playSong } = useContext(PlayerContext);
 
   const [isLoading, setIsLoading] = useState(true);
   const [playlists, setPlaylists] = useState([]);
@@ -41,8 +97,6 @@ function SeeAllPlaylists() {
   }, []);
 
   const navigate = useNavigate();
-  const longPressProps = useLongPress(() => showOptions(menuOptions, (opt) => console.log(opt)));
-  const tapFeedback = { scale: 0.98 };
 
   if (isLoading) {
     return (
@@ -74,24 +128,13 @@ function SeeAllPlaylists() {
       <div className="playlists-list-full">
         {playlists.length > 0 ? (
           playlists.map((playlist) => (
-            <motion.div
+            <PlaylistCardFull
               key={playlist.id}
-              className="playlist-card-full"
-              {...longPressProps}
-              whileTap={tapFeedback}
-              onClick={() => navigate(`/playlist/${playlist.id}`)}
-            >
-              <img
-                src={playlist.cover}
-                alt={playlist.title}
-                className="playlist-card-full__cover"
-              />
-
-              <div className="playlist-card-full__info">
-                <p className="playlist-card-full__title">{playlist.title}</p>
-                <p className="playlist-card-full__subtitle">{playlist.songCount} songs</p>
-              </div>
-            </motion.div>
+              playlist={playlist}
+              navigate={navigate}
+              showOptions={showOptions}
+              playSong={playSong}
+            />
           ))
         ) : (
           <EmptyState

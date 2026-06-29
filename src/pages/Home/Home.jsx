@@ -68,6 +68,7 @@ function Home() {
       song.cover,
       -1,
       song.youtubeId || null,
+      popular,
     );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");

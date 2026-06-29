@@ -145,7 +145,15 @@ function ArtistDetail() {
       return;
     }
 
-    playSong(song.src, song.title, song.artist, song.cover, -1, null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+      topTracks,
+    );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
