@@ -29,33 +29,58 @@ function MediaPlayer({ children }) {
   const [volume, setVolume] = useState(1);
   const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  // off → niet herhalen, repeat → hele wachtrij herhalen, repeat-one → dit nummer herhalen
   const [repeatMode, setRepeatMode] = useState("off");
   const [shuffle, setShuffle] = useState(false);
+  const [originalQueue, setOriginalQueue] = useState(null);
 
   const toggleRepeat = () =>
     setRepeatMode((prev) =>
       prev === "off" ? "repeat" : prev === "repeat" ? "repeat-one" : "off",
     );
 
-  function toggleShuffle() {
+  const shuffleArray = (array) => {
+    const newArray = [...array];
+
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+
+      [newArray[i], newArray[randomIndex]] = [
+        newArray[randomIndex],
+        newArray[i],
+      ];
+    }
+
+    return newArray;
+  };
+
+  const toggleShuffle = () => {
     setShuffle((prev) => {
       const newShuffle = !prev;
 
       if (newShuffle) {
         setQueue((currentQueue) => {
+          setOriginalQueue(currentQueue);
+
           const beforeCurrent = currentQueue.slice(0, currentIndex + 1);
           const afterCurrent = currentQueue.slice(currentIndex + 1);
 
-          const shuffled = [...afterCurrent].sort(() => Math.random() - 0.5);
+          const shuffled = shuffleArray(afterCurrent);
 
           return [...beforeCurrent, ...shuffled];
+        });
+      } else {
+        setQueue((currentQueue) => {
+          if (originalQueue) {
+            return originalQueue;
+          }
+
+          return currentQueue;
         });
       }
 
       return newShuffle;
     });
-  }
+  };
 
   const handleVolumeChange = (newVolume) => {
     const v = Math.max(0, Math.min(1, newVolume));

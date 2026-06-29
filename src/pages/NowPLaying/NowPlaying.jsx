@@ -1130,12 +1130,14 @@ function NowPlaying() {
                 }}
               >
                 <Reorder.Group
+                  as="div"
                   axis="y"
                   values={queue}
                   onReorder={reorderQueue}
                   className="queue-list"
                   layoutScroll
                 >
+                  {" "}
                   {queue.length > 0 ? (
                     queue.map((track, index) => (
                       <QueueItem
