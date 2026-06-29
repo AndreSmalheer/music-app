@@ -346,6 +346,21 @@
   border-radius: 12px;
   transition: background-color 0.2s ease;
   touch-action: none;
+  position: relative;
+}
+
+.queue-item.now-playing {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.queue-item.now-playing::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  width: 4px;
+  height: 36px;
+  background: var(--text-primary);
+  border-radius: 10px;
 }
 
 .queue-item:active {
