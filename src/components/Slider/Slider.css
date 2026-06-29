@@ -6,12 +6,13 @@
   overflow: hidden;
   cursor: pointer;
   touch-action: none;
-  transition: height 0.2s ease;
   position: relative;
+  transform: scaleY(1);
+  transition: transform 0.2s ease;
 }
 
 .progress-bar-track[data-dragging="true"] {
-  height: 21px;
+  transform: scaleY(1.2);
 }
 
 .progress-bar-fill {
@@ -21,7 +22,7 @@
   border-radius: 999px;
   pointer-events: none;
   transition:
-    width(0.08s, linear),
+    width 0.08s linear,
     background-color 0.15s ease;
 }
 
