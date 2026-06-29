@@ -205,13 +205,14 @@
 .control--next {
   width: clamp(48px, 6vw, 72px);
   height: clamp(36px, 5vw, 56px);
+  color: var(--media-control-color);
 }
 
 .control--play-pause {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: #fff!important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,6 +230,11 @@
   gap: 10px;
   align-items: center;
   justify-content: space-between;
+}
+
+.control-group--main button {
+  background-color: transparent;
+  border: none;
 }
 
 .control--shuffle {

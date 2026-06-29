@@ -39,6 +39,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
+  margin-bottom: 20px;
 }
 
 .home-tile {
