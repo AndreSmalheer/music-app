@@ -1,23 +1,27 @@
 import "./Settings.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
 
-function ChevronRight() {
+function SettingsItem({ label, value, hasChevron = false }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6"></polyline>
-    </svg>
+    <div className="settings-item">
+      <span className="settings-item-label">{label}</span>
+      <div className="settings-item-content">
+        {value && <span className="settings-item-value">{value}</span>}
+        {hasChevron && <ChevronRight size={22} strokeWidth={2} />}
+      </div>
+    </div>
   );
 }
 
-function SettingsItem({ label, value, hasChevron = true }) {
+function SettingsToggle({ label, on = false }) {
   return (
     <div className="settings-item">
-      <div className="settings-item-label">{label}</div>
-      <div className="settings-item-content">
-        {value && <span className="settings-item-value">{value}</span>}
-        {hasChevron && <ChevronRight />}
+      <span className="settings-item-label">{label}</span>
+      <div className={`settings-toggle ${on ? "is-on" : ""}`}>
+        <div className="settings-toggle-knob" />
       </div>
     </div>
   );
@@ -65,39 +69,30 @@ function Settings() {
   return (
     <div className="settings-page">
       <div className="settings-header">
-        <h1>Settings</h1>
+        <button className="settings-back" onClick={() => navigate(-1)}>
+          <ChevronLeft size={26} strokeWidth={2.2} />
+        </button>
+        <h1>Instellingen</h1>
       </div>
 
-      <SettingsSection title="Account">
-        <SettingsItem label="Profile" value="Driek" />
-        <SettingsItem label="Subscription" value="Premium" />
-        <SettingsItem label="Email" value="driek@example.com" />
+      <div className="settings-profile">
+        <div className="settings-avatar">A</div>
+        <div className="settings-profile-info">
+          <div className="settings-profile-name">Adam</div>
+          <div className="settings-profile-sub">Bekijk profiel</div>
+        </div>
+        <ChevronRight size={22} strokeWidth={2} className="settings-profile-chevron" />
+      </div>
+
+      <SettingsSection title="Weergave">
+        <SettingsItem label="Thema" value="Donker" />
       </SettingsSection>
 
-      <SettingsSection title="Playback">
-        <SettingsItem label="Audio Quality" value="High" />
-        <SettingsItem label="Equalizer" value="Pop" />
-        <SettingsItem label="Crossfade" value="Off" />
-        <SettingsItem label="Gapless Playback" value="On" />
-      </SettingsSection>
-
-      <SettingsSection title="Storage & Data">
-        <SettingsItem label="Download Quality" value="Extreme" />
-        <SettingsItem label="Cache Size" value="2.4 GB" />
-        <SettingsItem label="Download via Cellular" value="Off" />
-      </SettingsSection>
-
-      <SettingsSection title="Appearance">
-        <SettingsItem label="Theme" value="Dark" />
-        <SettingsItem label="Accent Color" value="Purple" />
-        <SettingsItem label="Language" value="English" />
-      </SettingsSection>
-
-      <SettingsSection title="About">
-        <SettingsItem label="Version" value="1.0.4 (Build 42)" hasChevron={false} />
-        <SettingsItem label="Privacy Policy" />
-        <SettingsItem label="Terms of Service" />
-        <SettingsItem label="Open Source Licenses" />
+      <SettingsSection title="Afspelen">
+        <SettingsItem label="Audiokwaliteit" value="Hoog" />
+        <SettingsToggle label="Crossfade" on={true} />
+        <SettingsToggle label="Alleen downloaden via wifi" on={false} />
+        <SettingsItem label="Equalizer" hasChevron={true} />
       </SettingsSection>
 
       <div className="logout-container">
@@ -105,9 +100,9 @@ function Settings() {
           Log Out
         </button>
       </div>
-      
+
       <div className="settings-footer">
-        <p>© 2026 Music App. All rights reserved.</p>
+        <p>Muziekspeler &middot; versie 1.0.0</p>
       </div>
     </div>
   );

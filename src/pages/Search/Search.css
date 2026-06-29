@@ -1,99 +1,154 @@
 .search-page {
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
-  padding-top: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 18px 28px;
+}
+
+/* Paginatitel */
+.search-title {
+  margin: 6px 0 16px;
+  color: var(--text-primary);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+/* Wit zoekveld met donker icoon */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: #ffffff;
+  border-radius: 7px;
+  padding: 12px 14px;
+  margin-bottom: 26px;
+}
+
+.search-field__icon {
+  color: #121212;
+  flex-shrink: 0;
 }
 
 .search-container {
-  background-color: var(--search-bar-bg);
-  border-radius: 15px;
-  width: min(100%, 360px);
+  flex: 1;
+  min-width: 0;
   border: none;
-  height: 40px;
-  box-sizing: border-box;
-  padding: 20px 20px;
-  color: white;
-  font-size: var(--font-primary);
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.search-container:focus {
-  border-color: var(--text-secondary);
   outline: none;
-  caret-color: white;
+  background: transparent;
+  color: #121212;
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: 600;
 }
 
+.search-container::placeholder {
+  color: #5a5a5a;
+  font-weight: 600;
+}
+
+/* ============ Bladeren door alles ============ */
+.genre-section {
+  width: 100%;
+}
+
+.genre-section__title {
+  margin: 0 0 16px;
+  color: var(--text-primary);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+}
+
+.genre-tile {
+  position: relative;
+  height: 102px;
+  border: none;
+  border-radius: 9px;
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  font-family: var(--font-primary);
+  transition: transform 0.15s ease;
+}
+
+.genre-tile:active {
+  transform: scale(0.97);
+}
+
+.genre-tile__name {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.genre-tile__deco {
+  position: absolute;
+  right: -12px;
+  bottom: -12px;
+  width: 62px;
+  height: 62px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 6px;
+  transform: rotate(28deg);
+}
+
+/* ============ Tags ============ */
 .tags-container {
-  width: min(100%, 340px);
-  margin-top: 12px;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
+  margin-bottom: 6px;
 }
 
 .tag {
-  min-width: 44px;
-  height: 26px;
-  padding: 0 5px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background-color: #302e2e;
-  border: 1px solid #2a2a2a;
-  border-radius: 15px;
+  padding: 6px 13px;
+  background: var(--surface-strong);
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-
   transition:
     transform 0.15s ease,
     background-color 0.15s ease;
-
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
 }
 
 .tag.active {
-  background-color: #c696fb;
-  border-color: #c696fb;
+  background: var(--accent);
 }
 
 .tag.active h2 {
-  color: #121212;
+  color: var(--on-accent);
 }
 
 .tag h2 {
-  font-size: 12px;
   margin: 0;
-  color: var(--tag-text-collor);
-  font-weight: 500;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .tag:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-  }
+  font-size: 13px;
+  font-weight: 600;
+  color: #dadada;
 }
 
 .tag:active {
   transform: scale(0.96);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* ============ Resultaten ============ */
 .result-section {
-  width: min(100%, 340px);
+  width: 100%;
+  margin-top: 24px;
 }
 
 .serach-result-album-cover,
@@ -104,143 +159,153 @@
   -webkit-touch-callout: none;
 }
 
-.top-result {
-  margin-top: 40px;
-}
-
-.top-result h3 {
-  font-size: 20px;
-  color: white;
+.top-result h3,
+.result-songs h3,
+.result-section-title {
+  margin: 0 0 14px;
   padding: 0;
-  margin: 0;
+  color: var(--text-primary);
+  font-size: 19px;
+  font-weight: 800;
 }
 
 .result-container {
   display: flex;
   gap: 16px;
-  padding-left: 4px;
   box-sizing: border-box;
 }
 
-.serach-result-album-cover {
-  margin-top: 10px;
-  width: 95px;
-  height: 95px;
-  background-color: gray;
-  border-radius: 11px;
-}
-
 .result-songs {
-  margin-top: 22px;
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
-}
-
-.result-songs h3 {
-  padding: 0;
-  margin: 0;
-  font-size: 20px;
-  color: white;
-  width: 100%;
 }
 
 .songs-container {
   box-sizing: border-box;
-  padding-top: 17px;
-  padding-left: 8px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
   width: 100%;
 }
 
+/* Song-rij (variant="search") */
 .song {
   width: 100%;
-  height: min(20vh, 60px);
   display: flex;
   align-items: center;
-}
-
-.search-song-info {
-  height: 100%;
-  margin-top: 3px;
-  margin-left: 9px;
+  gap: 14px;
+  padding: 9px 0;
 }
 
 .album-cover-search-result {
-  height: 100%;
-  width: auto;
-  aspect-ratio: 1/1;
-  background-color: gray;
-  border-radius: 7px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background-color: var(--surface);
+  border-radius: var(--cover-radius);
+  overflow: hidden;
+}
+
+.search-song-info {
+  min-width: 0;
+  margin: 0;
 }
 
 .search-song-title,
 .search-song-artist {
   padding: 0;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-song-title {
-  color: white;
-  font-size: 18px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .search-song-artist {
+  margin-top: 2px;
   font-size: 13px;
-  color: #bfbfbf;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.options-container {
-  margin-left: auto;
-  width: 24px;
-  height: 8px;
+/* Top result-kaart (variant="card") */
+.search-page .track-card {
   display: flex;
-  gap: 3px;
+  flex-direction: column;
+  gap: 8px;
   cursor: pointer;
 }
 
-.options-container span {
-  border-radius: 50%;
-  display: block;
-  height: 100%;
-  width: auto;
-  aspect-ratio: 1/1;
-  background-color: #c696fb;
+.search-page .track-card__cover {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: var(--cover-radius);
+  background-color: var(--surface);
 }
 
-.result-section-title {
-  color: white;
-  padding: 0;
+.search-page .track-card__title {
   margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
 }
 
+/* Artiesten */
 .result-section.result-artist {
-  margin-top: 22px;
+  margin-top: 24px;
 }
 
 .artists-container-result {
   width: 100%;
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
-  padding-top: 8px;
-  padding-left: 8px;
+  padding-top: 4px;
 }
 
-.result-artist-img {
-  width: 62px;
-  height: 62px;
-  background-color: gray;
+.search-page .radio-song-item.artist {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 76px;
+  cursor: pointer;
+}
+
+.search-page .radio-song-item.artist img {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--surface);
 }
 
-.result-artist-text {
+.search-page .radio-song-item.artist .info {
   text-align: center;
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.search-page .radio-song-item.artist .info h3 {
+  margin: 0;
   font-size: 14px;
-  color: #bfbfbf;
-  margin-top: 4px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 76px;
+}
+
+.search-page .radio-song-item.artist .info p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .yt-badge {
@@ -253,50 +318,34 @@
   flex-shrink: 0;
 }
 
+/* Laad- en lege toestanden */
 .search-placeholder {
-  margin-top: 80px;
-  color: #bfbfbf;
+  margin-top: 60px;
+  color: var(--text-secondary);
   text-align: center;
   padding: 0 20px;
 }
 
 .search-placeholder h1 {
-  font-size: 24px;
-  font-weight: 500;
-  opacity: 0.8;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .search-yt-button {
   margin-top: 20px;
-  padding: 10px 24px;
-
-  background-color: #c696fb;
-  color: #121212;
-
+  padding: 12px 26px;
+  background: var(--accent);
+  color: var(--on-accent);
   border: none;
-  border-radius: 20px;
-
-  font-size: 14px;
-  font-weight: 600;
-
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 800;
+  font-family: var(--font-primary);
   cursor: pointer;
-
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .search-yt-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
-  }
+  transition: transform 0.15s ease;
 }
 
 .search-yt-button:active {
   transform: scale(0.96);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }

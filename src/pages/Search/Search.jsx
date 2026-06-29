@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search as SearchIcon } from "lucide-react";
 import "./Search.css";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
@@ -11,6 +12,18 @@ import ArtistItem from "../../components/items/ArtistItems";
 
 const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
+
+// Decoratieve genre-tegels (statisch) — alleen UI, geen functionaliteit
+const GENRES = [
+  { name: "Pop", color: "#c0392b" },
+  { name: "Hiphop", color: "#16a085" },
+  { name: "Dance", color: "#8e44ad" },
+  { name: "Rock", color: "#2980b9" },
+  { name: "Chill", color: "#d35400" },
+  { name: "Indie", color: "#27ae60" },
+  { name: "Klassiek", color: "#34495e" },
+  { name: "Nederpop", color: "#c0398b" },
+];
 
 function Search() {
   const [activeTag, setActiveTag] = useState("All");
@@ -67,16 +80,35 @@ function Search() {
 
   return (
     <div className="search-page">
-      <input
-        className="search-container"
-        placeholder="type here..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <h1 className="search-title">Zoeken</h1>
+
+      <div className="search-field">
+        <SearchIcon className="search-field__icon" size={21} strokeWidth={2.4} />
+        <input
+          className="search-container"
+          placeholder="Artiesten, nummers of afspeellijsten"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
 
       {!query.trim() ? (
-        <div className="search-placeholder">
-          <h1>Zoek naar iets</h1>
+        <div className="genre-section">
+          <h2 className="genre-section__title">Bladeren door alles</h2>
+
+          <div className="genre-grid">
+            {GENRES.map((genre) => (
+              <button
+                key={genre.name}
+                className="genre-tile"
+                style={{ background: genre.color }}
+                onClick={() => {}}
+              >
+                <span className="genre-tile__name">{genre.name}</span>
+                <div className="genre-tile__deco" />
+              </button>
+            ))}
+          </div>
         </div>
       ) : (
         <>

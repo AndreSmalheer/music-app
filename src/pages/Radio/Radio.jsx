@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronLeft, Link2, Search, Plus } from "lucide-react";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import {
@@ -148,10 +149,42 @@ function Radio() {
 
   return (
     <div className="radio-page">
+      <div className="radio-header">
+        <button
+          type="button"
+          className="radio-back"
+          onClick={() => navigate(-1)}
+          aria-label="Terug"
+        >
+          <ChevronLeft size={26} />
+        </button>
+        <h1 className="radio-header__title">YouTube toevoegen</h1>
+      </div>
+
+      <div className="radio-paste">
+        <div className="radio-paste__label">Plak een link</div>
+        <div className="radio-paste__row">
+          <div className="radio-paste__input">
+            <Link2 size={18} />
+            <span>youtube.com/watch?v=...</span>
+          </div>
+          <button type="button" className="radio-paste__btn">
+            Plak
+          </button>
+        </div>
+      </div>
+
+      <div className="radio-divider">
+        <span className="radio-divider__line" />
+        <span className="radio-divider__text">OF ZOEK OP YOUTUBE</span>
+        <span className="radio-divider__line" />
+      </div>
+
       <div className="radio-search-container">
+        <Search className="radio-search-icon" size={19} />
         <input
           type="text"
-          placeholder="Search YouTube..."
+          placeholder="lo-fi beats"
           className="radio-search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -183,13 +216,35 @@ function Radio() {
                   variant="artist"
                 />
               ) : (
-                <SongItem
+                <div
                   key={item.youtubeId}
-                  song={item}
-                  handlePlaySong={handlePlaySong}
-                  showOptions={showOptions}
-                  variant="radio"
-                />
+                  className="radio-yt-row"
+                  onClick={() => handlePlaySong(item)}
+                >
+                  <div className="radio-yt-thumb">
+                    <img src={item.cover || item.img} alt={item.title} />
+                    {item.duration && (
+                      <span className="radio-yt-dur">{item.duration}</span>
+                    )}
+                  </div>
+
+                  <div className="radio-yt-info">
+                    <div className="radio-yt-title">{item.title}</div>
+                    <div className="radio-yt-channel">{item.artist}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="radio-yt-add"
+                    aria-label="Toevoegen en afspelen"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlaySong(item);
+                    }}
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
               ),
             )
           ) : query.trim() ? (

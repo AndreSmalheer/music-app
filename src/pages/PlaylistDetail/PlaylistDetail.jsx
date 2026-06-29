@@ -5,6 +5,7 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
+import { ChevronLeft, Download, Shuffle, Play, MoreHorizontal } from "lucide-react";
 import {
   getPlaylist,
   addRecent,
@@ -13,33 +14,51 @@ import {
 import { playTrackList } from "../../utils/playback";
 import "./PlaylistDetail.css";
 
-function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong }) {
+function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong, isCurrent }) {
   const { showOptions } = useModal();
   const tapFeedback = { scale: 0.98 };
-  const longPressProps = useLongPress(
-    () =>
-      showOptions(["Play", "Remove from Playlist"], async (option) => {
-        if (option === "Play") {
-          onPlaySong(song);
-          return;
-        }
+  const openMenu = () =>
+    showOptions(["Play", "Remove from Playlist"], async (option) => {
+      if (option === "Play") {
+        onPlaySong(song);
+        return;
+      }
 
-        if (option === "Remove from Playlist") {
-          await onRemoveSong(song);
-        }
-      }),
-    () => onPlaySong(song),
-  );
+      if (option === "Remove from Playlist") {
+        await onRemoveSong(song);
+      }
+    });
+  const longPressProps = useLongPress(openMenu, () => onPlaySong(song));
 
   return (
-    <motion.div className="song-row" whileTap={tapFeedback} {...longPressProps}>
-      <span className="song-index">{index + 1}</span>
-      <div className="song-row-info">
-        <p className="song-row-title">{song.title}</p>
-        <p className="song-row-artist">{song.artist}</p>
-      </div>
-      <span className="song-duration">{song.durationLabel}</span>
-    </motion.div>
+    <div className="song-row">
+      <motion.button
+        type="button"
+        className="song-row-main"
+        whileTap={tapFeedback}
+        {...longPressProps}
+      >
+        <div
+          className="song-row-cover"
+          style={song.cover ? { backgroundImage: `url(${song.cover})` } : undefined}
+        />
+        <div className="song-row-info">
+          <p className={`song-row-title${isCurrent ? " current" : ""}`}>
+            {song.title}
+          </p>
+          <p className="song-row-artist">{song.artist}</p>
+        </div>
+        <span className="song-duration">{song.durationLabel}</span>
+      </motion.button>
+      <button
+        type="button"
+        className="song-row-kebab"
+        onClick={openMenu}
+        aria-label="More options"
+      >
+        <MoreHorizontal size={20} />
+      </button>
+    </div>
   );
 }
 
@@ -49,7 +68,7 @@ function PlaylistDetail() {
   const [playlist, setPlaylist] = useState(null);
   const [songs, setSongs] = useState([]);
   const navigate = useNavigate();
-  const { playSong } = useContext(PlayerContext);
+  const { playSong, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
     let active = true;
@@ -113,6 +132,15 @@ function PlaylistDetail() {
   return (
     <div className="playlist-detail-page">
       <div className="playlist-header">
+        <button
+          type="button"
+          className="playlist-back"
+          onClick={() => navigate(-1)}
+          aria-label="Back"
+        >
+          <ChevronLeft size={26} />
+        </button>
+
         <div className="playlist-header-content">
           <img
             src={
@@ -127,28 +155,36 @@ function PlaylistDetail() {
               A curated selection of the best visual design test tracks.
             </p>
             <div className="playlist-stats">
-              <span>{songs.length} songs</span> •{" "}
-              <span>{totalMinutes} mins</span>
+              Afspeellijst &middot; {songs.length} nummers &middot;{" "}
+              {totalMinutes} min
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="playlist-actions">
+      <div className="playlist-actions">
+        <div className="playlist-actions-left">
+          <button type="button" className="playlist-action-icon" aria-label="Download">
+            <Download size={26} strokeWidth={1.8} />
+          </button>
           <motion.button
-            className="btn-playlist-action play"
-            whileTap={{ scale: 0.95 }}
-            onClick={handlePlayAll}
-          >
-            Play
-          </motion.button>
-          <motion.button
-            className="btn-playlist-action shuffle"
-            whileTap={{ scale: 0.95 }}
+            type="button"
+            className="playlist-action-icon"
+            whileTap={{ scale: 0.9 }}
             onClick={handleShuffle}
+            aria-label="Shuffle"
           >
-            Shuffle
+            <Shuffle size={26} strokeWidth={1.8} />
           </motion.button>
         </div>
+        <motion.button
+          className="btn-play-circle"
+          whileTap={{ scale: 0.95 }}
+          onClick={handlePlayAll}
+          aria-label="Play"
+        >
+          <Play size={26} fill="currentColor" stroke="none" />
+        </motion.button>
       </div>
 
       <div className="songs-list">
@@ -157,9 +193,9 @@ function PlaylistDetail() {
               <div
                 key={i}
                 className="song-row"
-                style={{ padding: "12px", gap: "16px" }}
+                style={{ padding: "9px 18px", gap: "14px" }}
               >
-                <Skeleton width="20px" height="14px" />
+                <Skeleton width="48px" height="48px" borderRadius="4px" />
                 <div
                   style={{
                     flex: 1,
@@ -181,6 +217,7 @@ function PlaylistDetail() {
                 index={index}
                 onPlaySong={handlePlaySong}
                 onRemoveSong={handleRemoveSong}
+                isCurrent={currentTrack?.src === song.src}
               />
             ))}
       </div>

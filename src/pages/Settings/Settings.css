@@ -1,64 +1,125 @@
 .settings-page {
-  padding: 24px var(--spacing-horizontal);
+  padding: 8px var(--spacing-horizontal) 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 4px;
   box-sizing: border-box;
 }
 
 .has-player .settings-page {
-    padding-bottom: 0;
+  padding-bottom: 0;
 }
 
+/* Header */
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 18px;
+}
+
+.settings-back {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+}
 
 .settings-header h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
 }
 
+/* Profile row */
+.settings-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.settings-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b2a86, #c44569);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.settings-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-profile-name {
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.settings-profile-sub {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.settings-profile-chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Sections */
 .settings-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .settings-section-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   color: var(--text-secondary);
-  padding-left: 4px;
+  padding: 18px 4px 8px;
 }
 
 .settings-section-content {
-  background-color: var(--bg-secondary);
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
+/* Rows */
 .settings-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 13px 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.settings-item:last-child {
-  border-bottom: none;
+  transition: opacity 0.2s ease;
 }
 
 .settings-item:active {
-  background-color: rgba(255, 255, 255, 0.05);
+  opacity: 0.7;
 }
 
 .settings-item-label {
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -71,14 +132,43 @@
 
 .settings-item-value {
   font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.settings-item-content svg {
-  opacity: 0.5;
+/* Toggle */
+.settings-toggle {
+  width: 46px;
+  height: 27px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
 }
 
+.settings-toggle.is-on {
+  background: var(--accent, #1ed15f);
+}
+
+.settings-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s ease;
+}
+
+.settings-toggle.is-on .settings-toggle-knob {
+  left: 22px;
+}
+
+/* Logout */
 .logout-container {
-  padding: 0 4px;
+  padding: 26px 4px 0;
 }
 
 .btn-logout {
@@ -90,6 +180,7 @@
   border-radius: 16px;
   font-family: var(--font-primary);
   font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -99,13 +190,15 @@
   transform: scale(0.98);
 }
 
+/* Footer */
 .settings-footer {
   text-align: center;
-  padding-bottom: 24px;
+  padding: 30px 18px 24px;
 }
 
 .settings-footer p {
-  font-size: 12px;
-  color: var(--text-secondary);
-  opacity: 0.6;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #6d6d70;
 }

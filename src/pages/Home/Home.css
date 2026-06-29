@@ -1,157 +1,140 @@
 .home-page {
-  padding-bottom: 20px;
+  padding: 8px 18px 28px;
   overflow-x: hidden;
 }
 
-.home-section {
-  padding: 20px 16px 8px;
-}
-
-.home-section__header {
+/* Topbar: begroeting links, icoon-knoppen rechts */
+.home-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin: 6px 0 22px;
 }
 
-.home-section__title {
-  font-size: clamp(20px, 7vw, 24px);
-  font-weight: 700;
-  color: #fff;
+.home-greeting {
   margin: 0;
+  color: var(--text-primary);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
-/* Horizontaal scrollbare rij (gedeeld door artiesten + nummers).
-   Vaste itembreedtes + scroll-snap zorgen voor nette, gelijke kaarten
-   en een vloeiende scroll-animatie op touch. */
-.home-section__list,
-.popular-list {
+.home-topbar__actions {
   display: flex;
-  gap: 14px;
-  padding: 0 6px 8px;
-  overflow-x: hidden;
-  overflow-y: hidden;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: #cfcfcf;
+  display: flex;
+}
+
+/* 2-koloms grid met snelle tegels */
+.home-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.home-tile {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--surface, rgba(255, 255, 255, 0.07));
+  border: none;
+  border-radius: 5px;
+  padding: 0;
+  height: 56px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+
+.home-tile__cover {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--bg-secondary);
+}
+
+.home-tile__title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.15;
+  padding-right: 6px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Carrousels */
+.home-carousel-title {
+  color: var(--text-primary);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 32px 0 4px;
+}
+
+.home-carousel__row {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding: 14px 18px 4px;
+  margin: 0 -18px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 
-.home-section__list::-webkit-scrollbar,
-.popular-list::-webkit-scrollbar {
+.home-carousel__row::-webkit-scrollbar {
   display: none;
 }
 
-/* Nummer-kaartjes: allemaal even breed, vierkante cover */
-.popular-list .track-card {
-  flex: 0 0 120px;
-  max-width: 120px;
-  scroll-snap-align: start;
+.home-card {
+  flex-shrink: 0;
+  width: 148px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
 }
 
-.popular-list .track-card__cover {
-  width: 100%;
-  aspect-ratio: 1/1;
+.home-card__cover {
+  width: 148px;
+  height: 148px;
   object-fit: cover;
-  border-radius: 11px;
+  border-radius: var(--cover-radius, 6px);
+  margin-bottom: 9px;
+  background: var(--bg-secondary);
   display: block;
 }
 
-.artist-card {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  flex: 0 0 90px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  scroll-snap-align: start;
+.home-card__cover--empty {
+  opacity: 0.5;
 }
 
-.artist-card__img {
-  width: 90px;
-  height: 90px;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  border-radius: 50%;
-  background-color: var(--bg-secondary);
-}
-
-.artist-card__name {
-  text-align: center;
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.playlist-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 0 6px;
-}
-
-.playlist-card {
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 56px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.playlist-card__cover {
-  height: 100%;
-  aspect-ratio: 1/1;
-  background-color: #444;
-  object-fit: cover;
-}
-
-.playlist-card__title {
-  font-size: 14px;
+.home-card__title {
   color: var(--text-primary);
-  font-weight: 500;
-  margin: 0;
-  padding-right: 8px;
+  font-size: 14px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Replaced .empty-play-box with specific emulated item placeholders */
-.empty-artist-card {
-  flex: 1;
-  max-width: 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.empty-artist-img {
-  width: 85%;
-  aspect-ratio: 1/1;
-  border-radius: 50%;
-  background-color: var(--bg-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  opacity: 0.5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-playlist-card {
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
-  height: 56px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  opacity: 0.5;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
+.home-card__sub {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1.3;
 }
