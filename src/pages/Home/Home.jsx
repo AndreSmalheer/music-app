@@ -118,6 +118,45 @@ function Home() {
     }
   };
 
+  // Tik op een mood-tegel: zoek die mood op YouTube en speel 'm meteen af als
+  // mix (queue = alle resultaten), zoals een radio. Niets wordt opgeslagen;
+  // alleen het eerste nummer komt op de achtergrond in je recent/bibliotheek.
+  const handleMoodTile = async (tile) => {
+    try {
+      const results = await searchYoutube(tile.query);
+      const songs = results.filter((r) => r.type !== "youtube-artist");
+      if (songs.length === 0) return;
+
+      const first = songs[0];
+      playSong(
+        first.src,
+        first.title,
+        first.artist,
+        first.cover,
+        -1,
+        first.youtubeId || null,
+        songs,
+      );
+
+      navigate("/now-playing");
+
+      if (first.youtubeId) {
+        downloadFromYoutube({
+          url: `https://www.youtube.com/watch?v=${first.youtubeId}`,
+          title: first.title,
+          artist: first.artist,
+          thumbnail: first.cover,
+        })
+          .then((saved) => {
+            if (saved?.id) addRecent(saved.id).catch(() => {});
+          })
+          .catch(() => {});
+      }
+    } catch (err) {
+      console.error("Mood-mix afspelen mislukt:", err);
+    }
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -255,7 +294,7 @@ function Home() {
               key={tile.name}
               className="home-tile"
               whileTap={tapFeedback}
-              onClick={() => navigate("/search")}
+              onClick={() => handleMoodTile(tile)}
             >
               {cover ? (
                 <img

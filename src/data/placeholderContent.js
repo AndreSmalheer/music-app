@@ -21,13 +21,38 @@ export function gradientFor(str) {
 }
 
 // Snel-toegang tegels bovenaan de Home (vaste namen, zoals in het ontwerp).
+// `query` is de YouTube-zoekterm die we als mix afspelen als je op de tegel tikt.
 export const MOOD_TILES = [
-  { name: "Focus Flow", gradient: "linear-gradient(135deg,#3d348b,#7678ed)" },
-  { name: "Avond Chill", gradient: "linear-gradient(135deg,#1b3a4b,#3a7563)" },
-  { name: "Workout Boost", gradient: "linear-gradient(135deg,#b9375e,#e8836c)" },
-  { name: "Throwbacks", gradient: "linear-gradient(135deg,#704264,#bb8493)" },
-  { name: "Nieuw voor jou", gradient: "linear-gradient(135deg,#0a4d68,#37b3a4)" },
-  { name: "Regenachtige Dag", gradient: "linear-gradient(135deg,#264653,#2a9d8f)" },
+  {
+    name: "Focus Flow",
+    query: "focus flow music",
+    gradient: "linear-gradient(135deg,#3d348b,#7678ed)",
+  },
+  {
+    name: "Avond Chill",
+    query: "evening chill music",
+    gradient: "linear-gradient(135deg,#1b3a4b,#3a7563)",
+  },
+  {
+    name: "Workout Boost",
+    query: "workout motivation music",
+    gradient: "linear-gradient(135deg,#b9375e,#e8836c)",
+  },
+  {
+    name: "Throwbacks",
+    query: "throwback hits playlist",
+    gradient: "linear-gradient(135deg,#704264,#bb8493)",
+  },
+  {
+    name: "Nieuw voor jou",
+    query: "new music 2024",
+    gradient: "linear-gradient(135deg,#0a4d68,#37b3a4)",
+  },
+  {
+    name: "Regenachtige Dag",
+    query: "rainy day music",
+    gradient: "linear-gradient(135deg,#264653,#2a9d8f)",
+  },
 ];
 
 // Random nummers als vulling. src wijst naar de test-mp3 zodat ze ook echt
