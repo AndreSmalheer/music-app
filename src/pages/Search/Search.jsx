@@ -13,7 +13,7 @@ import ArtistItem from "../../components/items/ArtistItems";
 const TAGS = ["All", "Songs", "Artists", "Playlists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
 
-// Decoratieve genre-tegels (statisch) — alleen UI, geen functionaliteit
+// Genre-tegels: klikken zoekt op de genrenaam via de bestaande zoekfunctie.
 const GENRES = [
   { name: "Pop", color: "#c0392b" },
   { name: "Hiphop", color: "#16a085" },
@@ -102,7 +102,7 @@ function Search() {
                 key={genre.name}
                 className="genre-tile"
                 style={{ background: genre.color }}
-                onClick={() => {}}
+                onClick={() => setQuery(genre.name)}
               >
                 <span className="genre-tile__name">{genre.name}</span>
                 <div className="genre-tile__deco" />

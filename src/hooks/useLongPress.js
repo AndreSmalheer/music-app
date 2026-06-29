@@ -45,7 +45,6 @@ const useLongPress = (onLongPress, onClick, { delay = 500, disabled = false } = 
     onTouchStart: start,
     onTouchEnd: stop,
     onContextMenu: handleContextMenu,
-    stop,
   };
 };
 
