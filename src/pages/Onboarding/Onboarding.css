@@ -6,9 +6,10 @@
   justify-content: center;
   background: var(--bg-primary);
   text-align: center;
-  padding: 20px;
-  overflow: hidden;
+  padding: 24px;
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
 }
 
 .onboarding-card {
@@ -17,80 +18,78 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
   justify-content: center;
-  overflow: hidden;
 }
 
-.onboarding-image-wrapper {
-  width: 100%;
-  aspect-ratio: 1;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
+/* removed image spacing */
+.onboarding-image-wrapper,
 .onboarding-image-placeholder {
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-}
-
-.onboarding-form {
-  width: 100%;
-  margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.onboarding-input {
-  width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  box-sizing: border-box;
-}
-
-.onboarding-input:focus {
-  outline: none;
-  border-color: #bfbfbf;
+  display: none;
 }
 
 .onboarding-card h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: 2.2rem;
+  margin: 0 0 12px;
   color: white;
+  line-height: 1.2;
 }
 
 .onboarding-card p {
   color: #ccc;
-  margin-bottom: 2rem;
+  margin: 0 0 32px;
   line-height: 1.5;
+  max-width: 320px;
+}
+
+.onboarding-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.onboarding-input {
+  width: 100%;
+  padding: 15px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.onboarding-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .onboarding-actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  margin-bottom: 2rem;
+  margin-bottom: 28px;
 }
 
 .onboarding-button {
-  padding: 12px 32px;
-  border-radius: 24px;
+  padding: 13px 34px;
+  border-radius: 30px;
   border: none;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition:
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.onboarding-button:hover {
+  transform: translateY(-1px);
 }
 
 .onboarding-button:active {
   opacity: 0.8;
+  transform: scale(0.98);
 }
 
 .onboarding-button.primary {
@@ -99,21 +98,22 @@
 }
 
 .onboarding-button.secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: white;
 }
 
 .onboarding-indicators {
+  position: absolute;
+  bottom: 24px;
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
 }
 
 .indicator {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .indicator.active {

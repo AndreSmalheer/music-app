@@ -5,20 +5,19 @@ import "./Onboarding.css";
 
 const steps = [
   {
-    title: "Explore Music",
+    title: "Stream from YouTube",
     description:
-      "Browse and search your favorite artists and tracks effortlessly.",
-    image: "/icons/explore.svg",
+      "Play millions of songs directly from YouTube without downloading them first.",
   },
   {
-    title: "Create Playlists",
-    description: "Build your own collection by creating custom playlists.",
-    image: "/icons/playlist.svg",
+    title: "Download to Your Device",
+    description:
+      "Save songs locally for your own collection. Downloads are stored on your device, not for offline streaming.",
   },
   {
-    title: "Create Account",
+    title: "Create Your Account",
     description:
-      "Join us to save your favorites and access your library anywhere.",
+      "Sign in to sync your library, favorites, and settings across your devices.",
     type: "form",
   },
 ];
@@ -111,12 +110,6 @@ function Onboarding() {
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
-          {steps[currentStep].type !== "form" && (
-            <div className="onboarding-image-wrapper">
-              <div className="onboarding-image-placeholder" />
-            </div>
-          )}
-
           <h1>{steps[currentStep].title}</h1>
           <p>{steps[currentStep].description}</p>
 
