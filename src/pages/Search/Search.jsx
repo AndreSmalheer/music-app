@@ -33,7 +33,6 @@ function Search() {
     const timer = setTimeout(async () => {
       try {
         const local = await searchApi(q);
-        console.log(local);
         setSearchResults({
           topResults: [...local.songs.slice(0, 1)],
           songs: local.songs,
@@ -53,13 +52,6 @@ function Search() {
   const showSongs = activeTag === "All" || activeTag === "Songs";
   const showArtists = activeTag === "All" || activeTag === "Artists";
   const handlePlaySong = (song) => {
-    console.log(song);
-    if (song.youtubeId) {
-      console.log("Yt song");
-    }
-
-    console.log("local song");
-
     playSong(
       song.src,
       song.title,
@@ -67,6 +59,7 @@ function Search() {
       song.cover,
       -1,
       song.youtubeId || null,
+      searchResults.songs,
     );
     if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
