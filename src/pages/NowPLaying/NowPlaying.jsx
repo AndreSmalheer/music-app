@@ -640,18 +640,33 @@ function NowPlaying() {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
-    if (currentTrack?.youtubeId) {
-      setYtLoading(true);
+    const audio = audioPlayerRef.current;
 
-      const timer = setTimeout(() => {
-        setYtLoading(false);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    } else {
+    if (!currentTrack?.youtubeId || !audio) {
       setYtLoading(false);
+      return;
     }
-  }, [currentTrack]);
+
+    setYtLoading(true);
+
+    const handlePlaying = () => {
+      setYtLoading(false);
+    };
+
+    const handleCanPlay = () => {
+      if (!audio.paused) {
+        setYtLoading(false);
+      }
+    };
+
+    audio.addEventListener("playing", handlePlaying);
+    audio.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      audio.removeEventListener("playing", handlePlaying);
+      audio.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [currentTrack, audioPlayerRef]);
 
   useEffect(() => {
     if (!downloadSuccess) return undefined;
@@ -712,8 +727,6 @@ function NowPlaying() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // Bij streams kan duration Infinity/NaN zijn — val dan terug op de huidige tijd
-  // zodat de slider en resterende-tijd niet kapotgaan.
   const hasKnownDuration = Number.isFinite(duration) && duration > 0;
   const safeDuration = hasKnownDuration ? duration : 0;
 
