@@ -105,7 +105,7 @@ function Home() {
     <div className="home-page">
       <RecentlyPlayed />
 
-      <section className="home-section">
+      {/* <section className="home-section">
         <div className="home-section__header">
           <h2 className="home-section__title">Popular nummers</h2>
         </div>
@@ -125,22 +125,24 @@ function Home() {
               </div>
             ))
           ) : popular.length > 0 ? (
-            popular.map((song) => (
-              <SongItem
-                key={song.id}
-                song={song}
-                handlePlaySong={handleSongClick}
-                showOptions={showOptions}
-                variant="card"
-              />
-            ))
+            popular
+              .slice(0, 3)
+              .map((song) => (
+                <SongItem
+                  key={song.id}
+                  song={song}
+                  handlePlaySong={handleSongClick}
+                  showOptions={showOptions}
+                  variant="card"
+                />
+              ))
           ) : (
             <div className="empty-track-card">
               <div className="empty-track-cover" />
             </div>
           )}
         </div>
-      </section>
+      </section> */}
 
       <section className="home-section">
         <div className="home-section__header">
