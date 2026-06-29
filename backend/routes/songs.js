@@ -5,11 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { create } from "youtube-dl-exec";
 
 import Song from "../models/Song.js";
 import Artist from "../models/Artist.js";
 import upload from "../middleware/upload.js";
+import { resolveAudio } from "./youtube.js";
 
 // Zoekt artiest op naam + bron op, maakt hem aan als hij niet bestaat, en voegt songId toe.
 async function syncArtist(artistName, songId, { isYoutubeArtist = false, thumbnail } = {}) {
@@ -31,58 +31,11 @@ async function syncArtist(artistName, songId, { isYoutubeArtist = false, thumbna
   );
 }
 
-let _youtubedl;
-function getYoutubedl() {
-  if (!_youtubedl) {
-    _youtubedl = create(process.env.YTDLP_PATH || "yt-dlp");
-  }
-  return _youtubedl;
-}
-
-const downloadCache = new Map();
-
-function mimeForExt(ext) {
-  if (ext === "m4a" || ext === "mp4") return "audio/mp4";
-  if (ext === "webm") return "audio/webm";
-  if (ext === "mp3") return "audio/mpeg";
-  return "audio/mpeg";
-}
-
 function normalizeDuration(duration) {
   const value = Number(duration);
   if (!Number.isFinite(value) || value <= 0) return 0;
   if (value > 24 * 60 * 60) return Math.round(value / 1000);
   return Math.round(value);
-}
-
-async function resolveAudio(videoId) {
-  const cached = downloadCache.get(videoId);
-  if (cached && cached.expires > Date.now()) return cached;
-
-  const info = await getYoutubedl()(`https://www.youtube.com/watch?v=${videoId}`, {
-    dumpSingleJson: true,
-    noWarnings: true,
-    noPlaylist: true,
-    format: "bestaudio[ext=m4a]/bestaudio",
-  });
-
-  if (!info?.url) throw new Error("Geen audio-URL gevonden");
-
-  let expires = Date.now() + 60 * 60 * 1000;
-  const match = /[?&]expire=(\d+)/.exec(info.url);
-  if (match) {
-    expires = Math.min(expires, parseInt(match[1], 10) * 1000 - 60 * 1000);
-  }
-
-  const resolved = {
-    url: info.url,
-    ext: info.ext,
-    mime: mimeForExt(info.ext),
-    duration: normalizeDuration(info.duration),
-    expires,
-  };
-  downloadCache.set(videoId, resolved);
-  return resolved;
 }
 
 async function downloadAudioToFile(videoId, filePath) {

@@ -164,7 +164,16 @@ function mimeForExt(ext) {
   return "audio/mpeg";
 }
 
-async function resolveAudio(videoId) {
+function normalizeDuration(duration) {
+  const value = Number(duration);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  if (value > 24 * 60 * 60) return Math.round(value / 1000);
+  return Math.round(value);
+}
+
+// Eén gedeelde resolve + cache voor de hele backend (stream én song-download
+// importeren dit). Zo draait yt-dlp maar één keer per video i.p.v. dubbel.
+export async function resolveAudio(videoId) {
   const cached = formatCache.get(videoId);
   if (cached && cached.expires > Date.now()) return cached;
 
@@ -187,7 +196,13 @@ async function resolveAudio(videoId) {
   const m = /[?&]expire=(\d+)/.exec(info.url);
   if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
 
-  const resolved = { url: info.url, mime: mimeForExt(info.ext), expires };
+  const resolved = {
+    url: info.url,
+    ext: info.ext,
+    mime: mimeForExt(info.ext),
+    duration: normalizeDuration(info.duration),
+    expires,
+  };
   formatCache.set(videoId, resolved);
   return resolved;
 }
@@ -205,6 +220,21 @@ async function fetchUpstream(videoId, rangeHeader, allowRetry = true) {
   }
   return { audio, upstream };
 }
+
+// GET /api/youtube/prefetch/:videoId — warmt alleen de audio-URL-cache op
+// (geen body). De frontend roept dit aan voor het volgende nummer in de wachtrij
+// zodat skip/auto-advance direct speelt i.p.v. ~4s op yt-dlp te wachten.
+router.get("/prefetch/:videoId", async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId) return res.status(400).json({ error: "Geen videoId" });
+  try {
+    await resolveAudio(videoId);
+    res.status(204).end();
+  } catch {
+    // Stilletjes falen: prefetch is best-effort, de echte stream probeert opnieuw.
+    res.status(204).end();
+  }
+});
 
 // GET /api/youtube/stream/:videoId — proxyt YouTube-audio met Range-support,
 // zodat de tijdbalk werkt en je kunt seeken.
