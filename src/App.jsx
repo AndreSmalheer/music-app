@@ -19,6 +19,8 @@ import PlaylistDetail from "./pages/PlaylistDetail/PlaylistDetail";
 import ArtistDetail from "./pages/ArtistDetail/ArtistDetail";
 import Download from "./pages/Download/Download";
 import Radio from "./pages/Radio/Radio";
+import Library from "./pages/Library/Library";
+import Upload from "./pages/Upload/Upload";
 import Settings from "./pages/Settings/Settings";
 import Onboarding from "./pages/Onboarding/Onboarding";
 import EditPlaylist from "./pages/EditPlaylist/EditPlaylist";
@@ -184,6 +186,22 @@ function AppContent() {
               element={
                 <PageWrapper>
                   <Radio />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <PageWrapper>
+                  <Library />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/upload"
+              element={
+                <PageWrapper>
+                  <Upload />
                 </PageWrapper>
               }
             />

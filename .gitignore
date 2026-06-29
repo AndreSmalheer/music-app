@@ -33,3 +33,6 @@ backend/uploads/*
 *.sw?
 
 downloads
+
+# Lokale design-referentie (Claude Design import)
+.design-reference/

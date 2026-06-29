@@ -1,24 +1,52 @@
-@import url("https://fonts.googleapis.com/css2?family=Lilita+One&display=swap");
+/* ===== Design system (Muziekspeler redesign) =====
+   Donker thema, Manrope-font, groen accent. Variabelenamen blijven
+   compatibel met bestaande componenten waar mogelijk. */
 
 :root {
-  --bg-primary: #242323;
-  --bg-secondary: #323232;
+  /* Achtergronden */
+  --bg-primary: #0c0c0e;
+  --bg-secondary: #1c1c1f;
+  --bg-elevated: #232327;
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-strong: rgba(255, 255, 255, 0.09);
+
+  /* Tekst */
   --text-primary: #ffffff;
-  --text-secondary: #bfbfbf;
-  --progress-bar-bg: #595959;
-  --search-bar-bg: #363636;
-  --progress-bar-fill: #6b00de;
-  --progress-bar-fill-dragging: #9a4dff;
-  --spacing-horizontal: 16px;
-  --border-radius-large: 27px;
+  --text-secondary: #9a9a9d;
+  --text-tertiary: #6d6d70;
+
+  /* Accent (groen) */
+  --accent: #1ed15f;
+  --accent-press: #19b853;
+  --on-accent: #0c0c0e;
+
+  /* Sliders / progress */
+  --progress-bar-bg: rgba(255, 255, 255, 0.18);
+  --progress-bar-fill: #ffffff;
+  --progress-bar-fill-dragging: var(--accent);
+  --search-bar-bg: #ffffff;
+
+  /* Layout */
+  --spacing-horizontal: 18px;
+  --cover-radius: 6px;
+  --border-radius-large: 14px;
   --footer-offset: 90px;
-  --tag-text-collor: #E3E3E3;
-  --btn-default: #ffffff;
-  --btn-active: #4da3ff;
-  --font-primary: "Lilita One", sans-serif;
-  --media-control-color: #c5c5c5;
-  --media-active-control-color: #ffffff;
-  --media-control-active-bg: var(--progress-bar-fill);
+  --tag-text-collor: #e3e3e3;
+  --btn-default: #cfcfcf;
+  --btn-active: #ffffff;
+
+  /* Typografie */
+  --font-primary: "Manrope", system-ui, -apple-system, sans-serif;
+
+  /* Media controls */
+  --media-control-color: #cfcfcf;
+  --media-active-control-color: var(--accent);
+  --media-control-active-bg: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
 body,
@@ -28,5 +56,22 @@ html {
   height: 100%;
   overflow: hidden;
   background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: var(--font-primary);
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Gedeelde animaties uit het ontwerp */
+@keyframes eqb {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
