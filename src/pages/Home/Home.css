@@ -119,8 +119,11 @@
   display: block;
 }
 
-.home-card__cover--empty {
-  opacity: 0.5;
+/* Gradient-fallback voor covers zonder afbeelding. */
+.home-card__fallback {
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .home-card__title {

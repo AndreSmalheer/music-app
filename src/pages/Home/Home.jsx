@@ -5,7 +5,7 @@ import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import { ArrowRight, Upload, Settings } from "lucide-react";
+import { ArrowRight, Upload, Settings, Music } from "lucide-react";
 import {
   getArtists,
   getPlaylists,
@@ -31,6 +31,23 @@ function shuffle(arr) {
 
 function ArrowBtn() {
   return <ArrowRight size={22} strokeWidth={2.5} />;
+}
+
+// Vaste gradient-set voor covers zonder afbeelding (zelfde sfeer als het ontwerp).
+const GRADIENTS = [
+  "linear-gradient(135deg,#3d348b,#7678ed)",
+  "linear-gradient(135deg,#0a4d68,#37b3a4)",
+  "linear-gradient(135deg,#b9375e,#e8836c)",
+  "linear-gradient(135deg,#704264,#bb8493)",
+  "linear-gradient(135deg,#1b3a4b,#3a7563)",
+  "linear-gradient(135deg,#264653,#2a9d8f)",
+];
+
+// Kies deterministisch een gradient op basis van een string (titel/naam).
+function gradientFor(str) {
+  let hash = 0;
+  for (const ch of String(str || "")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return GRADIENTS[hash % GRADIENTS.length];
 }
 
 function Home() {
@@ -89,6 +106,26 @@ function Home() {
       active = false;
     };
   }, []);
+
+  // "Speciaal voor jou" mixt je afspeellijsten en artiesten zodat de rij gevuld is.
+  const recommendations = [
+    ...playlists.map((p) => ({
+      key: `pl-${p.id}`,
+      title: p.title,
+      sub: "Afspeellijst",
+      cover: p.cover,
+      gradient: gradientFor(p.title || p.id),
+      onClick: () => navigate(`/playlist/${p.id}`),
+    })),
+    ...artists.map((a) => ({
+      key: `ar-${a.id}`,
+      title: a.name,
+      sub: "Artiest",
+      cover: a.img || a.cover,
+      gradient: gradientFor(a.name || a.id),
+      onClick: () => navigate(`/artist/${a.id}`),
+    })),
+  ];
 
   return (
     <div className="home-page">
@@ -150,27 +187,47 @@ function Home() {
                 <Skeleton height="1rem" style={{ marginTop: "9px" }} />
               </div>
             ))
-          ) : playlists.length > 0 ? (
-            playlists.map((playlist) => (
+          ) : recommendations.length > 0 ? (
+            recommendations.map((item) => (
               <motion.button
-                key={playlist.id}
+                key={item.key}
                 className="home-card"
                 whileTap={tapFeedback}
-                onClick={() => navigate(`/playlist/${playlist.id}`)}
+                onClick={item.onClick}
               >
-                <img
-                  className="home-card__cover"
-                  src={playlist.cover}
-                  alt=""
-                  onError={handleImgError}
-                />
-                <div className="home-card__title">{playlist.title}</div>
-                <div className="home-card__sub">Afspeellijst</div>
+                {item.cover ? (
+                  <img
+                    className="home-card__cover"
+                    src={item.cover}
+                    alt=""
+                    onError={(e) => {
+                      // Val terug op de gradient als de afbeelding niet laadt.
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextElementSibling?.style.setProperty(
+                        "display",
+                        "flex",
+                      );
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="home-card__cover home-card__fallback"
+                  style={{
+                    background: item.gradient,
+                    display: item.cover ? "none" : "flex",
+                  }}
+                >
+                  <Music size={34} strokeWidth={1.8} />
+                </div>
+                <div className="home-card__title">{item.title}</div>
+                <div className="home-card__sub">{item.sub}</div>
               </motion.button>
             ))
           ) : (
             <div className="home-card">
-              <div className="home-card__cover home-card__cover--empty" />
+              <div className="home-card__cover home-card__fallback">
+                <Music size={34} strokeWidth={1.8} />
+              </div>
             </div>
           )}
         </div>
