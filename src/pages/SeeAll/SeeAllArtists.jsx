@@ -5,6 +5,7 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import ArtistItem from "../../components/items/ArtistItems";
 import { getArtists } from "../../services/api";
+import { ChevronLeft } from "lucide-react";
 import "./SeeAll.css";
 
 function SeeAllArtists() {
@@ -41,11 +42,16 @@ function SeeAllArtists() {
   if (isLoading) {
     return (
       <div className="see-all-page">
-        <Skeleton
-          width="150px"
-          height="32px"
-          style={{ marginBottom: "20px" }}
-        />
+        <div className="see-all-header">
+          <button
+            className="see-all-back"
+            onClick={() => navigate(-1)}
+            aria-label="Terug"
+          >
+            <ChevronLeft size={26} />
+          </button>
+          <Skeleton width="160px" height="28px" />
+        </div>
 
         <div className="artists-list-full">
           {[...Array(12)].map((_, i) => (
@@ -80,7 +86,16 @@ function SeeAllArtists() {
 
   return (
     <div className="see-all-page">
-      <h1 className="see-all-title">All Artists</h1>
+      <div className="see-all-header">
+        <button
+          className="see-all-back"
+          onClick={() => navigate(-1)}
+          aria-label="Terug"
+        >
+          <ChevronLeft size={26} />
+        </button>
+        <h1 className="see-all-title">Alle artiesten</h1>
+      </div>
 
       {artists.length > 0 ? (
         <div className="artists-list-full">

@@ -1,37 +1,230 @@
-@import "../PlaylistDetail/PlaylistDetail.css";
-
 .edit-playlist-page {
+  padding: 8px var(--spacing-horizontal) 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-height: calc(100vh - var(--footer-offset));
+  box-sizing: border-box;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
 }
 
-.edit-song-row {
-  gap: 16px;
+.edit-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
 }
 
-.drag-handle {
-  font-size: 20px;
-  color: var(--text-secondary);
-  cursor: grab;
-  width: 24px;
-  text-align: center;
+.edit-back {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
 }
 
-.edit-song-cover {
-  width: 48px;
-  height: 48px;
+.edit-header h1 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
+}
+
+.edit-content {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 100%;
+}
+
+.edit-cover-section {
+  display: flex;
+  justify-content: center;
+}
+
+.edit-cover-preview {
+  width: 150px;
+  height: 150px;
   border-radius: 6px;
-  object-fit: cover;
-}
-
-.delete-btn {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 59, 48, 0.2);
-  color: #ff3b30;
-  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  cursor: pointer;
+}
+
+.edit-cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-secondary);
+}
+
+.edit-cover-placeholder span {
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+}
+
+.edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.edit-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.edit-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.edit-field-name {
+  border-bottom: 2px solid var(--accent, #1ED15F);
+  padding: 0 0 8px;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 20px;
+  font-weight: 700;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-field-desc {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0 0 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-songs-title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.edit-songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-song-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.edit-delete-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 80px;
+  border-radius: 8px;
+  background: #ff3b30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.edit-song-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: var(--bg-primary);
+  padding: 8px 4px;
+}
+
+.edit-song-index {
   flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.edit-song-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-song-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-song-artist {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-song-remove {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.btn-edit-confirm {
+  width: 100%;
+  margin-top: 8px;
+  background-color: var(--accent, #1ED15F);
+  color: var(--accent-text, #0c0c0e);
+  border: none;
+  border-radius: 30px;
+  padding: 16px;
+  font-family: var(--font-primary);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
 }

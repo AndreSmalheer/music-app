@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 
 import "./SeeAll.css";
 
@@ -80,14 +81,32 @@ function SeeAll() {
   if (isLoading) {
     return (
       <div className="see-all-page">
-        <Skeleton width="150px" height="32px" />
+        <div className="see-all-header">
+          <button
+            className="see-all-back"
+            onClick={() => navigate(-1)}
+            aria-label="Terug"
+          >
+            <ChevronLeft size={26} />
+          </button>
+          <Skeleton width="180px" height="28px" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="see-all-page">
-      <h1 className="see-all-title">Onlangs afgespeeld</h1>
+      <div className="see-all-header">
+        <button
+          className="see-all-back"
+          onClick={() => navigate(-1)}
+          aria-label="Terug"
+        >
+          <ChevronLeft size={26} />
+        </button>
+        <h1 className="see-all-title">Onlangs afgespeeld</h1>
+      </div>
 
       <div className="see-all-recent-songs-container">
         {songs.length > 0 ? (

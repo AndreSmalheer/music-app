@@ -5,6 +5,7 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
+import { ChevronLeft, Play, Shuffle } from "lucide-react";
 import {
   getArtist,
   addRecent,
@@ -178,47 +179,65 @@ function ArtistDetail() {
 
   return (
     <div className="artist-detail-page">
-      {isLoading ? (
-        <div className="artist-hero">
-          <Skeleton height="300px" borderRadius="0" />
-          <div className="artist-hero-overlay">
-            <Skeleton width="60%" height="2rem" />
-            <Skeleton
-              width="40%"
-              height="1rem"
-              style={{ marginTop: "0.5rem" }}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="artist-hero">
+      <div className="artist-hero">
+        {isLoading ? (
+          <div className="artist-hero-img artist-hero-skeleton" />
+        ) : (
           <img
             src={artist?.img || "/covers/test-cover.jpg"}
             alt="Artist Profile"
             className="artist-hero-img"
           />
-          <div className="artist-hero-overlay">
-            <h1 className="artist-hero-name">{artist?.name || "Artist"}</h1>
-            <p className="artist-hero-listeners">1,234,567 Monthly Listeners</p>
-          </div>
+        )}
+        <div className="artist-hero-scrim" />
+
+        <button
+          type="button"
+          className="artist-back"
+          onClick={() => navigate(-1)}
+          aria-label="Back"
+        >
+          <ChevronLeft size={26} />
+        </button>
+
+        <div className="artist-hero-overlay">
+          {isLoading ? (
+            <>
+              <Skeleton width="60%" height="2.5rem" />
+              <Skeleton
+                width="40%"
+                height="1rem"
+                style={{ marginTop: "0.5rem" }}
+              />
+            </>
+          ) : (
+            <>
+              <h1 className="artist-hero-name">{artist?.name || "Artist"}</h1>
+              <p className="artist-hero-listeners">1,234,567 maandelijkse luisteraars</p>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="artist-content">
         <div className="artist-main-actions">
           <motion.button
+            type="button"
+            className="btn-artist-shuffle"
+            whileTap={{ scale: 0.9 }}
+            onClick={handleShuffle}
+            aria-label="Shuffle"
+          >
+            <Shuffle size={26} strokeWidth={1.8} />
+          </motion.button>
+          <motion.button
+            type="button"
             className="btn-artist-play"
             whileTap={{ scale: 0.95 }}
             onClick={() => handlePlaySong(topTracks[0])}
+            aria-label="Play"
           >
-            Play
-          </motion.button>
-          <motion.button
-            className="btn-artist-shuffle"
-            whileTap={{ scale: 0.95 }}
-            onClick={handleShuffle}
-          >
-            Shuffle
+            <Play size={26} fill="currentColor" stroke="none" />
           </motion.button>
         </div>
 
@@ -230,18 +249,21 @@ function ArtistDetail() {
                   <div
                     key={i}
                     className="artist-song-row"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1rem",
-                    }}
+                    style={{ gap: "14px" }}
                   >
-                    <Skeleton width="20px" height="20px" />
-                    <Skeleton width="50px" height="50px" />
-                    <div style={{ flex: 1 }}>
-                      <Skeleton width="80%" />
+                    <Skeleton width="48px" height="48px" borderRadius="6px" />
+                    <div
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <Skeleton height="16px" width="70%" />
+                      <Skeleton height="13px" width="40%" />
                     </div>
-                    <Skeleton width="40px" />
+                    <Skeleton width="30px" height="13px" />
                   </div>
                 ))
               : topTracks.map((track, index) => (
@@ -252,14 +274,17 @@ function ArtistDetail() {
                     whileTap={tapFeedback}
                     onClick={() => handlePlaySong(track)}
                   >
-                    <span className="artist-song-index">{index + 1}</span>
-                    <img
-                      src={track.cover}
-                      alt=""
+                    <div
                       className="artist-song-cover"
+                      style={
+                        track.cover
+                          ? { backgroundImage: `url(${track.cover})` }
+                          : undefined
+                      }
                     />
                     <div className="artist-song-info">
                       <p className="artist-song-title">{track.title}</p>
+                      <p className="artist-song-artist">{track.artist}</p>
                     </div>
                     <span className="artist-song-duration">
                       {track.durationLabel}
@@ -273,7 +298,7 @@ function ArtistDetail() {
               onClick={handleShowMore}
               disabled={isLoadingMore}
             >
-              {isLoadingMore ? "Loading..." : "Show More"}
+              {isLoadingMore ? "Loading..." : "Meer laden"}
             </button>
           )}
         </section>

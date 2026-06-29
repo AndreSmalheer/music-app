@@ -1,155 +1,179 @@
 .see-all-page {
   box-sizing: border-box;
   width: 100%;
-  height: 100%;
-  padding: 10px 26px;
+  min-height: 100%;
+  background: var(--bg-primary, #0c0c0e);
+  color: var(--text-primary, #fff);
+  font-family: "Manrope", sans-serif;
+  padding: 8px 18px 28px;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
-.view-header {
+/* ---- Header met terug-chevron ---- */
+.see-all-header {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 18px;
 }
 
-.btn-play-all-recent {
-  background-color: #c696fb;
-  color: #121212;
+.see-all-back {
+  background: none;
   border: none;
-  border-radius: 20px;
-  padding: 10px 24px;
-  font-family: var(--font-primary);
-  font-weight: 600;
-  font-size: 14px;
+  padding: 4px;
+  margin-left: -6px;
   cursor: pointer;
+  color: var(--text-primary, #fff);
+  display: flex;
+  align-items: center;
 }
 
 .see-all-title {
-  font-size: clamp(24px, 8vw, 32px);
-  color: var(--text-primary);
   margin: 0;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary, #fff);
 }
 
 .see-all-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 12px;
 }
 
+.see-all-header-row .see-all-header {
+  margin: 6px 0 0;
+}
+
+/* ---- Add-playlist knop ---- */
+.btn-add-playlist {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-primary, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Artiestenlijst (ronde foto's) ---- */
 .artists-list-full {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 20px;
+  gap: 18px;
 }
 
 .artist-card-full-list {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background-color: var(--bg-secondary);
-  padding: 12px;
-  border-radius: 50px 16px 16px 50px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 14px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  width: 100%;
 }
 
 .artist-card-full-list__img {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
+  background: var(--surface, rgba(255, 255, 255, 0.07));
 }
 
 .artist-card-full-list__info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .artist-card-full-list__name {
-  font-size: 16px;
-  color: var(--text-primary);
-  font-weight: 500;
   margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .artist-card-full-list__subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
   margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #9a9a9d);
 }
 
-.btn-add-playlist {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: var(--bg-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
+/* ---- Playlists-lijst ---- */
 .playlists-list-full {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 10px;
+  gap: 18px;
+  padding-top: 18px;
 }
 
 .playlist-card-full {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background-color: var(--bg-secondary);
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 14px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  width: 100%;
 }
 
 .playlist-card-full__cover {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--cover-radius, 6px);
   object-fit: cover;
+  background: var(--surface, rgba(255, 255, 255, 0.07));
 }
 
 .playlist-card-full__info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .playlist-card-full__title {
-  font-size: 16px;
-  color: var(--text-primary);
-  font-weight: 500;
   margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .playlist-card-full__subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
   margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #9a9a9d);
 }
 
+/* ---- Onlangs afgespeeld (songs-lijst) ---- */
 .see-all-recent-songs-container {
   width: 100%;
-  padding-left: 4px;
-  padding-top: 13px;
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 18px;
 }
 
 .see-all-recent-song {
@@ -157,34 +181,43 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   width: 100%;
-  height: 90px;
-  padding-left: 6px;
   display: flex;
   align-items: center;
+  gap: 14px;
+  cursor: pointer;
 }
 
 .see-all-recent-song-album-cover {
-  height: 100%;
-  width: auto;
-  aspect-ratio: 1/1;
-  background-color: gray;
-  border-radius: 7px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--cover-radius, 6px);
+  background: var(--surface, rgba(255, 255, 255, 0.07));
 }
 
 .see-all-recent-song-song-info {
-  height: 100%;
-  padding-top: 8px;
-  padding-left: 8px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .see-all-recent-song-song-info-title {
-  font-size: 16px;
-  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .see-all-recent-song-song-info-artists {
-  font-size: 14px;
-  color: #bfbfbf;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #9a9a9d);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

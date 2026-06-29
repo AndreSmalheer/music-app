@@ -8,7 +8,7 @@ import EmptyState from "../../components/EmptyState/EmptyState";
 import { getPlaylists } from "../../services/api";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { playPlaylistById } from "../../utils/playback";
-import { Plus } from "lucide-react";
+import { Plus, ChevronLeft } from "lucide-react";
 import "./SeeAll.css";
 
 // Eén playlist-kaart met eigen long-press menu (Open/Play/Shuffle).
@@ -58,7 +58,9 @@ function PlaylistCardFull({ playlist, navigate, showOptions, playSong }) {
 
       <div className="playlist-card-full__info">
         <p className="playlist-card-full__title">{playlist.title}</p>
-        <p className="playlist-card-full__subtitle">{playlist.songCount} songs</p>
+        <p className="playlist-card-full__subtitle">
+          {playlist.songCount} nummers
+        </p>
       </div>
     </motion.div>
   );
@@ -93,13 +95,21 @@ function SeeAllPlaylists() {
   if (isLoading) {
     return (
       <div className="see-all-page">
-        <div className="see-all-header-row" style={{ marginBottom: "20px" }}>
-          <Skeleton width="200px" height="32px" />
+        <div className="see-all-header-row">
+          <div className="see-all-header">
+            <button
+              className="see-all-back"
+              onClick={() => navigate(-1)}
+              aria-label="Terug"
+            >
+              <ChevronLeft size={26} />
+            </button>
+            <Skeleton width="160px" height="28px" />
+          </div>
           <Skeleton width="32px" height="32px" borderRadius="8px" />
         </div>
 
-        <div className="playlists-list-full">
-       </div>
+        <div className="playlists-list-full"></div>
       </div>
     );
   }
@@ -107,7 +117,16 @@ function SeeAllPlaylists() {
   return (
     <div className="see-all-page">
       <div className="see-all-header-row">
-        <h1 className="see-all-title">Your Playlists</h1>
+        <div className="see-all-header">
+          <button
+            className="see-all-back"
+            onClick={() => navigate(-1)}
+            aria-label="Terug"
+          >
+            <ChevronLeft size={26} />
+          </button>
+          <h1 className="see-all-title">Jouw afspeellijsten</h1>
+        </div>
         <motion.button
           className="btn-add-playlist"
           whileTap={{ scale: 0.9 }}

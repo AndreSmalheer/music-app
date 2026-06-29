@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { ChevronLeft, Image, Trash2 } from "lucide-react";
 import { useModal } from "../../context/ModalContext";
 import { getPlaylist, updatePlaylist } from "../../services/api";
 import "./EditPlaylist.css";
 
 function EditPlaylist() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [playlist, setPlaylist] = useState(null);
   const [songs, setSongs] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -46,84 +48,96 @@ function EditPlaylist() {
 
   return (
     <div className="playlist-detail-page edit-playlist-page">
-      <div className="playlist-header">
-        <div className="playlist-header-content">
-          <img
-            src={playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"}
-            alt="Playlist Cover"
-            className="playlist-main-cover"
-          />
-          <div className="playlist-info">
-            <h1 className="playlist-title">{playlist?.title || "Edit Playlist"}</h1>
-            <p className="playlist-description">Reorder or remove tracks from your playlist.</p>
+      <div className="edit-header">
+        <button className="edit-back" onClick={() => navigate(-1)} aria-label="Terug">
+          <ChevronLeft size={26} strokeWidth={2.2} />
+        </button>
+        <h1>Afspeellijst bewerken</h1>
+      </div>
+
+      <div className="edit-content">
+        <div className="edit-cover-section">
+          <div className="edit-cover-preview">
+            {playlist?.cover ? (
+              <img src={playlist.cover} alt="Playlist Cover" />
+            ) : (
+              <div className="edit-cover-placeholder">
+                <Image size={30} strokeWidth={1.7} />
+                <span>Hoes</span>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="songs-list">
-        {songs.map((song, index) => (
-          <motion.div
-            key={song.id}
-            className="song-row-wrapper"
-            style={{
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '12px',
-              marginBottom: '4px'
-            }}
-          >
-            <div
-              className="delete-action"
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 7,
-                borderRadius: 10,
-                height: '100%',
-                width: 82,
-                background: '#ff3b30',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '14px',
-              }}
-              onClick={() => handleDelete(song)}
-            >
-              Delete
-            </div>
-            <motion.div
-              className="song-row"
-              drag="x"
-              dragDirectionLock
-              dragConstraints={{ left: -80, right: 0 }}
-              dragSnapToOrigin={true}
-              dragMomentum={false}
-              style={{
-                background: 'var(--bg-primary)',
-                position: 'relative',
-                zIndex: 1,
-                touchAction: 'pan-y'
-              }}
-              onDragStart={() => setIsDragging(true)}
-              onDragEnd={(event, info) => {
-                setTimeout(() => setIsDragging(false), 50);
-                if (info.offset.x < -60) {
-                  handleDelete(song);
-                }
-              }}
-            >
-              <div className="drag-handle" style={{ marginRight: '10px' }}>☰</div>
-              <span className="song-index" style={{ marginRight: '10px' }}>{index + 1}</span>
-              <div className="song-row-info" style={{ flex: 1 }}>
-                <p className="song-row-title">{song.title}</p>
-                <p className="song-row-artist">{song.artist}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        ))}
-      </div>
+        <div className="edit-fields">
+          <div className="edit-input-group">
+            <span className="edit-label">NAAM</span>
+            <div className="edit-field-name">{playlist?.title || "Afspeellijst bewerken"}</div>
+          </div>
 
+          <div className="edit-input-group">
+            <span className="edit-label">BESCHRIJVING</span>
+            <div className="edit-field-desc">Wijzig de volgorde of verwijder nummers.</div>
+          </div>
+        </div>
+
+        <div className="edit-songs">
+          <div className="edit-songs-title">Nummers</div>
+          <div className="edit-songs-list">
+            {songs.map((song, index) => (
+              <motion.div
+                key={song.id}
+                className="edit-song-wrapper"
+              >
+                <div
+                  className="edit-delete-action"
+                  onClick={() => handleDelete(song)}
+                >
+                  <Trash2 size={18} strokeWidth={2} />
+                </div>
+                <motion.div
+                  className="edit-song-row"
+                  drag="x"
+                  dragDirectionLock
+                  dragConstraints={{ left: -80, right: 0 }}
+                  dragSnapToOrigin={true}
+                  dragMomentum={false}
+                  style={{ touchAction: "pan-y" }}
+                  onDragStart={() => setIsDragging(true)}
+                  onDragEnd={(event, info) => {
+                    setTimeout(() => setIsDragging(false), 50);
+                    if (info.offset.x < -60) {
+                      handleDelete(song);
+                    }
+                  }}
+                >
+                  <span className="edit-song-index">{index + 1}</span>
+                  <div className="edit-song-info">
+                    <p className="edit-song-title">{song.title}</p>
+                    <p className="edit-song-artist">{song.artist}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="edit-song-remove"
+                    aria-label="Verwijderen"
+                    onClick={() => handleDelete(song)}
+                  >
+                    <Trash2 size={18} strokeWidth={2} />
+                  </button>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <motion.button
+          className="btn-edit-confirm"
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigate(-1)}
+        >
+          Opslaan
+        </motion.button>
+      </div>
     </div>
   );
 }
