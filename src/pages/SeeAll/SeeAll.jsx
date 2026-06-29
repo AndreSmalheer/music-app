@@ -14,7 +14,7 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { getRecent, addRecent } from "../../services/api";
 
 function SeeAll() {
-  const { showOptions } = useModal();
+  const { showOptions, showConfirm } = useModal();
 
   const { playSong } = useContext(PlayerContext);
 
@@ -22,7 +22,7 @@ function SeeAll() {
 
   const [searchParams] = useSearchParams();
 
-  const includeYt = searchParams.get("includeYt") === "true";
+  const includeYt = searchParams.get("includeYt") !== "false";
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -118,6 +118,12 @@ function SeeAll() {
               song={song}
               handlePlaySong={handlePlaySong}
               showOptions={showOptions}
+              showConfirm={showConfirm}
+              onDeleteSong={(deletedSong) =>
+                setSongs((currentSongs) =>
+                  currentSongs.filter((song) => song.id !== deletedSong.id),
+                )
+              }
             />
           ))
         ) : (

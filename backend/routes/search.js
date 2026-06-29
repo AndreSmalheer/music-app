@@ -16,8 +16,6 @@ router.get("/", async (req, res, next) => {
 
     const [songs, artists, playlists] = await Promise.all([
       Song.find({
-        type: { $ne: "youtube" },
-        youtubeId: { $exists: false },
         $or: [{ title: rx }, { artist: rx }, { album: rx }],
       }).limit(20),
       Artist.find({ name: rx, isYoutubeArtist: { $ne: true } }).limit(20),

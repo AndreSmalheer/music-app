@@ -9,6 +9,8 @@ import { create } from "youtube-dl-exec";
 
 import Song from "../models/Song.js";
 import Artist from "../models/Artist.js";
+import Playlist from "../models/Playlist.js";
+import RecentlyPlayed from "../models/RecentlyPlayed.js";
 import upload from "../middleware/upload.js";
 
 // Zoekt artiest op naam + bron op, maakt hem aan als hij niet bestaat, en voegt songId toe.
@@ -293,6 +295,11 @@ router.delete("/:id", async (req, res, next) => {
         { $pull: { songs: song._id } },
       );
     }
+
+    await Promise.all([
+      Playlist.updateMany({ songs: song._id }, { $pull: { songs: song._id } }),
+      RecentlyPlayed.deleteMany({ song: song._id }),
+    ]);
 
     res.json({ success: true });
   } catch (err) {

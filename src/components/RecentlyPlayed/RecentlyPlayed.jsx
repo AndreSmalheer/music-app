@@ -16,7 +16,7 @@ function ArrowBtn() {
 
 function RecentlyPlayed({
   tracks: tracksProp,
-  InculdeYt = false,
+  InculdeYt = true,
   YtSearchStyling = false,
 }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +25,7 @@ function RecentlyPlayed({
   const navigate = useNavigate();
 
   const { playSong } = useContext(PlayerContext);
-  const { showOptions } = useModal();
+  const { showOptions, showConfirm } = useModal();
 
   useEffect(() => {
     if (tracksProp) {
@@ -117,6 +117,12 @@ function RecentlyPlayed({
                 song={track}
                 handlePlaySong={handleTrackClick}
                 showOptions={showOptions}
+                showConfirm={showConfirm}
+                onDeleteSong={(deletedTrack) =>
+                  setTracks((currentTracks) =>
+                    currentTracks.filter((track) => track.id !== deletedTrack.id),
+                  )
+                }
                 variant="card"
               />
             ))

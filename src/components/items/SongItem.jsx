@@ -2,12 +2,19 @@ import { motion } from "framer-motion";
 import useLongPress from "../../hooks/useLongPress";
 import {
   addSongToPlaylist,
+  deleteSong,
   getPlaylists,
-  removeSongFromPlaylist,
 } from "../../services/api";
 
-function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
-  const menuOptions = ["Play", "Add to Playlist"];
+function SongItem({
+  song,
+  handlePlaySong,
+  showOptions,
+  showConfirm,
+  onDeleteSong,
+  variant = "list",
+}) {
+  const menuOptions = ["Play", "Add to Playlist", "Delete"];
 
   const showPlaylistOptions = async () => {
     try {
@@ -42,6 +49,25 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
         setTimeout(showPlaylistOptions, 100);
 
         break;
+
+      case "Delete": {
+        const removeSong = async () => {
+          try {
+            await deleteSong(song.id);
+            onDeleteSong?.(song);
+          } catch (err) {
+            console.error("Song verwijderen mislukt:", err);
+          }
+        };
+
+        if (showConfirm) {
+          showConfirm(`Delete "${song.title}" from your library?`, removeSong);
+        } else {
+          removeSong();
+        }
+
+        break;
+      }
 
       default:
         console.log(option, song);

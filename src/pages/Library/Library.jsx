@@ -4,13 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Music, ListMusic } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
-import { getPlaylists, getSongs, getArtists } from "../../services/api";
+import {
+  getPlaylists,
+  getLocalSongs,
+  getSavedYoutubeSongs,
+  getArtists,
+} from "../../services/api";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import "./Library.css";
 
 const TABS = [
   { key: "playlists", label: "Afspeellijsten" },
   { key: "uploads", label: "Uploads" },
+  { key: "youtube", label: "YouTube" },
   { key: "artists", label: "Artiesten" },
 ];
 
@@ -24,6 +30,7 @@ function Library() {
 
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
+  const [youtubeSongs, setYoutubeSongs] = useState([]);
   const [artists, setArtists] = useState([]);
 
   // Alle data in één keer ophalen.
@@ -31,14 +38,16 @@ function Library() {
     let active = true;
     (async () => {
       try {
-        const [pl, sg, ar] = await Promise.all([
+        const [pl, sg, yt, ar] = await Promise.all([
           getPlaylists(),
-          getSongs(),
+          getLocalSongs(),
+          getSavedYoutubeSongs(),
           getArtists(),
         ]);
         if (!active) return;
         setPlaylists(pl);
         setSongs(sg);
+        setYoutubeSongs(yt);
         setArtists(ar);
       } catch (err) {
         console.error("Bibliotheek laden mislukt:", err);
@@ -52,8 +61,8 @@ function Library() {
   }, []);
 
   // Speel een upload af met de hele uploads-lijst als wachtrij, startend bij song.
-  const playUpload = (song) => {
-    const ordered = [song, ...songs.filter((s) => s.id !== song.id)];
+  const playSongList = (song, list) => {
+    const ordered = [song, ...list.filter((s) => s.id !== song.id)];
     playSong(
       song.src,
       song.title,
@@ -156,7 +165,40 @@ function Library() {
               key={song.id}
               className="library-row"
               whileTap={{ scale: 0.98 }}
-              onClick={() => playUpload(song)}
+              onClick={() => playSongList(song, songs)}
+            >
+              <img
+                src={song.cover}
+                alt={song.title}
+                className="library-row__cover"
+              />
+              <div className="library-row__info">
+                <p className="library-row__title">{song.title}</p>
+                <p className="library-row__subtitle">{song.artist}</p>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      );
+    }
+
+    if (activeTab === "youtube") {
+      if (youtubeSongs.length === 0) {
+        return (
+          <EmptyState
+            title="Geen YouTube nummers"
+            subtitle="Speel of bewaar YouTube nummers om ze hier te zien"
+          />
+        );
+      }
+      return (
+        <div className="library-list">
+          {youtubeSongs.map((song) => (
+            <motion.button
+              key={song.id}
+              className="library-row"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => playSongList(song, youtubeSongs)}
             >
               <img
                 src={song.cover}

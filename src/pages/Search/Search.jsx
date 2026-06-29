@@ -31,7 +31,7 @@ function Search() {
   const [searchResults, setSearchResults] = useState(emptyResults);
   const [isLoading, setIsLoading] = useState(false);
   const { playSong } = useContext(PlayerContext);
-  const { showOptions } = useModal();
+  const { showOptions, showConfirm } = useModal();
   const navigate = useNavigate();
   const tapFeedback = { scale: 0.98 };
 
@@ -75,8 +75,18 @@ function Search() {
       searchResults.songs,
       song.id,
     );
-    if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
+    if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
+  };
+
+  const handleDeleteSong = (deletedSong) => {
+    setSearchResults((currentResults) => ({
+      ...currentResults,
+      topResults: currentResults.topResults.filter(
+        (song) => song.id !== deletedSong.id,
+      ),
+      songs: currentResults.songs.filter((song) => song.id !== deletedSong.id),
+    }));
   };
 
   return (
@@ -157,6 +167,8 @@ function Search() {
                       song={song}
                       handlePlaySong={handlePlaySong}
                       showOptions={showOptions}
+                      showConfirm={showConfirm}
+                      onDeleteSong={handleDeleteSong}
                       variant="card"
                     />
                   ))}
@@ -174,6 +186,8 @@ function Search() {
                         song={song}
                         handlePlaySong={handlePlaySong}
                         showOptions={showOptions}
+                        showConfirm={showConfirm}
+                        onDeleteSong={handleDeleteSong}
                         variant="search"
                       />
                     ))}
