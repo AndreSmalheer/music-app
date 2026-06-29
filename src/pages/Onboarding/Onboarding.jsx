@@ -5,19 +5,19 @@ import "./Onboarding.css";
 
 const steps = [
   {
-    title: "Stream from YouTube",
+    title: "Stream vanaf YouTube",
     description:
-      "Play millions of songs directly from YouTube without downloading them first.",
+      "Speel miljoenen nummers direct af vanaf YouTube zonder ze eerst te downloaden.",
   },
   {
-    title: "Download to Your Device",
+    title: "Download naar je apparaat",
     description:
-      "Save songs locally for your own collection. Downloads are stored on your device, not for offline streaming.",
+      "Sla nummers lokaal op voor je eigen collectie. Downloads worden op je apparaat opgeslagen en zijn niet bedoeld voor offline streaming.",
   },
   {
-    title: "Create Your Account",
+    title: "Maak je account aan",
     description:
-      "Sign in to sync your library, favorites, and settings across your devices.",
+      "Log in om je bibliotheek, favorieten en instellingen op al je apparaten te synchroniseren.",
     type: "form",
   },
 ];
