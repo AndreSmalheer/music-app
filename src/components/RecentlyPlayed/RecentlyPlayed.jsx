@@ -69,6 +69,7 @@ function RecentlyPlayed({
         -1,
         track.youtubeId || null,
         tracks,
+        track.id,
       );
 
       if (track.id) {

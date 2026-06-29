@@ -28,6 +28,7 @@ export function playTrackList(tracks, { playSong, navigate, shuffle = false } = 
     -1,
     first.youtubeId || null,
     list,
+    first.id,
   );
 
   if (first.id) addRecent(first.id).catch(() => {});

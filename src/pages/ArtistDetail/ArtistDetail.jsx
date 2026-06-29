@@ -135,6 +135,8 @@ function ArtistDetail() {
           savedSong.cover,
           -1,
           savedSong.youtubeId || null,
+          null,
+          savedSong.id,
         );
 
         if (savedSong.id) addRecent(savedSong.id).catch(() => {});

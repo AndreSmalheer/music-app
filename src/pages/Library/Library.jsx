@@ -62,6 +62,7 @@ function Library() {
       -1,
       song.youtubeId || null,
       ordered,
+      song.id,
     );
     navigate("/now-playing");
   };

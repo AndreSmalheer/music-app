@@ -32,6 +32,7 @@ import {
   ListMusic,
   GripVertical,
 } from "lucide-react";
+import { addSongToPlaylist, getPlaylists } from "../../services/api";
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -204,6 +205,64 @@ function NowPlaying() {
     toggleRepeat();
   };
 
+  const showPlaylistOptions = async () => {
+    try {
+      const playlists = await getPlaylists();
+      const options = playlists.map((playlist) => ({
+        id: playlist.id,
+        label: playlist.title,
+      }));
+
+      showOptions(
+        options.length > 0
+          ? options
+          : [{ id: "no-playlists", label: "No playlists found" }],
+        async (playlist) => {
+          if (playlist.id === "no-playlists") return;
+
+          try {
+            let trackId = currentTrack?.id;
+            if (!trackId && currentTrack?.youtubeId) {
+              const saved = await downloadYoutubeToLibrary({
+                url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
+                title: currentTrack.title,
+                artist: currentTrack.artist,
+                thumbnail: currentTrack.coverSrc,
+              });
+              trackId = saved?.id;
+            }
+            if (trackId) {
+              await addSongToPlaylist(playlist.id, trackId);
+            } else {
+              console.warn(
+                "Unable to determine track ID for playlist addition.",
+              );
+            }
+          } catch (e) {
+            console.error("Failed to add song to playlist:", e);
+          }
+        },
+      );
+    } catch (err) {
+      console.error("Playlists laden mislukt:", err);
+    }
+  };
+
+  const handleMenuOption = (option) => {
+    switch (option) {
+      case "Add to Playlist":
+        setTimeout(showPlaylistOptions, 100);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  const openMenu = () => {
+    showOptions(menuOptions, handleMenuOption);
+  };
+
   const isActive = repeatMode !== "off";
 
   if (!currentTrack) {
@@ -225,28 +284,23 @@ function NowPlaying() {
   const hasKnownDuration = Number.isFinite(duration) && duration > 0;
   const safeDuration = hasKnownDuration ? duration : 0;
 
-  const menuOptions = [
-    "Add to Playlist",
-    "Go to Album",
-    "View Artist",
-    "Share Song",
-    "Sleep Timer",
-  ];
+  const menuOptions = ["Add to Playlist"];
 
   const isYoutube = !!currentTrack.youtubeId;
 
   const handleDownload = async () => {
     if (!currentTrack.youtubeId || downloadInFlight) return;
+    const trackToDownload = { ...currentTrack };
+
     try {
       setDownloadInFlight(true);
       const savedSong = await downloadYoutubeToLibrary({
-        url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
-        title: currentTrack.title,
-        artist: currentTrack.artist,
-        thumbnail: currentTrack.coverSrc,
+        url: `https://www.youtube.com/watch?v=${trackToDownload.youtubeId}`,
+        title: trackToDownload.title,
+        artist: trackToDownload.artist,
+        thumbnail: trackToDownload.coverSrc,
       });
 
-      setDownloadConfirmOpen(false);
       setDownloadSuccess(true);
 
       if (savedSong?.id) {
@@ -309,7 +363,7 @@ function NowPlaying() {
           <button
             type="button"
             className="np-top-btn"
-            onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}
+            onClick={openMenu}
             aria-label="More"
           >
             <MoreVertical size={24} strokeWidth={2} />
@@ -501,7 +555,7 @@ function NowPlaying() {
         {downloadConfirmOpen && (
           <MotionDiv
             className="download-overlay"
-            onClick={() => !downloadInFlight && setDownloadConfirmOpen(false)}
+            onClick={() => setDownloadConfirmOpen(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -523,7 +577,6 @@ function NowPlaying() {
                 <button
                   className="download-sheet__btn download-sheet__btn--cancel"
                   onClick={() => setDownloadConfirmOpen(false)}
-                  disabled={downloadInFlight}
                 >
                   Cancel
                 </button>

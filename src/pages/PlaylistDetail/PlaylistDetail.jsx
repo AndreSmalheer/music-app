@@ -99,6 +99,7 @@ function PlaylistDetail() {
       -1,
       song.youtubeId || null,
       songs,
+      song.id,
     );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");

@@ -69,6 +69,8 @@ function SeeAll() {
       song.youtubeId || null,
 
       songs,
+
+      song.id,
     );
 
     if (song.id) {

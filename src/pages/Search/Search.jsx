@@ -73,6 +73,7 @@ function Search() {
       -1,
       song.youtubeId || null,
       searchResults.songs,
+      song.id,
     );
     if (song.id && !song.youtubeId) addRecent(song.id).catch(() => {});
     navigate("/now-playing");

@@ -99,6 +99,8 @@ function Radio() {
         savedSong.cover,
         -1,
         savedSong.youtubeId || null,
+        null,
+        savedSong.id,
       );
 
       if (savedSong.id) {

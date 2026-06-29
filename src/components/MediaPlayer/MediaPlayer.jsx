@@ -120,14 +120,23 @@ function MediaPlayer({ children }) {
     index = -1,
     youtubeId = null,
     newQueue = null,
+    trackId = null,
   ) => {
     if (!audioPlayerRef.current) return;
 
     const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
+    const resolvedTrackId =
+      trackId ||
+      newQueue?.find((song) => {
+        const songSrc = song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src;
+        return songSrc === finalSrc;
+      })?.id ||
+      null;
 
     audioPlayerRef.current.src = finalSrc;
 
     const track = {
+      id: resolvedTrackId,
       src: finalSrc,
       title,
       artist,
@@ -139,6 +148,7 @@ function MediaPlayer({ children }) {
 
     if (newQueue) {
       const formattedQueue = newQueue.map((song) => ({
+        id: song.id || null,
         src: song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src,
         title: song.title,
         artist: song.artist,
@@ -205,6 +215,8 @@ function MediaPlayer({ children }) {
       track.coverSrc,
       index,
       track.youtubeId,
+      null,
+      track.id,
     );
   };
 
