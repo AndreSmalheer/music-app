@@ -142,6 +142,27 @@
   opacity: 0.6;
 }
 
+.artist-show-more-btn {
+  align-self: center;
+  min-width: 150px;
+  height: 42px;
+  margin-top: 12px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 21px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.artist-show-more-btn:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
 .artist-albums-row {
   display: flex;
   gap: 16px;

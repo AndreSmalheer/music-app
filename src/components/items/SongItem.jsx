@@ -1,8 +1,35 @@
 import { motion } from "framer-motion";
 import useLongPress from "../../hooks/useLongPress";
+import {
+  addSongToPlaylist,
+  getPlaylists,
+  removeSongFromPlaylist,
+} from "../../services/api";
 
 function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
   const menuOptions = ["Play", "Add to Playlist"];
+
+  const showPlaylistOptions = async () => {
+    try {
+      const playlists = await getPlaylists();
+      const options = playlists.map((playlist) => ({
+        id: playlist.id,
+        label: playlist.title,
+      }));
+
+      showOptions(
+        options.length > 0
+          ? options
+          : [{ id: "no-playlists", label: "No playlists found" }],
+        async (playlist) => {
+          if (playlist.id === "no-playlists") return;
+          await addSongToPlaylist(playlist.id, song.id);
+        },
+      );
+    } catch (err) {
+      console.error("Playlists laden mislukt:", err);
+    }
+  };
 
   const handleMenuOption = (option) => {
     switch (option) {
@@ -12,15 +39,7 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
         break;
 
       case "Add to Playlist":
-        setTimeout(() => {
-          showOptions(
-            ["Test playlist 1", "Test playlist 2"],
-
-            (playlist) => {
-              console.log("Add track:", song.title, "to", playlist);
-            },
-          );
-        }, 100);
+        setTimeout(showPlaylistOptions, 100);
 
         break;
 

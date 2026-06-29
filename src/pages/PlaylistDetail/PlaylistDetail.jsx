@@ -5,8 +5,42 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import { getPlaylist, addRecent } from "../../services/api";
+import {
+  getPlaylist,
+  addRecent,
+  removeSongFromPlaylist,
+} from "../../services/api";
 import "./PlaylistDetail.css";
+
+function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong }) {
+  const { showOptions } = useModal();
+  const tapFeedback = { scale: 0.98 };
+  const longPressProps = useLongPress(
+    () =>
+      showOptions(["Play", "Remove from Playlist"], async (option) => {
+        if (option === "Play") {
+          onPlaySong(song);
+          return;
+        }
+
+        if (option === "Remove from Playlist") {
+          await onRemoveSong(song);
+        }
+      }),
+    () => onPlaySong(song),
+  );
+
+  return (
+    <motion.div className="song-row" whileTap={tapFeedback} {...longPressProps}>
+      <span className="song-index">{index + 1}</span>
+      <div className="song-row-info">
+        <p className="song-row-title">{song.title}</p>
+        <p className="song-row-artist">{song.artist}</p>
+      </div>
+      <span className="song-duration">{song.durationLabel}</span>
+    </motion.div>
+  );
+}
 
 function PlaylistDetail() {
   const { id } = useParams();
@@ -15,23 +49,6 @@ function PlaylistDetail() {
   const [songs, setSongs] = useState([]);
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
-  const { showOptions } = useModal();
-  const [isDragging, setIsDragging] = useState(false);
-
-  const menuOptions = [
-    "Shuffle",
-    "Edit Playlist",
-    "Add Songs",
-    "Delete",
-    "Download",
-  ];
-
-  const { stop, ...longPressProps } = useLongPress(
-    () => showOptions(menuOptions, (opt) => console.log(opt)),
-    null,
-    { disabled: isDragging },
-  );
-  const tapFeedback = { scale: 0.98 };
 
   useEffect(() => {
     let active = true;
@@ -54,9 +71,61 @@ function PlaylistDetail() {
 
   const handlePlaySong = (song) => {
     if (!song) return;
-    playSong(song.src, song.title, song.artist, song.cover, -1, song.youtubeId || null);
+    playSong(
+      song.src,
+      song.title,
+      song.artist,
+      song.cover,
+      -1,
+      song.youtubeId || null,
+    );
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
+  };
+
+  const shuffleSongs = (songs) => {
+    const shuffled = [...songs];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const random = Math.floor(Math.random() * (i + 1));
+
+      [shuffled[i], shuffled[random]] = [shuffled[random], shuffled[i]];
+    }
+
+    return shuffled;
+  };
+
+  const handleShuffle = () => {
+    if (songs.length === 0) return;
+
+    const shuffled = shuffleSongs(songs);
+
+    playSong(
+      shuffled[0].src,
+      shuffled[0].title,
+      shuffled[0].artist,
+      shuffled[0].cover,
+      -1,
+      shuffled[0].youtubeId || null,
+      shuffled,
+    );
+
+    if (shuffled[0].id) {
+      addRecent(shuffled[0].id).catch(() => {});
+    }
+
+    navigate("/now-playing");
+  };
+
+  const handleRemoveSong = async (song) => {
+    try {
+      await removeSongFromPlaylist(id, song.id);
+      setSongs((currentSongs) =>
+        currentSongs.filter((currentSong) => currentSong.id !== song.id),
+      );
+    } catch (err) {
+      console.error("Song verwijderen uit playlist mislukt:", err);
+    }
   };
 
   const totalMinutes = Math.round(
@@ -68,7 +137,9 @@ function PlaylistDetail() {
       <div className="playlist-header">
         <div className="playlist-header-content">
           <img
-            src={playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"}
+            src={
+              playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"
+            }
             alt="Playlist Cover"
             className="playlist-main-cover"
           />
@@ -78,7 +149,8 @@ function PlaylistDetail() {
               A curated selection of the best visual design test tracks.
             </p>
             <div className="playlist-stats">
-              <span>{songs.length} songs</span> • <span>{totalMinutes} mins</span>
+              <span>{songs.length} songs</span> •{" "}
+              <span>{totalMinutes} mins</span>
             </div>
           </div>
         </div>
@@ -94,7 +166,7 @@ function PlaylistDetail() {
           <motion.button
             className="btn-playlist-action shuffle"
             whileTap={{ scale: 0.95 }}
-            onClick={() => handlePlaySong(songs[0])}
+            onClick={handleShuffle}
           >
             Shuffle
           </motion.button>
@@ -125,20 +197,13 @@ function PlaylistDetail() {
               </div>
             ))
           : songs.map((song, index) => (
-              <motion.div
+              <PlaylistSongRow
                 key={song.id}
-                className="song-row"
-                whileTap={tapFeedback}
-                onClick={() => handlePlaySong(song)}
-                {...longPressProps}
-              >
-                <span className="song-index">{index + 1}</span>
-                <div className="song-row-info">
-                  <p className="song-row-title">{song.title}</p>
-                  <p className="song-row-artist">{song.artist}</p>
-                </div>
-                <span className="song-duration">{song.durationLabel}</span>
-              </motion.div>
+                song={song}
+                index={index}
+                onPlaySong={handlePlaySong}
+                onRemoveSong={handleRemoveSong}
+              />
             ))}
       </div>
     </div>

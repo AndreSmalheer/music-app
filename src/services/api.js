@@ -5,7 +5,8 @@
 
 // In dev stuurt Vite de /api/* calls via de proxy naar localhost:3001.
 // In productie (Capacitor) moet VITE_API_URL naar de echte server wijzen.
-export let BASE_URL = localStorage.getItem("SERVER_URL") || import.meta.env.VITE_API_URL || "";
+export let BASE_URL =
+  localStorage.getItem("SERVER_URL") || import.meta.env.VITE_API_URL || "";
 
 export function setBaseUrl(url) {
   localStorage.setItem("SERVER_URL", url);
@@ -55,9 +56,20 @@ export function assetUrl(p) {
 
 // Seconden -> "m:ss"
 export function formatDuration(seconds = 0) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
+  const normalizedSeconds = normalizeDuration(seconds);
+  const m = Math.floor(normalizedSeconds / 60);
+  const s = Math.floor(normalizedSeconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function normalizeDuration(duration = 0) {
+  const value = Number(duration);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+
+  // Some clients report milliseconds; the API stores seconds.
+  if (value > 24 * 60 * 60) return Math.round(value / 1000);
+
+  return Math.round(value);
 }
 
 // ---- mappers (backend -> UI) -------------------------------------------
@@ -70,8 +82,8 @@ export function toUiTrack(song) {
     title: song.title,
     artist: song.artist,
     album: song.album,
-    duration: song.duration ?? 0,
-    durationLabel: formatDuration(song.duration ?? 0),
+    duration: normalizeDuration(song.duration),
+    durationLabel: formatDuration(song.duration),
     cover: assetUrl(song.thumbnail),
     img: assetUrl(song.thumbnail),
     src: isYoutubeTrack
@@ -91,6 +103,7 @@ export function toUiArtist(artist) {
     img: assetUrl(artist.thumbnail),
     cover: assetUrl(artist.thumbnail),
     isYoutubeArtist: !!artist.isYoutubeArtist,
+    youtubeChannelId: artist.youtubeChannelId,
     type: artist.isYoutubeArtist ? "youtube-artist" : "artist",
     songs: (artist.songs || []).map((s) =>
       typeof s === "object" ? toUiTrack(s) : s,
@@ -170,7 +183,12 @@ export async function downloadFromYoutube({ url, title, artist, thumbnail }) {
   return toUiTrack(song);
 }
 
-export async function downloadYoutubeToLibrary({ url, title, artist, thumbnail }) {
+export async function downloadYoutubeToLibrary({
+  url,
+  title,
+  artist,
+  thumbnail,
+}) {
   const song = await postJSON("/api/songs/download-local", {
     url,
     title,
@@ -211,6 +229,30 @@ export async function updatePlaylist(id, data) {
   return toUiPlaylist(await putJSON(`/api/playlists/${id}`, body));
 }
 
+export async function addSongToPlaylist(playlistId, songId) {
+  const playlist = await getPlaylist(playlistId);
+  const songs = playlist.songs.map((song) =>
+    typeof song === "object" ? song.id : song,
+  );
+
+  if (!songs.includes(songId)) {
+    songs.push(songId);
+  }
+
+  return updatePlaylist(playlistId, { songs });
+}
+
+export async function removeSongFromPlaylist(playlistId, songId) {
+  const playlist = await getPlaylist(playlistId);
+  const songs = playlist.songs.map((song) =>
+    typeof song === "object" ? song.id : song,
+  );
+
+  const updatedSongs = songs.filter((id) => id !== songId);
+
+  return updatePlaylist(playlistId, { songs: updatedSongs });
+}
+
 export function deletePlaylist(id) {
   return del(`/api/playlists/${id}`);
 }
@@ -229,6 +271,16 @@ export async function getYoutubeArtists() {
 
 export async function getArtist(id) {
   return toUiArtist(await getJSON(`/api/artists/${id}`));
+}
+
+export async function createYoutubeArtist({ name, thumbnail, youtubeChannelId }) {
+  return toUiArtist(
+    await postJSON("/api/artists/youtube", {
+      name,
+      thumbnail,
+      youtubeChannelId,
+    }),
+  );
 }
 
 // ---- Recently played ----------------------------------------------------
@@ -261,21 +313,51 @@ export async function search(q) {
 
 // ---- YouTube ------------------------------------------------------------
 
+function toUiYoutubeResult(item) {
+  return item.type === "youtube-artist"
+    ? {
+        id: item.youtubeChannelId,
+        youtubeChannelId: item.youtubeChannelId,
+        name: item.artist || item.title,
+        title: item.artist || item.title,
+        artist: item.artist || item.title,
+        cover: item.thumbnail,
+        img: item.thumbnail,
+        type: "youtube-artist",
+        isYoutubeArtist: true,
+      }
+    : {
+        id: item.youtubeId,
+        youtubeId: item.youtubeId,
+        title: item.title,
+        artist: item.artist,
+        cover: item.thumbnail,
+        img: item.thumbnail,
+        src: "",
+        type: "youtube",
+        duration: 0,
+        durationLabel: "",
+      };
+}
+
 // Geeft een lijst van { youtubeId, title, artist, thumbnail, type: "youtube" }
 export async function searchYoutube(q) {
   const data = await getJSON(`/api/youtube/search?q=${encodeURIComponent(q)}`);
-  return data.map((item) => ({
-    id: item.youtubeId,
-    youtubeId: item.youtubeId,
-    title: item.title,
-    artist: item.artist,
-    cover: item.thumbnail,
-    img: item.thumbnail,
-    src: "",
-    type: "youtube",
-    duration: 0,
-    durationLabel: "",
-  }));
+  return data.map(toUiYoutubeResult);
+}
+
+export async function searchYoutubePage(q, pageToken = "") {
+  const pageTokenParam = pageToken
+    ? `&pageToken=${encodeURIComponent(pageToken)}`
+    : "";
+  const data = await getJSON(
+    `/api/youtube/search?q=${encodeURIComponent(q)}&paged=true${pageTokenParam}`,
+  );
+
+  return {
+    results: (data.results || []).map(toUiYoutubeResult),
+    nextPageToken: data.nextPageToken || null,
+  };
 }
 
 export function getYoutubeStreamUrl(videoId) {

@@ -86,18 +86,25 @@ function ModalOverlay({ isOpen, onClose, type, data }) {
                 <div className="options-menu-handle"></div>
               </div>
               <div className="options-list">
-                {data.options.map((option) => (
+                {data.options.map((option) => {
+                  const optionLabel =
+                    typeof option === "string" ? option : option.label;
+                  const optionKey =
+                    typeof option === "string" ? option : option.id || option.label;
+
+                  return (
                   <button
-                    key={option}
+                    key={optionKey}
                     className="options-item"
                     onClick={() => {
                       data.onOptionClick?.(option);
                       onClose();
                     }}
                   >
-                    {option}
+                    {optionLabel}
                   </button>
-                ))}
+                  );
+                })}
                 <button
                   className="options-item options-item--cancel"
                   onClick={onClose}

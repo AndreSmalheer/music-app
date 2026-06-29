@@ -48,6 +48,13 @@ function mimeForExt(ext) {
   return "audio/mpeg";
 }
 
+function normalizeDuration(duration) {
+  const value = Number(duration);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  if (value > 24 * 60 * 60) return Math.round(value / 1000);
+  return Math.round(value);
+}
+
 async function resolveAudio(videoId) {
   const cached = downloadCache.get(videoId);
   if (cached && cached.expires > Date.now()) return cached;
@@ -67,7 +74,13 @@ async function resolveAudio(videoId) {
     expires = Math.min(expires, parseInt(match[1], 10) * 1000 - 60 * 1000);
   }
 
-  const resolved = { url: info.url, ext: info.ext, mime: mimeForExt(info.ext), expires };
+  const resolved = {
+    url: info.url,
+    ext: info.ext,
+    mime: mimeForExt(info.ext),
+    duration: normalizeDuration(info.duration),
+    expires,
+  };
   downloadCache.set(videoId, resolved);
   return resolved;
 }
@@ -130,7 +143,7 @@ router.post(
         type: "mp3",
         filePath: `/uploads/${audioFile.filename}`,
         thumbnail: coverFile ? `/uploads/${coverFile.filename}` : undefined,
-        duration: Number(req.body.duration) || 0,
+        duration: normalizeDuration(req.body.duration),
       });
 
       await syncArtist(song.artist, song._id, {
@@ -159,6 +172,8 @@ router.post("/download", async (req, res, next) => {
       return res.status(400).json({ error: "Geen geldige YouTube video-id gevonden" });
     }
 
+    const { duration } = await resolveAudio(youtubeId);
+
     const song = await Song.findOneAndUpdate(
       { youtubeId },
       {
@@ -168,6 +183,7 @@ router.post("/download", async (req, res, next) => {
           type: "youtube",
           youtubeId,
           thumbnail,
+          duration,
         },
         $setOnInsert: {
           addedAt: new Date(),
@@ -212,7 +228,7 @@ router.post("/download-local", async (req, res, next) => {
       }
     }
 
-    const { ext } = await resolveAudio(youtubeId);
+    const { ext, duration } = await resolveAudio(youtubeId);
     const fileName = `${youtubeId}.${ext || "m4a"}`;
     const absoluteFilePath = path.join(publicMusicDir, fileName);
     const relativeFilePath = `/music/downloads/${fileName}`;
@@ -231,6 +247,7 @@ router.post("/download-local", async (req, res, next) => {
           sourceYoutubeId: youtubeId,
           youtubeId: undefined,
           thumbnail,
+          duration,
         },
         $setOnInsert: {
           addedAt: new Date(),

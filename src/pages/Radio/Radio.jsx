@@ -4,9 +4,10 @@ import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import {
   addRecent,
+  createYoutubeArtist,
   downloadFromYoutube,
   getYoutubeArtists,
-  searchYoutube,
+  searchYoutubePage,
 } from "../../services/api";
 import "./Radio.css";
 import { useModal } from "../../context/ModalContext";
@@ -23,7 +24,8 @@ function Radio() {
   const [youtubeArtists, setYoutubeArtists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const [searchOffset, setSearchOffset] = useState(10);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const { playSong } = useContext(PlayerContext);
   const navigate = useNavigate();
@@ -34,6 +36,7 @@ function Radio() {
     if (!q) {
       setResults([]);
       setIsLoading(false);
+      setNextPageToken(null);
       return;
     }
 
@@ -41,10 +44,10 @@ function Radio() {
 
     const timer = setTimeout(async () => {
       try {
-        const youtubeResults = await searchYoutube(q);
+        const youtubePage = await searchYoutubePage(q);
 
-        setResults(youtubeResults);
-        setSearchOffset(10);
+        setResults(youtubePage.results);
+        setNextPageToken(youtubePage.nextPageToken);
         setShowMore(false);
       } catch (err) {
         console.error("YouTube search failed:", err);
@@ -75,6 +78,11 @@ function Radio() {
   }, []);
 
   const handlePlaySong = async (song) => {
+    if (song.type === "youtube-artist") {
+      handleOpenYoutubeArtist(song);
+      return;
+    }
+
     try {
       const savedSong = await downloadFromYoutube({
         url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
@@ -102,6 +110,20 @@ function Radio() {
     }
   };
 
+  const handleOpenYoutubeArtist = async (artist) => {
+    try {
+      const savedArtist = await createYoutubeArtist({
+        name: artist.name || artist.artist || artist.title,
+        thumbnail: artist.cover || artist.img,
+        youtubeChannelId: artist.youtubeChannelId,
+      });
+
+      navigate(`/artist/${savedArtist.id}`);
+    } catch (err) {
+      console.error("YouTube artiest openen mislukt:", err);
+    }
+  };
+
   const visibleArtists = showMore
     ? youtubeArtists
     : youtubeArtists.slice(0, 10);
@@ -109,14 +131,18 @@ function Radio() {
   const visibleResults = results;
 
   const handleShowMore = async () => {
+    if (!nextPageToken || isLoadingMore) return;
+
+    setIsLoadingMore(true);
     try {
-      const moreResults = await searchYoutube(query, searchOffset);
+      const youtubePage = await searchYoutubePage(query, nextPageToken);
 
-      setResults((prev) => [...prev, ...moreResults]);
-
-      setSearchOffset((prev) => prev + 10);
+      setResults((prev) => [...prev, ...youtubePage.results]);
+      setNextPageToken(youtubePage.nextPageToken);
     } catch (err) {
       console.error("More YouTube results failed:", err);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -147,15 +173,25 @@ function Radio() {
           {isLoading ? (
             <p className="radio-searching-text">Searching...</p>
           ) : results.length > 0 ? (
-            visibleResults.map((song) => (
-              <SongItem
-                key={song.youtubeId}
-                song={song}
-                handlePlaySong={handlePlaySong}
-                showOptions={showOptions}
-                variant="radio"
-              />
-            ))
+            visibleResults.map((item) =>
+              item.type === "youtube-artist" ? (
+                <ArtistItem
+                  key={item.youtubeChannelId || item.id}
+                  artist={item}
+                  navigate={() => handleOpenYoutubeArtist(item)}
+                  showOptions={showOptions}
+                  variant="artist"
+                />
+              ) : (
+                <SongItem
+                  key={item.youtubeId}
+                  song={item}
+                  handlePlaySong={handlePlaySong}
+                  showOptions={showOptions}
+                  variant="radio"
+                />
+              ),
+            )
           ) : query.trim() ? (
             <p className="no-result-text">No results found.</p>
           ) : youtubeArtists.length > 0 ? (
@@ -174,9 +210,13 @@ function Radio() {
         </div>
       </section>
 
-      {query.trim() && results.length > 10 && (
-        <button className="show-more-btn" onClick={handleShowMore}>
-          Show More
+      {query.trim() && nextPageToken && (
+        <button
+          className="show-more-btn"
+          onClick={handleShowMore}
+          disabled={isLoadingMore}
+        >
+          {isLoadingMore ? "Loading..." : "Show More"}
         </button>
       )}
     </div>

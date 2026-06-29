@@ -6,6 +6,7 @@ const artistSchema = new mongoose.Schema({
   songs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Song" }],
   createdAt: { type: Date, default: Date.now },
   isYoutubeArtist: { type: Boolean, default: false },
+  youtubeChannelId: { type: String },
 });
 
 artistSchema.index({ name: 1, isYoutubeArtist: 1 }, { unique: true });

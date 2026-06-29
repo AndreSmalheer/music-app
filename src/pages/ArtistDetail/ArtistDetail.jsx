@@ -5,7 +5,12 @@ import { useModal } from "../../context/ModalContext";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
-import { getArtist, addRecent } from "../../services/api";
+import {
+  getArtist,
+  addRecent,
+  downloadFromYoutube,
+  searchYoutubePage,
+} from "../../services/api";
 import "./ArtistDetail.css";
 
 const albums = [
@@ -43,6 +48,8 @@ function ArtistDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [artist, setArtist] = useState(null);
   const [topTracks, setTopTracks] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const longPressProps = useLongPress(() =>
     showOptions(["Go to Radio", "Share", "Add to Playlist", "Report"], (opt) =>
       console.log(opt),
@@ -85,7 +92,18 @@ function ArtistDetail() {
         const data = await getArtist(id);
         if (!active) return;
         setArtist(data);
-        setTopTracks(data?.songs || []);
+
+        if (data?.isYoutubeArtist) {
+          const youtubePage = await searchYoutubePage(data.name);
+          if (!active) return;
+          setTopTracks(
+            youtubePage.results.filter((track) => track.type === "youtube"),
+          );
+          setNextPageToken(youtubePage.nextPageToken);
+        } else {
+          setTopTracks(data?.songs || []);
+          setNextPageToken(null);
+        }
       } catch (err) {
         console.error("Artiest laden mislukt:", err);
       } finally {
@@ -97,18 +115,57 @@ function ArtistDetail() {
     };
   }, [id]);
 
-  const handlePlaySong = (song) => {
+  const handlePlaySong = async (song) => {
     if (!song) return;
-    playSong(
-      song.src,
-      song.title,
-      song.artist,
-      song.cover,
-      -1,
-      song.youtubeId || null,
-    );
+
+    if (song.type === "youtube" && song.youtubeId) {
+      try {
+        const savedSong = await downloadFromYoutube({
+          url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
+          title: song.title,
+          artist: song.artist,
+          thumbnail: song.cover,
+        });
+
+        playSong(
+          savedSong.src,
+          savedSong.title,
+          savedSong.artist,
+          savedSong.cover,
+          -1,
+          savedSong.youtubeId || null,
+        );
+
+        if (savedSong.id) addRecent(savedSong.id).catch(() => {});
+        navigate("/now-playing");
+      } catch (err) {
+        console.error("YouTube track opslaan mislukt:", err);
+      }
+
+      return;
+    }
+
+    playSong(song.src, song.title, song.artist, song.cover, -1, null);
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
+  };
+
+  const handleShowMore = async () => {
+    if (!artist?.isYoutubeArtist || !nextPageToken || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const youtubePage = await searchYoutubePage(artist.name, nextPageToken);
+      setTopTracks((currentTracks) => [
+        ...currentTracks,
+        ...youtubePage.results.filter((track) => track.type === "youtube"),
+      ]);
+      setNextPageToken(youtubePage.nextPageToken);
+    } catch (err) {
+      console.error("Meer YouTube tracks laden mislukt:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   return (
@@ -202,6 +259,15 @@ function ArtistDetail() {
                   </motion.div>
                 ))}
           </div>
+          {artist?.isYoutubeArtist && nextPageToken && (
+            <button
+              className="artist-show-more-btn"
+              onClick={handleShowMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Loading..." : "Show More"}
+            </button>
+          )}
         </section>
 
         {/* <section className="artist-section">

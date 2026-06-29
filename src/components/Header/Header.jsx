@@ -102,7 +102,7 @@ function Header() {
   return (
     <div className="Header">
       {isBackPage ? <BackBtn /> : <SettingsBtn />}
-      {isPlaylistDetail && <EditBtn />}
+      {/* {isPlaylistDetail && <EditBtn />} */}
     </div>
   );
 }

@@ -21,6 +21,8 @@ function getYoutubedl() {
 router.get("/search", async (req, res, next) => {
   try {
     const q = (req.query.q || "").trim();
+    const pageToken = (req.query.pageToken || "").trim();
+    const paged = req.query.paged === "true";
 
     if (!q) {
       return res.json([]);
@@ -70,13 +72,32 @@ router.get("/search", async (req, res, next) => {
       return res.json(results);
     }
 
-    const url =
+    const videosUrl =
       `https://www.googleapis.com/youtube/v3/search` +
       `?part=snippet&type=video&videoCategoryId=10` +
       `&q=${encodeURIComponent(q)}` +
-      `&maxResults=15&key=${key}`;
+      `&maxResults=15` +
+      `${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}` +
+      `&key=${key}`;
 
-    const ytRes = await fetch(url);
+    const channelsUrl =
+      `https://www.googleapis.com/youtube/v3/search` +
+      `?part=snippet&type=channel` +
+      `&q=${encodeURIComponent(q)}` +
+      `&maxResults=5&key=${key}`;
+
+    const [channelsRes, ytRes] = await Promise.all([
+      pageToken ? Promise.resolve(null) : fetch(channelsUrl),
+      fetch(videosUrl),
+    ]);
+
+    if (channelsRes && !channelsRes.ok) {
+      const err = await channelsRes.json().catch(() => ({}));
+
+      return res.status(channelsRes.status).json({
+        error: err?.error?.message || "YouTube API fout",
+      });
+    }
 
     if (!ytRes.ok) {
       const err = await ytRes.json().catch(() => ({}));
@@ -86,9 +107,22 @@ router.get("/search", async (req, res, next) => {
       });
     }
 
-    const data = await ytRes.json();
+    const [channelsData, data] = await Promise.all([
+      channelsRes ? channelsRes.json() : Promise.resolve({ items: [] }),
+      ytRes.json(),
+    ]);
 
-    const results = (data.items || []).map((item) => ({
+    const channelResults = (channelsData.items || []).map((item) => ({
+      youtubeChannelId: item.id.channelId,
+      title: item.snippet.channelTitle || item.snippet.title,
+      artist: item.snippet.channelTitle || item.snippet.title,
+      thumbnail:
+        item.snippet.thumbnails?.medium?.url ||
+        item.snippet.thumbnails?.default?.url,
+      type: "youtube-artist",
+    }));
+
+    const videoResults = (data.items || []).map((item) => ({
       youtubeId: item.id.videoId,
       title: item.snippet.title,
       artist: item.snippet.channelTitle,
@@ -97,6 +131,15 @@ router.get("/search", async (req, res, next) => {
         item.snippet.thumbnails?.default?.url,
       type: "youtube",
     }));
+
+    const results = [...channelResults, ...videoResults];
+
+    if (paged) {
+      return res.json({
+        results,
+        nextPageToken: data.nextPageToken || null,
+      });
+    }
 
     res.json(results);
   } catch (err) {
