@@ -12,6 +12,8 @@ function Footer() {
     audioPlayerRef,
     isPlaying,
     currentTrack,
+    currentTime,
+    duration,
     handlePlay,
     handlePause,
     handleNext,
@@ -34,9 +36,9 @@ function Footer() {
           onNext={handleNext}
           onPrevious={handlePrevious}
           isPlaying={isPlaying}
-          title={currentTrack.title}
-          artist={currentTrack.artist}
-          coverSrc={currentTrack.coverSrc}
+          currentTrack={currentTrack}
+          currentTime={currentTime}
+          duration={duration}
         />
       )}
 
