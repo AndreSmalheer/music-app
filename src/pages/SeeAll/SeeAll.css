@@ -19,23 +19,14 @@
   margin: 6px 0 18px;
 }
 
-.see-all-back {
-  background: none;
-  border: none;
-  padding: 4px;
-  margin-left: -6px;
-  cursor: pointer;
-  color: var(--text-primary, #fff);
-  display: flex;
-  align-items: center;
-}
-
 .see-all-title {
   margin: 0;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--text-primary, #fff);
+  text-align: center;
+  width: 100%;
 }
 
 .see-all-header-row {

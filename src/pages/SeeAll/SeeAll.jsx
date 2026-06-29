@@ -84,13 +84,6 @@ function SeeAll() {
     return (
       <div className="see-all-page">
         <div className="see-all-header">
-          <button
-            className="see-all-back"
-            onClick={() => navigate(-1)}
-            aria-label="Terug"
-          >
-            <ChevronLeft size={26} />
-          </button>
           <Skeleton width="180px" height="28px" />
         </div>
       </div>
@@ -100,13 +93,6 @@ function SeeAll() {
   return (
     <div className="see-all-page">
       <div className="see-all-header">
-        <button
-          className="see-all-back"
-          onClick={() => navigate(-1)}
-          aria-label="Terug"
-        >
-          <ChevronLeft size={26} />
-        </button>
         <h1 className="see-all-title">Onlangs afgespeeld</h1>
       </div>
 
