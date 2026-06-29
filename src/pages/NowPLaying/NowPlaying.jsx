@@ -386,17 +386,16 @@ function NowPlaying() {
             </div>
 
             <div className="now-playing-actions">
-              {isYoutube ? (
-                <MotionButton
-                  type="button"
-                  className="download-btn"
-                  onClick={() => setDownloadConfirmOpen(true)}
-                  whileTap={{ scale: 0.92 }}
-                  aria-label="Download to library"
-                >
-                  <Download size={26} strokeWidth={2} />
-                </MotionButton>
-              ) : (
+              {isYoutube ? // <MotionButton
+              //   type="button"
+              //   className="download-btn"
+              //   onClick={() => setDownloadConfirmOpen(true)}
+              //   whileTap={{ scale: 0.92 }}
+              //   aria-label="Download to library"
+              // >
+              //   <Download size={26} strokeWidth={2} />
+              // </MotionButton>
+              null : (
                 <button
                   type="button"
                   className={`favroute-btn ${favroute ? "active" : ""}`}
