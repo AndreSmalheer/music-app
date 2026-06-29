@@ -37,7 +37,25 @@ function MediaPlayer({ children }) {
     setRepeatMode((prev) =>
       prev === "off" ? "repeat" : prev === "repeat" ? "repeat-one" : "off",
     );
-  const toggleShuffle = () => setShuffle((prev) => !prev);
+
+  function toggleShuffle() {
+    setShuffle((prev) => {
+      const newShuffle = !prev;
+
+      if (newShuffle) {
+        setQueue((currentQueue) => {
+          const beforeCurrent = currentQueue.slice(0, currentIndex + 1);
+          const afterCurrent = currentQueue.slice(currentIndex + 1);
+
+          const shuffled = [...afterCurrent].sort(() => Math.random() - 0.5);
+
+          return [...beforeCurrent, ...shuffled];
+        });
+      }
+
+      return newShuffle;
+    });
+  }
 
   const handleVolumeChange = (newVolume) => {
     const v = Math.max(0, Math.min(1, newVolume));
