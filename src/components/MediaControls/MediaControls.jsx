@@ -1,6 +1,7 @@
 import "./MediaControls.css";
 import { NavLink } from "react-router-dom";
 import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
+import Slider from "../Slider/Slider";
 
 function MediaControls({
   audioPlayerRef,
@@ -9,15 +10,15 @@ function MediaControls({
   onNext,
   onPrevious,
   isPlaying,
-  title,
-  artist,
-  coverSrc,
+  currentTrack,
+  currentTime,
+  duration,
 }) {
   return (
     <NavLink to="/now-playing" className="media-controls-link">
       <div className="media-controls">
         <div className="media-cover-image">
-          <img src={coverSrc} alt="" />
+          <img src={currentTrack?.coverSrc} alt="" />
           {isPlaying && (
             <div className="media-eq-overlay">
               <span className="media-eq-bar" />
@@ -28,8 +29,10 @@ function MediaControls({
         </div>
 
         <div className="media-text">
-          <p className="media-song-title">{title || "No track"}</p>
-          <p className="media-artist-name">{artist || ""}</p>
+          <p className="media-song-title">
+            {currentTrack?.title || "No track"}
+          </p>
+          <p className="media-artist-name">{currentTrack?.artist || ""}</p>
         </div>
 
         <button
@@ -53,8 +56,26 @@ function MediaControls({
           )}
         </button>
 
-        <div className="media-progress">
-          <div className="media-progress-fill" />
+        <div
+          className="media-progress"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!audioPlayerRef.current || duration <= 0) return;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+
+            audioPlayerRef.current.currentTime = percent * duration;
+          }}
+        >
+          <div
+            className="media-progress-fill"
+            style={{
+              width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+            }}
+          />
         </div>
       </div>
     </NavLink>

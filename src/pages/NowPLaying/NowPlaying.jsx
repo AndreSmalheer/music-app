@@ -1,8 +1,5 @@
 import "./NowPlaying.css";
-import {
-  PlayerContext,
-  PlayerProgressContext,
-} from "../../components/MediaPlayer/MediaPlayer";
+import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useState, useContext, useEffect } from "react";
 import { useModal } from "../../context/ModalContext";
 import { useNavigate } from "react-router-dom";
@@ -35,55 +32,10 @@ import {
   ListMusic,
   GripVertical,
 } from "lucide-react";
+import { addSongToPlaylist, getPlaylists } from "../../services/api";
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
-
-const formatTime = (time) => {
-  if (!Number.isFinite(time)) return "0:00";
-  const absoluteTime = Math.max(0, time);
-  const minutes = Math.floor(absoluteTime / 60);
-  const seconds = Math.floor(absoluteTime % 60);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-};
-
-// De voortgangsbalk re-rendert ~4x/sec (currentTime). Door 'm in een eigen
-// component te zetten die als enige PlayerProgressContext leest, blijft de rest
-// van NowPlaying (wachtrij, iconen, framer-motion) buiten die re-render-cyclus.
-// Dat scheelt merkbaar lag bij het bedienen van de knoppen tijdens het afspelen.
-function ProgressBar({ audioPlayerRef, isPlaying, handlePlay }) {
-  const { currentTime, duration } = useContext(PlayerProgressContext);
-
-  const hasKnownDuration = Number.isFinite(duration) && duration > 0;
-  const safeDuration = hasKnownDuration ? duration : 0;
-
-  return (
-    <div className="progress-bar">
-      <Slider
-        value={currentTime}
-        max={safeDuration || 1}
-        onChange={(val) => {
-          if (audioPlayerRef.current && hasKnownDuration) {
-            audioPlayerRef.current.currentTime = val;
-          }
-        }}
-        onDragEnd={() => {
-          if (!isPlaying) handlePlay();
-        }}
-      />
-      <div className="progress-bar-times">
-        <div className="progress-time progress-time-start">
-          {formatTime(currentTime)}
-        </div>
-        <div className="progress-time progress-time-end">
-          {hasKnownDuration
-            ? `-${formatTime(safeDuration - currentTime)}`
-            : "Live"}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function QueueItem({ track, index, currentIndex }) {
   const controls = useDragControls();
@@ -122,6 +74,8 @@ function NowPlaying() {
   const {
     audioPlayerRef,
     isPlaying,
+    currentTime,
+    duration,
     currentTrack,
     volume,
     queue,
@@ -138,8 +92,6 @@ function NowPlaying() {
     toggleShuffle,
   } = useContext(PlayerContext);
 
-  // currentTime/duration leven in een aparte component (ProgressBar) zodat
-  // NowPlaying zelf niet 4x/sec mee re-rendert tijdens het afspelen.
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const navigate = useNavigate();
@@ -253,6 +205,64 @@ function NowPlaying() {
     toggleRepeat();
   };
 
+  const showPlaylistOptions = async () => {
+    try {
+      const playlists = await getPlaylists();
+      const options = playlists.map((playlist) => ({
+        id: playlist.id,
+        label: playlist.title,
+      }));
+
+      showOptions(
+        options.length > 0
+          ? options
+          : [{ id: "no-playlists", label: "No playlists found" }],
+        async (playlist) => {
+          if (playlist.id === "no-playlists") return;
+
+          try {
+            let trackId = currentTrack?.id;
+            if (!trackId && currentTrack?.youtubeId) {
+              const saved = await downloadYoutubeToLibrary({
+                url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
+                title: currentTrack.title,
+                artist: currentTrack.artist,
+                thumbnail: currentTrack.coverSrc,
+              });
+              trackId = saved?.id;
+            }
+            if (trackId) {
+              await addSongToPlaylist(playlist.id, trackId);
+            } else {
+              console.warn(
+                "Unable to determine track ID for playlist addition.",
+              );
+            }
+          } catch (e) {
+            console.error("Failed to add song to playlist:", e);
+          }
+        },
+      );
+    } catch (err) {
+      console.error("Playlists laden mislukt:", err);
+    }
+  };
+
+  const handleMenuOption = (option) => {
+    switch (option) {
+      case "Add to Playlist":
+        setTimeout(showPlaylistOptions, 100);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  const openMenu = () => {
+    showOptions(menuOptions, handleMenuOption);
+  };
+
   const isActive = repeatMode !== "off";
 
   if (!currentTrack) {
@@ -263,28 +273,34 @@ function NowPlaying() {
     );
   }
 
-  const menuOptions = [
-    "Add to Playlist",
-    "Go to Album",
-    "View Artist",
-    "Share Song",
-    "Sleep Timer",
-  ];
+  const formatTime = (time) => {
+    if (!Number.isFinite(time)) return "0:00";
+    const absoluteTime = Math.max(0, time);
+    const minutes = Math.floor(absoluteTime / 60);
+    const seconds = Math.floor(absoluteTime % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const hasKnownDuration = Number.isFinite(duration) && duration > 0;
+  const safeDuration = hasKnownDuration ? duration : 0;
+
+  const menuOptions = ["Add to Playlist"];
 
   const isYoutube = !!currentTrack.youtubeId;
 
   const handleDownload = async () => {
     if (!currentTrack.youtubeId || downloadInFlight) return;
+    const trackToDownload = { ...currentTrack };
+
     try {
       setDownloadInFlight(true);
       const savedSong = await downloadYoutubeToLibrary({
-        url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
-        title: currentTrack.title,
-        artist: currentTrack.artist,
-        thumbnail: currentTrack.coverSrc,
+        url: `https://www.youtube.com/watch?v=${trackToDownload.youtubeId}`,
+        title: trackToDownload.title,
+        artist: trackToDownload.artist,
+        thumbnail: trackToDownload.coverSrc,
       });
 
-      setDownloadConfirmOpen(false);
       setDownloadSuccess(true);
 
       if (savedSong?.id) {
@@ -347,7 +363,7 @@ function NowPlaying() {
           <button
             type="button"
             className="np-top-btn"
-            onClick={() => showOptions(menuOptions, (opt) => console.log(opt))}
+            onClick={openMenu}
             aria-label="More"
           >
             <MoreVertical size={24} strokeWidth={2} />
@@ -370,17 +386,15 @@ function NowPlaying() {
             </div>
 
             <div className="now-playing-actions">
-              {isYoutube ? (
-                <MotionButton
-                  type="button"
-                  className="download-btn"
-                  onClick={() => setDownloadConfirmOpen(true)}
-                  whileTap={{ scale: 0.92 }}
-                  aria-label="Download to library"
-                >
-                  <Download size={26} strokeWidth={2} />
-                </MotionButton>
-              ) : (
+              {isYoutube ? //   type="button" // <MotionButton
+              //   className="download-btn"
+              //   onClick={() => setDownloadConfirmOpen(true)}
+              //   whileTap={{ scale: 0.92 }}
+              //   aria-label="Download to library"
+              // >
+              //   <Download size={26} strokeWidth={2} />
+              // </MotionButton>
+              null : (
                 <button
                   type="button"
                   className={`favroute-btn ${favroute ? "active" : ""}`}
@@ -397,11 +411,30 @@ function NowPlaying() {
             </div>
           </div>
 
-          <ProgressBar
-            audioPlayerRef={audioPlayerRef}
-            isPlaying={isPlaying}
-            handlePlay={handlePlay}
-          />
+          <div className="progress-bar">
+            <Slider
+              value={currentTime}
+              max={safeDuration || 1}
+              onChange={(val) => {
+                if (audioPlayerRef.current && hasKnownDuration) {
+                  audioPlayerRef.current.currentTime = val;
+                }
+              }}
+              onDragEnd={() => {
+                if (!isPlaying) handlePlay();
+              }}
+            />
+            <div className="progress-bar-times">
+              <div className="progress-time progress-time-start">
+                {formatTime(currentTime)}
+              </div>
+              <div className="progress-time progress-time-end">
+                {hasKnownDuration
+                  ? `-${formatTime(safeDuration - currentTime)}`
+                  : "Live"}
+              </div>
+            </div>
+          </div>
 
           <div className="player-controls">
             <div className="control-group control-group--main">
@@ -520,7 +553,7 @@ function NowPlaying() {
         {downloadConfirmOpen && (
           <MotionDiv
             className="download-overlay"
-            onClick={() => !downloadInFlight && setDownloadConfirmOpen(false)}
+            onClick={() => setDownloadConfirmOpen(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -542,7 +575,6 @@ function NowPlaying() {
                 <button
                   className="download-sheet__btn download-sheet__btn--cancel"
                   onClick={() => setDownloadConfirmOpen(false)}
-                  disabled={downloadInFlight}
                 >
                   Cancel
                 </button>
