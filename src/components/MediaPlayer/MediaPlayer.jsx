@@ -109,7 +109,6 @@ function MediaPlayer({ children }) {
 
   const handlePause = () => {
     audioPlayerRef.current?.pause();
-    setYtLoading(false);
     setIsPlaying(false);
   };
 
