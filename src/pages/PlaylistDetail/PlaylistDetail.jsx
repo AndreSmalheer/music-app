@@ -7,7 +7,6 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
 import {
   ChevronLeft,
-  Download,
   Shuffle,
   Play,
   MoreHorizontal,
@@ -22,37 +21,20 @@ import {
 import { playTrackList } from "../../utils/playback";
 import "./PlaylistDetail.css";
 
-function PlaylistSongRow({
-  song,
-  index,
-  onPlaySong,
-  onRemoveSong,
-  isCurrent,
-  type,
-}) {
+function PlaylistSongRow({ song, onPlaySong, onRemoveSong, isCurrent, type }) {
   const { showOptions } = useModal();
   const tapFeedback = { scale: 0.98 };
-  console.log(type);
+
   const openMenu = () =>
     showOptions(
       ["Play", "Download", "Remove from Playlist"],
       async (option) => {
-        if (option === "Play") {
-          onPlaySong(song);
-          return;
-        }
-
-        if (option === "Download") {
-          console.log("download song", song);
-          // later: startDownload(...)
-          return;
-        }
-
-        if (option === "Remove from Playlist") {
-          await onRemoveSong(song);
-        }
+        if (option === "Play") return onPlaySong(song);
+        if (option === "Download") return;
+        if (option === "Remove from Playlist") return onRemoveSong(song);
       },
     );
+
   const longPressProps = useLongPress(openMenu, () => onPlaySong(song));
 
   return (
@@ -69,6 +51,7 @@ function PlaylistSongRow({
             song.cover ? { backgroundImage: `url(${song.cover})` } : undefined
           }
         />
+
         <div className="song-row-info">
           <p className={`song-row-title${isCurrent ? " current" : ""}`}>
             {song.title}
@@ -80,6 +63,7 @@ function PlaylistSongRow({
 
         <span className="song-duration">{song.durationLabel}</span>
       </motion.button>
+
       <button
         type="button"
         className="song-row-kebab"
@@ -94,27 +78,43 @@ function PlaylistSongRow({
 
 function PlaylistDetail() {
   const { id } = useParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [playlist, setPlaylist] = useState(null);
-  const [songs, setSongs] = useState([]);
   const navigate = useNavigate();
   const { playSong, currentTrack } = useContext(PlayerContext);
 
+  const [playlist, setPlaylist] = useState(null);
+  const [songs, setSongs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const totalMinutes = Math.round(
+    songs.reduce((sum, s) => sum + (s.duration || 0), 0) / 60,
+  );
+
   useEffect(() => {
     let active = true;
+
+    const start = Date.now();
+
     (async () => {
       try {
         const data = await getPlaylist(id);
         console.log(data);
+
         if (!active) return;
+
         setPlaylist(data);
         setSongs(data?.songs || []);
       } catch (err) {
         console.error("Playlist laden mislukt:", err);
       } finally {
-        if (active) setIsLoading(false);
+        const elapsed = Date.now() - start;
+        const wait = Math.max(1000 - elapsed, 0);
+
+        setTimeout(() => {
+          if (active) setIsLoading(false);
+        }, wait);
       }
     })();
+
     return () => {
       active = false;
     };
@@ -122,6 +122,7 @@ function PlaylistDetail() {
 
   const handlePlaySong = (song) => {
     if (!song) return;
+
     playSong(
       song.src,
       song.title,
@@ -131,16 +132,15 @@ function PlaylistDetail() {
       song.youtubeId || null,
       songs,
     );
+
     if (song.id) addRecent(song.id).catch(() => {});
     navigate("/now-playing");
   };
 
-  // Speel de hele playlist vanaf het begin.
   const handlePlayAll = () => {
     playTrackList(songs, { playSong, navigate });
   };
 
-  // Speel de playlist in willekeurige volgorde.
   const handleShuffle = () => {
     playTrackList(songs, { playSong, navigate, shuffle: true });
   };
@@ -148,23 +148,18 @@ function PlaylistDetail() {
   const handleRemoveSong = async (song) => {
     try {
       await removeSongFromPlaylist(id, song.id);
-      setSongs((currentSongs) =>
-        currentSongs.filter((currentSong) => currentSong.id !== song.id),
-      );
+      setSongs((prev) => prev.filter((s) => s.id !== song.id));
     } catch (err) {
-      console.error("Song verwijderen uit playlist mislukt:", err);
+      console.error("Song verwijderen mislukt:", err);
     }
   };
 
-  const totalMinutes = Math.round(
-    songs.reduce((sum, s) => sum + (s.duration || 0), 0) / 60,
-  );
+  const coverUrl = playlist?.cover?.trim() ? playlist.cover : null;
 
   return (
     <div className="playlist-detail-page">
       <div className="playlist-header">
         <button
-          type="button"
           className="playlist-back"
           onClick={() => navigate(-1)}
           aria-label="Back"
@@ -173,43 +168,66 @@ function PlaylistDetail() {
         </button>
 
         <div className="playlist-header-content">
-          <img
-            src={
-              playlist?.cover || "/indieblog-best-album-covers-2010s-07 4.png"
-            }
-            alt="Playlist Cover"
-            className="playlist-main-cover"
-          />
-          <div className="playlist-info">
-            <h1 className="playlist-title">{playlist?.title || "Playlist"}</h1>
-            <p className="playlist-description">
-              A curated selection of the best visual design test tracks.
-            </p>
-            <div className="playlist-stats">
-              Afspeellijst &middot; {songs.length} nummers &middot;{" "}
-              {totalMinutes} min
-            </div>
+          <div className="playlist-cover-wrap">
+            {isLoading ? (
+              <Skeleton width="188px" height="188px" borderRadius="6px" />
+            ) : coverUrl ? (
+              <img
+                src={coverUrl}
+                alt="Playlist Cover"
+                className="playlist-main-cover"
+              />
+            ) : (
+              <div className="playlist-main-cover playlist-main-cover-empty" />
+            )}
           </div>
+
+          {isLoading ? (
+            <div
+              style={{
+                marginTop: 22,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <Skeleton width="180px" height="28px" />
+              <Skeleton width="260px" height="14px" />
+              <Skeleton width="140px" height="13px" />
+            </div>
+          ) : (
+            <div className="playlist-info">
+              <h1 className="playlist-title">
+                {playlist?.title || "Playlist"}
+              </h1>
+              <p className="playlist-description">
+                {playlist?.description || ""}
+              </p>
+              <div className="playlist-stats">
+                Afspeellijst &middot; {songs.length} nummers &middot;{" "}
+                {totalMinutes} min
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="playlist-actions">
         <div className="playlist-actions-left">
           <motion.button
-            type="button"
             className="playlist-action-icon"
             whileTap={{ scale: 0.9 }}
             onClick={handleShuffle}
-            aria-label="Shuffle"
           >
             <Shuffle size={26} strokeWidth={1.8} />
           </motion.button>
         </div>
+
         <motion.button
           className="btn-play-circle"
           whileTap={{ scale: 0.95 }}
           onClick={handlePlayAll}
-          aria-label="Play"
         >
           <Play size={26} fill="currentColor" stroke="none" />
         </motion.button>
@@ -240,7 +258,7 @@ function PlaylistDetail() {
             ))
           : songs.map((song, index) => (
               <PlaylistSongRow
-                key={song.id}
+                key={song.id || index}
                 song={song}
                 index={index}
                 onPlaySong={handlePlaySong}

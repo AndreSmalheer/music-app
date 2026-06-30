@@ -8,6 +8,7 @@ const router = Router();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../uploads"));
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// GET /api/playlists — alle playlists
+// GET all playlists
 router.get("/", async (req, res, next) => {
   try {
     const playlists = await Playlist.find().sort({ updatedAt: -1 });
@@ -30,42 +31,43 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// GET /api/playlists/:id — één playlist incl. songs
+// GET single playlist
 router.get("/:id", async (req, res, next) => {
   try {
     const playlist = await Playlist.findById(req.params.id).populate("songs");
     if (!playlist)
       return res.status(404).json({ error: "Playlist niet gevonden" });
+
     res.json(playlist);
   } catch (err) {
     next(err);
   }
 });
 
-// POST /api/playlists — nieuwe playlist
+// CREATE playlist
 router.post("/", upload.single("thumbnail"), async (req, res, next) => {
   try {
-    const { name, songs } = req.body;
+    const { name, description, songs } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: "Naam is verplicht" });
     }
 
-    const thumbnailUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
     const playlist = await Playlist.create({
       name,
-      thumbnail: thumbnailUrl,
+      description: description || "",
+      thumbnail: req.file ? `/uploads/${req.file.filename}` : "",
       songs: songs ? JSON.parse(songs) : [],
     });
 
     res.status(201).json(playlist);
   } catch (err) {
+    console.error("🔴 ERROR:", err);
     next(err);
   }
 });
 
-// PUT /api/playlists/:id — playlist updaten (naam, cover, songs)
+// UPDATE playlist
 router.put("/:id", async (req, res, next) => {
   try {
     const playlist = await Playlist.findByIdAndUpdate(
@@ -73,20 +75,24 @@ router.put("/:id", async (req, res, next) => {
       { $set: req.body },
       { new: true, runValidators: true },
     );
+
     if (!playlist)
       return res.status(404).json({ error: "Playlist niet gevonden" });
+
     res.json(playlist);
   } catch (err) {
     next(err);
   }
 });
 
-// DELETE /api/playlists/:id
+// DELETE playlist
 router.delete("/:id", async (req, res, next) => {
   try {
     const playlist = await Playlist.findByIdAndDelete(req.params.id);
+
     if (!playlist)
       return res.status(404).json({ error: "Playlist niet gevonden" });
+
     res.json({ success: true });
   } catch (err) {
     next(err);

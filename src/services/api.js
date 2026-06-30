@@ -115,10 +115,12 @@ export function toUiArtist(artist) {
 
 export function toUiPlaylist(playlist) {
   if (!playlist) return null;
+
   return {
     id: playlist._id,
     title: playlist.name,
     name: playlist.name,
+    description: playlist.description || "",
     cover: assetUrl(playlist.thumbnail),
     songCount: playlist.songs?.length || 0,
     songs: (playlist.songs || []).map((s) =>
@@ -236,11 +238,12 @@ export async function getPlaylist(id) {
 export async function createPlaylist({ name, thumbnail, songs, description }) {
   const formData = new FormData();
 
-  console.log("thumbnail type:", thumbnail);
-  console.log("is File?", thumbnail instanceof File);
-
   formData.append("name", name);
   formData.append("description", description || "");
+
+  if (songs) {
+    formData.append("songs", JSON.stringify(songs));
+  }
 
   if (thumbnail) {
     formData.append("thumbnail", thumbnail);
@@ -251,7 +254,9 @@ export async function createPlaylist({ name, thumbnail, songs, description }) {
     body: formData,
   });
 
-  return res.json();
+  const data = await res.json();
+
+  return data;
 }
 
 export async function updatePlaylist(id, data) {

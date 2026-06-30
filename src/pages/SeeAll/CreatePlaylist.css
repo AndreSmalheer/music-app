@@ -1,5 +1,5 @@
 .create-playlist-page {
-  padding: 8px var(--spacing-horizontal) 168px;
+  padding: 8px var(--spacing-horizontal) 25px;
   display: flex;
   flex-direction: column;
   gap: 26px;
