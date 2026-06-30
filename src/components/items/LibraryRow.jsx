@@ -3,6 +3,7 @@ import { addSongToPlaylist, getPlaylists } from "../../services/api";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDownload } from "../../context/DownloadContext";
+import DownloadModal from "../DownloadModal/DownloadModal";
 
 function LibraryRow({
   item,
@@ -13,10 +14,10 @@ function LibraryRow({
   onDelete,
 }) {
   const { downloads, startDownload } = useDownload();
-  const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
   const isCurrentlyDownloading = downloads.some(
     (dl) => dl.url.includes(item.youtubeId) && dl.status === "downloading",
   );
+  const [downloadOpen, setDownloadOpen] = useState(false);
 
   const getMenuOptions = () => {
     switch (type) {
@@ -81,7 +82,7 @@ function LibraryRow({
           break;
 
         case "Download":
-          setDownloadConfirmOpen(true);
+          setDownloadOpen(true);
           break;
 
         case "Delete":
@@ -93,18 +94,6 @@ function LibraryRow({
       }
     }),
   );
-
-  const handleDownload = () => {
-    if (!item.youtubeId || isCurrentlyDownloading) return;
-    startDownload({
-      url: `https://www.youtube.com/watch?v=${item.youtubeId}`,
-      title: item.title,
-      artist: item.artist,
-      thumbnail: item.cover,
-    });
-    setDownloadConfirmOpen(false);
-    return;
-  };
 
   // ---------------- PLAYLIST ----------------
   if (type === "playlist") {
@@ -145,50 +134,11 @@ function LibraryRow({
           </div>
         </motion.button>
 
-        <AnimatePresence>
-          {downloadConfirmOpen && (
-            <motion.div
-              className="download-overlay"
-              onClick={() => setDownloadConfirmOpen(false)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="download-sheet"
-                onClick={(e) => e.stopPropagation()}
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                <div className="download-sheet__handle" />
-                <h2 className="download-sheet__title">Download to library</h2>
-                <p className="download-sheet__text">
-                  Save this track as a local file so it shows up in your
-                  library.
-                </p>
-
-                <div className="download-sheet__actions">
-                  <button
-                    className="download-sheet__btn download-sheet__btn--cancel"
-                    onClick={() => setDownloadConfirmOpen(false)}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    className="download-sheet__btn download-sheet__btn--confirm"
-                    onClick={handleDownload}
-                    disabled={isCurrentlyDownloading}
-                  >
-                    {isCurrentlyDownloading ? "Downloading..." : "Download"}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <DownloadModal
+          isOpen={downloadOpen}
+          onClose={() => setDownloadOpen(false)}
+          track={item.track || item}
+        />
       </>
     );
   }

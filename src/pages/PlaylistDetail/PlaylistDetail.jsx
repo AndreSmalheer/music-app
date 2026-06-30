@@ -34,16 +34,25 @@ function PlaylistSongRow({
   const tapFeedback = { scale: 0.98 };
   console.log(type);
   const openMenu = () =>
-    showOptions(["Play", "Remove from Playlist"], async (option) => {
-      if (option === "Play") {
-        onPlaySong(song);
-        return;
-      }
+    showOptions(
+      ["Play", "Download", "Remove from Playlist"],
+      async (option) => {
+        if (option === "Play") {
+          onPlaySong(song);
+          return;
+        }
 
-      if (option === "Remove from Playlist") {
-        await onRemoveSong(song);
-      }
-    });
+        if (option === "Download") {
+          console.log("download song", song);
+          // later: startDownload(...)
+          return;
+        }
+
+        if (option === "Remove from Playlist") {
+          await onRemoveSong(song);
+        }
+      },
+    );
   const longPressProps = useLongPress(openMenu, () => onPlaySong(song));
 
   return (

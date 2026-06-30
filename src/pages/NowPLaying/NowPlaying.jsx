@@ -39,6 +39,7 @@ import {
   createPlaylist,
 } from "../../services/api";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import DownloadModal from "../../components/DownloadModal/DownloadModal";
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -103,7 +104,6 @@ function NowPlaying() {
   const navigate = useNavigate();
   const [queueOpen, setQueueOpen] = useState(false);
   const [ytLoading, setYtLoading] = useState(false);
-  const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
   const { downloads, startDownload } = useDownload();
   const isCurrentlyDownloading = downloads.some(
@@ -112,6 +112,7 @@ function NowPlaying() {
   );
   const loadedTrackRef = useRef(null);
   const modalControls = useDragControls();
+  const [downloadOpen, setDownloadOpen] = useState(false);
 
   useEffect(() => {
     const audio = audioPlayerRef.current;
@@ -248,12 +249,12 @@ function NowPlaying() {
         setTimeout(showPlaylistOptions, 100);
         break;
 
-      case "Delete":
-        setSongToDelete(currentTrack);
+      case "Download":
+        setDownloadOpen(true);
         break;
 
-      case "Download":
-        setDownloadConfirmOpen(true);
+      case "Delete":
+        setSongToDelete(currentTrack);
         break;
 
       default:
@@ -291,18 +292,6 @@ function NowPlaying() {
     : ["Add to Playlist", "Delete"];
 
   const isYoutube = !!currentTrack.youtubeId;
-
-  const handleDownload = () => {
-    if (!currentTrack?.youtubeId || isCurrentlyDownloading) return;
-    startDownload({
-      url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
-      title: currentTrack.title,
-      artist: currentTrack.artist,
-      thumbnail:
-        currentTrack.coverSrc || currentTrack.cover || currentTrack.img,
-    });
-    setDownloadConfirmOpen(false);
-  };
 
   return (
     <>
@@ -567,46 +556,6 @@ function NowPlaying() {
       </div>
 
       <AnimatePresence>
-        {downloadConfirmOpen && (
-          <MotionDiv
-            className="download-overlay"
-            onClick={() => setDownloadConfirmOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <MotionDiv
-              className="download-sheet"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <div className="download-sheet__handle" />
-              <h2 className="download-sheet__title">Download to library</h2>
-              <p className="download-sheet__text">
-                Save this track as a local file so it shows up in your library.
-              </p>
-              <div className="download-sheet__actions">
-                <button
-                  className="download-sheet__btn download-sheet__btn--cancel"
-                  onClick={() => setDownloadConfirmOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="download-sheet__btn download-sheet__btn--confirm"
-                  onClick={handleDownload}
-                  disabled={isCurrentlyDownloading}
-                >
-                  {isCurrentlyDownloading ? "Downloading..." : "Download"}
-                </button>
-              </div>
-            </MotionDiv>
-          </MotionDiv>
-        )}
-
         {queueOpen && (
           <MotionDiv
             className="queue-overlay"
@@ -676,6 +625,12 @@ function NowPlaying() {
           </MotionDiv>
         )}
       </AnimatePresence>
+
+      <DownloadModal
+        isOpen={downloadOpen}
+        onClose={() => setDownloadOpen(false)}
+        track={currentTrack}
+      />
 
       <ConfirmModal
         isOpen={!!songToDelete}
