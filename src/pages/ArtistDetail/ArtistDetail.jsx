@@ -191,14 +191,14 @@ function ArtistDetail() {
         )}
         <div className="artist-hero-scrim" />
 
-        <button
+        {/* <button
           type="button"
           className="artist-back"
           onClick={() => navigate(-1)}
           aria-label="Back"
         >
           <ChevronLeft size={26} />
-        </button>
+        </button> */}
 
         <div className="artist-hero-overlay">
           {isLoading ? (

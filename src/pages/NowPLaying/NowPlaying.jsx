@@ -371,15 +371,16 @@ function NowPlaying() {
                 </div>
 
                 <div className="now-playing-actions">
-                  {isYoutube ? //   type="button" // <MotionButton
-                  //   className="download-btn"
-                  //   onClick={() => setDownloadConfirmOpen(true)}
-                  //   whileTap={{ scale: 0.92 }}
-                  //   aria-label="Download to library"
-                  // >
-                  //   <Download size={26} strokeWidth={2} />
-                  // </MotionButton>
-                  null : (
+                  {isYoutube ? (
+                    <MotionButton
+                      className="download-btn"
+                      onClick={() => setDownloadConfirmOpen(true)}
+                      whileTap={{ scale: 0.92 }}
+                      aria-label="Download to library"
+                    >
+                      <Download size={26} strokeWidth={2} />
+                    </MotionButton>
+                  ) : (
                     <button
                       type="button"
                       className={`favroute-btn ${favroute ? "active" : ""}`}
@@ -478,7 +479,11 @@ function NowPlaying() {
                     }}
                     aria-label="Next"
                   >
-                    <SkipForward size={30} strokeWidth={1.5} fill="currentColor" />
+                    <SkipForward
+                      size={30}
+                      strokeWidth={1.5}
+                      fill="currentColor"
+                    />
                   </button>
 
                   <button
@@ -514,7 +519,10 @@ function NowPlaying() {
               </div>
 
               <div className="player-utilities">
-                <button className="airplay-btn utiletie-btn" aria-label="Airplay">
+                <button
+                  className="airplay-btn utiletie-btn"
+                  aria-label="Airplay"
+                >
                   <Airplay size={22} strokeWidth={1.8} />
                 </button>
 

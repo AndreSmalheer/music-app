@@ -157,7 +157,17 @@ export async function checkHealth() {
 
 export async function getSongs() {
   const data = await getJSON("/api/songs");
+  return data.map(toUiTrack);
+}
+
+export async function getLocalSongs() {
+  const data = await getJSON("/api/songs");
   return data.filter((song) => !song.youtubeId).map(toUiTrack);
+}
+
+export async function getSavedYoutubeSongs() {
+  const data = await getJSON("/api/songs");
+  return data.filter((song) => !!song.youtubeId).map(toUiTrack);
 }
 
 export async function getSong(id) {
@@ -301,7 +311,7 @@ export async function search(q) {
   const data = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
 
   return {
-    songs: (data.songs || []).filter((song) => !song.youtubeId).map(toUiTrack),
+    songs: (data.songs || []).map(toUiTrack),
 
     artists: (data.artists || [])
       .filter((artist) => !artist.isYoutubeArtist)
@@ -362,11 +372,4 @@ export async function searchYoutubePage(q, pageToken = "") {
 
 export function getYoutubeStreamUrl(videoId) {
   return `${BASE_URL}/api/youtube/stream/${videoId}`;
-}
-
-// Warmt server-side de audio-URL-cache van een YouTube-video op, zodat afspelen
-// daarna vrijwel direct start. Best-effort: fouten worden genegeerd.
-export function prefetchYoutube(videoId) {
-  if (!videoId) return;
-  fetch(`${BASE_URL}/api/youtube/prefetch/${videoId}`).catch(() => {});
 }

@@ -4,19 +4,28 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Music, ListMusic } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
-import { getPlaylists, getSongs, getArtists } from "../../services/api";
+import {
+  getPlaylists,
+  getLocalSongs,
+  getSavedYoutubeSongs,
+  getArtists,
+} from "../../services/api";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import "./Library.css";
+import LibraryRow from "../../components/items/LibraryRow";
+import { useModal } from "../../context/ModalContext";
 
 const TABS = [
   { key: "playlists", label: "Afspeellijsten" },
   { key: "uploads", label: "Uploads" },
+  { key: "youtube", label: "YouTube" },
   { key: "artists", label: "Artiesten" },
 ];
 
 function Library() {
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
+  const { showOptions } = useModal();
 
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("playlists");
@@ -24,21 +33,23 @@ function Library() {
 
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
+  const [youtubeSongs, setYoutubeSongs] = useState([]);
   const [artists, setArtists] = useState([]);
 
-  // Alle data in één keer ophalen.
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [pl, sg, ar] = await Promise.all([
+        const [pl, sg, yt, ar] = await Promise.all([
           getPlaylists(),
-          getSongs(),
+          getLocalSongs(),
+          getSavedYoutubeSongs(),
           getArtists(),
         ]);
         if (!active) return;
         setPlaylists(pl);
         setSongs(sg);
+        setYoutubeSongs(yt);
         setArtists(ar);
       } catch (err) {
         console.error("Bibliotheek laden mislukt:", err);
@@ -51,9 +62,8 @@ function Library() {
     };
   }, []);
 
-  // Speel een upload af met de hele uploads-lijst als wachtrij, startend bij song.
-  const playUpload = (song) => {
-    const ordered = [song, ...songs.filter((s) => s.id !== song.id)];
+  const playSongList = (song, list) => {
+    const ordered = [song, ...list.filter((s) => s.id !== song.id)];
     playSong(
       song.src,
       song.title,
@@ -62,6 +72,7 @@ function Library() {
       -1,
       song.youtubeId || null,
       ordered,
+      song.id,
     );
     navigate("/now-playing");
   };
@@ -116,24 +127,13 @@ function Library() {
       return (
         <div className="library-list">
           {playlists.map((item) => (
-            <motion.button
+            <LibraryRow
               key={item.id}
-              className="library-row"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`/playlist/${item.id}`)}
-            >
-              <img
-                src={item.cover}
-                alt={item.title}
-                className="library-row__cover"
-              />
-              <div className="library-row__info">
-                <p className="library-row__title">{item.title}</p>
-                <p className="library-row__subtitle">
-                  Afspeellijst · {item.songCount} nummers
-                </p>
-              </div>
-            </motion.button>
+              item={item}
+              type="playlist"
+              navigate={navigate}
+              showOptions={showOptions}
+            />
           ))}
         </div>
       );
@@ -151,22 +151,39 @@ function Library() {
       return (
         <div className="library-list">
           {songs.map((song) => (
-            <motion.button
+            <LibraryRow
               key={song.id}
-              className="library-row"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => playUpload(song)}
-            >
-              <img
-                src={song.cover}
-                alt={song.title}
-                className="library-row__cover"
-              />
-              <div className="library-row__info">
-                <p className="library-row__title">{song.title}</p>
-                <p className="library-row__subtitle">{song.artist}</p>
-              </div>
-            </motion.button>
+              item={song}
+              type="song"
+              navigate={navigate}
+              playSongList={(song) => playSongList(song, songs)}
+              showOptions={showOptions}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (activeTab === "youtube") {
+      if (youtubeSongs.length === 0) {
+        return (
+          <EmptyState
+            title="Geen YouTube nummers"
+            subtitle="Speel of bewaar YouTube nummers om ze hier te zien"
+          />
+        );
+      }
+      return (
+        <div className="library-list">
+          {youtubeSongs.map((song) => (
+            <LibraryRow
+              key={song.id}
+              item={song}
+              type="youtube"
+              navigate={navigate}
+              playSongList={(song) => playSongList(song, youtubeSongs)}
+              showOptions={showOptions}
+            />
           ))}
         </div>
       );
@@ -184,22 +201,13 @@ function Library() {
     return (
       <div className="library-list">
         {artists.map((artist) => (
-          <motion.button
+          <LibraryRow
             key={artist.id}
-            className="library-row"
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/artist/${artist.id}`)}
-          >
-            <img
-              src={artist.img || artist.cover}
-              alt={artist.name}
-              className="library-row__cover library-row__cover--round"
-            />
-            <div className="library-row__info">
-              <p className="library-row__title">{artist.name}</p>
-              <p className="library-row__subtitle">Artiest</p>
-            </div>
-          </motion.button>
+            item={artist}
+            type="artist"
+            navigate={navigate}
+            showOptions={showOptions}
+          />
         ))}
       </div>
     );
