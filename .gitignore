@@ -32,7 +32,7 @@ backend/uploads/*
 *.sln
 *.sw?
 
-downloads
+public/music/downloads
 
 # Lokale design-referentie (Claude Design import)
 .design-reference/
