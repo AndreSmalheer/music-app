@@ -36,6 +36,7 @@ import {
   addSongToPlaylist,
   getPlaylists,
   deleteSong,
+  createPlaylist,
 } from "../../services/api";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 
@@ -207,16 +208,8 @@ function NowPlaying() {
           if (playlist.id === "no-playlists") return;
 
           try {
-async (playlist) => {
-  if (playlist.id === "no-playlists") return;
-
-  try {
-    await addSongToPlaylist(playlist.id, item.track);
-  } catch (e) {
-    console.error("Failed to add song to playlist:", e);
-  }
-}
-
+            console.log("adding song to playlist");
+            await addSongToPlaylist(playlist.id, currentTrack);
           } catch (e) {
             console.error("Failed to add song to playlist:", e);
           }
@@ -228,7 +221,25 @@ async (playlist) => {
   };
 
   async function addToFavouritePlaylist() {
-    return;
+    try {
+      const playlists = await getPlaylists();
+
+      let favouritePlaylist = playlists.find(
+        (playlist) => playlist.title === "Favourite",
+      );
+
+      if (!favouritePlaylist) {
+        favouritePlaylist = await createPlaylist({
+          name: "Favourite",
+          thumbnail: "",
+          songs: [],
+        });
+      }
+
+      await addSongToPlaylist(favouritePlaylist.id, currentTrack);
+    } catch (err) {
+      console.error("Failed to add song to Favourite playlist:", err);
+    }
   }
 
   const handleMenuOption = (option) => {
@@ -390,7 +401,14 @@ async (playlist) => {
                   <button
                     type="button"
                     className={`favroute-btn ${favroute ? "active" : ""}`}
-                    onClick={() => setFavroute(!favroute)}
+                    onClick={async () => {
+                      const newValue = !favroute;
+                      setFavroute(newValue);
+
+                      if (newValue) {
+                        await addToFavouritePlaylist();
+                      }
+                    }}
                     aria-label="Favorite"
                   >
                     <Heart
