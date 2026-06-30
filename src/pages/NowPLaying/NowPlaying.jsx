@@ -123,16 +123,6 @@ function NowPlaying() {
       return;
     }
 
-    const isAlreadyPlaying = audio.currentTime > 0 && !audio.paused;
-    if (loadedTrackRef.current !== currentTrack.youtubeId) {
-      if (!isAlreadyPlaying) {
-        setYtLoading(true);
-      }
-      loadedTrackRef.current = currentTrack.youtubeId;
-    } else if (isAlreadyPlaying) {
-      setYtLoading(false);
-    }
-
     const handleLoadStart = () => {
       setYtLoading(true);
     };
@@ -145,22 +135,36 @@ function NowPlaying() {
       setYtLoading(false);
     };
 
+    const handlePause = () => {
+      setYtLoading(false);
+    };
+
     const handleError = () => {
       setYtLoading(false);
     };
 
+    // If the same track is already loaded, don't show loading again
+    if (loadedTrackRef.current !== currentTrack.youtubeId) {
+      loadedTrackRef.current = currentTrack.youtubeId;
+      setYtLoading(false);
+    } else {
+      setYtLoading(false);
+    }
+
     audio.addEventListener("loadstart", handleLoadStart);
     audio.addEventListener("playing", handlePlaying);
     audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("pause", handlePause);
     audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("loadstart", handleLoadStart);
       audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("error", handleError);
     };
-  }, [currentTrack, audioPlayerRef]);
+  }, [currentTrack?.youtubeId, audioPlayerRef]);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);

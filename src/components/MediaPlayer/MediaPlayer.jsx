@@ -109,6 +109,7 @@ function MediaPlayer({ children }) {
 
   const handlePause = () => {
     audioPlayerRef.current?.pause();
+    setYtLoading(false);
     setIsPlaying(false);
   };
 
@@ -128,7 +129,9 @@ function MediaPlayer({ children }) {
     const resolvedTrackId =
       trackId ||
       newQueue?.find((song) => {
-        const songSrc = song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src;
+        const songSrc = song.youtubeId
+          ? getYoutubeStreamUrl(song.youtubeId)
+          : song.src;
         return songSrc === finalSrc;
       })?.id ||
       null;
