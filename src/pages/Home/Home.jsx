@@ -269,13 +269,13 @@ function Home() {
       <div className="home-topbar">
         <h1 className="home-greeting">Goedemiddag</h1>
         <div className="home-topbar__actions">
-          <button
+          {/* <button
             className="home-icon-btn"
             aria-label="Upload"
             onClick={() => navigate("/upload")}
           >
             <Upload size={24} strokeWidth={1.9} />
-          </button>
+          </button> */}
           <button
             className="home-icon-btn"
             aria-label="Settings"
