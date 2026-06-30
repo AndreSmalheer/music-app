@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
 import useLongPress from "../../hooks/useLongPress";
 import { addSongToPlaylist, getPlaylists } from "../../services/api";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useDownload } from "../../context/DownloadContext";
 
 function LibraryRow({
   item,
@@ -10,6 +12,12 @@ function LibraryRow({
   showOptions,
   onDelete,
 }) {
+  const { downloads, startDownload } = useDownload();
+  const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
+  const isCurrentlyDownloading = downloads.some(
+    (dl) => dl.url.includes(item.youtubeId) && dl.status === "downloading",
+  );
+
   const getMenuOptions = () => {
     switch (type) {
       case "playlist":
@@ -19,7 +27,7 @@ function LibraryRow({
         return ["Play", "Add to Playlist", "Delete"];
 
       case "youtube":
-        return ["Play", "Add to Playlist"];
+        return ["Play", "Add to Playlist", "Download"];
 
       case "artist":
         return ["Open Artist"];
@@ -72,6 +80,10 @@ function LibraryRow({
           setTimeout(showPlaylistOptions, 100);
           break;
 
+        case "Download":
+          setDownloadConfirmOpen(true);
+          break;
+
         case "Delete":
           onDelete?.(item);
           break;
@@ -81,6 +93,18 @@ function LibraryRow({
       }
     }),
   );
+
+  const handleDownload = () => {
+    if (!item.youtubeId || isCurrentlyDownloading) return;
+    startDownload({
+      url: `https://www.youtube.com/watch?v=${item.youtubeId}`,
+      title: item.title,
+      artist: item.artist,
+      thumbnail: item.cover,
+    });
+    setDownloadConfirmOpen(false);
+    return;
+  };
 
   // ---------------- PLAYLIST ----------------
   if (type === "playlist") {
@@ -106,19 +130,66 @@ function LibraryRow({
   // ---------------- SONG / YOUTUBE ----------------
   if (type === "song" || type === "youtube") {
     return (
-      <motion.button
-        className="library-row"
-        {...longPressProps}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => playSongList(item)}
-      >
-        <img src={item.cover} className="library-row__cover" alt="" />
+      <>
+        <motion.button
+          className="library-row"
+          {...longPressProps}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => playSongList(item)}
+        >
+          <img src={item.cover} className="library-row__cover" alt="" />
 
-        <div className="library-row__info">
-          <p className="library-row__title">{item.title}</p>
-          <p className="library-row__subtitle">{item.artist}</p>
-        </div>
-      </motion.button>
+          <div className="library-row__info">
+            <p className="library-row__title">{item.title}</p>
+            <p className="library-row__subtitle">{item.artist}</p>
+          </div>
+        </motion.button>
+
+        <AnimatePresence>
+          {downloadConfirmOpen && (
+            <motion.div
+              className="download-overlay"
+              onClick={() => setDownloadConfirmOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="download-sheet"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <div className="download-sheet__handle" />
+                <h2 className="download-sheet__title">Download to library</h2>
+                <p className="download-sheet__text">
+                  Save this track as a local file so it shows up in your
+                  library.
+                </p>
+
+                <div className="download-sheet__actions">
+                  <button
+                    className="download-sheet__btn download-sheet__btn--cancel"
+                    onClick={() => setDownloadConfirmOpen(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="download-sheet__btn download-sheet__btn--confirm"
+                    onClick={handleDownload}
+                    disabled={isCurrentlyDownloading}
+                  >
+                    {isCurrentlyDownloading ? "Downloading..." : "Download"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 

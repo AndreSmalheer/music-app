@@ -207,15 +207,16 @@ function NowPlaying() {
           if (playlist.id === "no-playlists") return;
 
           try {
-            async (playlist) => {
-              if (playlist.id === "no-playlists") return;
+async (playlist) => {
+  if (playlist.id === "no-playlists") return;
 
-              try {
-                await addSongToPlaylist(playlist.id, item.track);
-              } catch (e) {
-                console.error("Failed to add song to playlist:", e);
-              }
-            };
+  try {
+    await addSongToPlaylist(playlist.id, item.track);
+  } catch (e) {
+    console.error("Failed to add song to playlist:", e);
+  }
+}
+
           } catch (e) {
             console.error("Failed to add song to playlist:", e);
           }
