@@ -193,12 +193,10 @@ export async function downloadFromYoutube({ url, title, artist, thumbnail }) {
   return toUiTrack(song);
 }
 
-export async function downloadYoutubeToLibrary({
-  url,
-  title,
-  artist,
-  thumbnail,
-}, signal) {
+export async function downloadYoutubeToLibrary(
+  { url, title, artist, thumbnail },
+  signal,
+) {
   const song = await request("/api/songs/download-local", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -241,9 +239,8 @@ export async function updatePlaylist(id, data) {
 
 export async function addSongToPlaylist(playlistId, songId) {
   const playlist = await getPlaylist(playlistId);
-  const songs = playlist.songs.map((song) =>
-    typeof song === "object" ? song.id : song,
-  );
+
+  const songs = playlist.songs.map((s) => (typeof s === "string" ? s : s.id));
 
   if (!songs.includes(songId)) {
     songs.push(songId);
@@ -283,7 +280,11 @@ export async function getArtist(id) {
   return toUiArtist(await getJSON(`/api/artists/${id}`));
 }
 
-export async function createYoutubeArtist({ name, thumbnail, youtubeChannelId }) {
+export async function createYoutubeArtist({
+  name,
+  thumbnail,
+  youtubeChannelId,
+}) {
   return toUiArtist(
     await postJSON("/api/artists/youtube", {
       name,

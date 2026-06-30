@@ -32,7 +32,11 @@ import {
   ListMusic,
   GripVertical,
 } from "lucide-react";
-import { addSongToPlaylist, getPlaylists, deleteSong } from "../../services/api";
+import {
+  addSongToPlaylist,
+  getPlaylists,
+  deleteSong,
+} from "../../services/api";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 
 const MotionButton = motion.button;
@@ -102,7 +106,8 @@ function NowPlaying() {
   const [songToDelete, setSongToDelete] = useState(null);
   const { downloads, startDownload } = useDownload();
   const isCurrentlyDownloading = downloads.some(
-    (dl) => dl.url.includes(currentTrack?.youtubeId) && dl.status === "downloading"
+    (dl) =>
+      dl.url.includes(currentTrack?.youtubeId) && dl.status === "downloading",
   );
   const loadedTrackRef = useRef(null);
   const modalControls = useDragControls();
@@ -155,8 +160,6 @@ function NowPlaying() {
     };
   }, [currentTrack, audioPlayerRef]);
 
-
-
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);
     e.currentTarget.classList.add("dragging");
@@ -207,7 +210,8 @@ function NowPlaying() {
             let trackId = currentTrack?.id;
             if (!trackId && currentTrack?.youtubeId) {
               // YouTube track without a local ID — save it first
-              const { downloadYoutubeToLibrary } = await import("../../services/api");
+              const { downloadYoutubeToLibrary } =
+                await import("../../services/api");
               const saved = await downloadYoutubeToLibrary({
                 url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
                 title: currentTrack.title,
@@ -233,6 +237,10 @@ function NowPlaying() {
     }
   };
 
+  async function addToFavouritePlaylist() {
+    return;
+  }
+
   const handleMenuOption = (option) => {
     switch (option) {
       case "Add to Playlist":
@@ -241,6 +249,10 @@ function NowPlaying() {
 
       case "Delete":
         setSongToDelete(currentTrack);
+        break;
+
+      case "Download":
+        setDownloadConfirmOpen(true);
         break;
 
       default:
@@ -274,7 +286,7 @@ function NowPlaying() {
   const safeDuration = hasKnownDuration ? duration : 0;
 
   const menuOptions = currentTrack?.youtubeId
-    ? ["Add to Playlist"]
+    ? ["Add to Playlist", "Download"]
     : ["Add to Playlist", "Delete"];
 
   const isYoutube = !!currentTrack.youtubeId;
@@ -285,7 +297,8 @@ function NowPlaying() {
       url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
       title: currentTrack.title,
       artist: currentTrack.artist,
-      thumbnail: currentTrack.coverSrc || currentTrack.cover || currentTrack.img,
+      thumbnail:
+        currentTrack.coverSrc || currentTrack.cover || currentTrack.img,
     });
     setDownloadConfirmOpen(false);
   };
@@ -361,7 +374,7 @@ function NowPlaying() {
                 </div>
 
                 <div className="now-playing-actions">
-                  {isYoutube ? (
+                  {/* {isYoutube ? (
                     <MotionButton
                       className="download-btn"
                       onClick={() => setDownloadConfirmOpen(true)}
@@ -383,7 +396,19 @@ function NowPlaying() {
                         fill={favroute ? "currentColor" : "none"}
                       />
                     </button>
-                  )}
+                  )} */}
+                  <button
+                    type="button"
+                    className={`favroute-btn ${favroute ? "active" : ""}`}
+                    onClick={() => setFavroute(!favroute)}
+                    aria-label="Favorite"
+                  >
+                    <Heart
+                      size={27}
+                      strokeWidth={2}
+                      fill={favroute ? "currentColor" : "none"}
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -574,8 +599,6 @@ function NowPlaying() {
           </MotionDiv>
         )}
 
-
-
         {queueOpen && (
           <MotionDiv
             className="queue-overlay"
@@ -661,7 +684,11 @@ function NowPlaying() {
             setSongToDelete(null);
           }
         }}
-        message={songToDelete ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen? Dit verwijdert het ook uit je bibliotheek.` : ""}
+        message={
+          songToDelete
+            ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen? Dit verwijdert het ook uit je bibliotheek.`
+            : ""
+        }
       />
     </>
   );

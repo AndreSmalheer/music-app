@@ -11,7 +11,7 @@ import {
 function HomeTile({ tile, track, cover, tapFeedback, handleMoodTile }) {
   const { showOptions } = useModal();
 
-  const menuOptions = ["Play", "Add to Playlists"];
+  const menuOptions = ["Play"];
 
   const showPlaylistOptions = async () => {
     if (!track?.id) return;
@@ -43,10 +43,6 @@ function HomeTile({ tile, track, cover, tapFeedback, handleMoodTile }) {
     switch (option) {
       case "Play":
         handleMoodTile(tile);
-        break;
-
-      case "Add to Playlists":
-        setTimeout(showPlaylistOptions, 100);
         break;
 
       default:
