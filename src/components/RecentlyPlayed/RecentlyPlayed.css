@@ -40,19 +40,23 @@
   gap: 12px;
   padding-bottom: 8px;
   padding-left: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .track-card {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  flex: 1;
-  max-width: 110px;
+
+  flex: 0 0 auto;
+  width: clamp(120px, 30vw, 150px);
   cursor: pointer;
 }
 
 .track-card__cover {
-  width: clamp(70px, 25vw, 110px);
+  width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 11px;
@@ -60,9 +64,10 @@
 }
 
 .track-card__title {
+  width: 100%;
   text-align: center;
-  margin: 6px 0 0;
-  font-size: 14px;
+  margin: 8px 0 0;
+  font-size: 15px;
   color: #bfbfbf;
   white-space: nowrap;
   overflow: hidden;
@@ -70,9 +75,10 @@
 }
 
 .track-card__artist {
+  width: 100%;
   text-align: center;
-  margin: 2px 0 0;
-  font-size: 12px;
+  margin: 3px 0 0;
+  font-size: 13px;
   color: #7d7d7d;
   white-space: nowrap;
   overflow: hidden;
@@ -80,13 +86,13 @@
 }
 
 .empty-track-card {
-  flex: 1;
-  max-width: 110px;
+  flex: 0 0 auto;
+  width: clamp(120px, 30vw, 150px);
 }
 
 .empty-track-cover {
   width: 100%;
-  aspect-ratio: 1/1;
+  aspect-ratio: 1 / 1;
   border-radius: 11px;
   background-color: var(--bg-secondary);
   border: 1px solid rgba(255, 255, 255, 0.05);

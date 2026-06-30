@@ -117,7 +117,7 @@ function RecentlyPlayed({
 
           return list.length > 0 ? (
             list
-              .slice(0, 3)
+              .slice(0, 8)
               .map((track) => (
                 <SongItem
                   key={track.id}
