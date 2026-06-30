@@ -5,7 +5,13 @@ import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import { ArrowRight, Upload, Settings, Music, DownloadCloud } from "lucide-react";
+import {
+  ArrowRight,
+  Upload,
+  Settings,
+  Music,
+  DownloadCloud,
+} from "lucide-react";
 import {
   getArtists,
   getPlaylists,
@@ -69,7 +75,7 @@ function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [artists, setArtists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
-  const { hasActiveDownloads } = useDownload();
+  const { hasActiveDownloads, subscribeReplaced } = useDownload();
   const [popular, setPopular] = useState([]);
   // Echte YouTube-tracks (mét echte cover-thumbnails) om de Home te vullen
   // zolang er nog geen eigen songs in de database staan.
@@ -226,6 +232,21 @@ function Home() {
     };
   }, []);
 
+  // When a YouTube song is replaced by a local download, swap it out of the
+  // popular / recommendation lists so stale YouTube cards disappear.
+  useEffect(() => {
+    const unsubscribe = subscribeReplaced("*", ({ youtubeId, localSong }) => {
+      setPopular((prev) =>
+        prev.map((s) =>
+          s.youtubeId === youtubeId
+            ? { ...localSong, youtubeId: undefined }
+            : s
+        )
+      );
+    });
+    return unsubscribe;
+  }, [subscribeReplaced]);
+
   // "Speciaal voor jou" mixt je afspeellijsten en artiesten zodat de rij gevuld is.
   const recommendations = [
     ...playlists.map((p) => ({
@@ -277,7 +298,11 @@ function Home() {
             aria-label="Downloads"
             onClick={() => navigate("/downloads")}
           >
-            <DownloadCloud size={24} strokeWidth={1.9} className={hasActiveDownloads ? "download-icon-pulse" : ""} />
+            <DownloadCloud
+              size={24}
+              strokeWidth={1.9}
+              className={hasActiveDownloads ? "download-icon-pulse" : ""}
+            />
             {hasActiveDownloads && <span className="download-badge-dot" />}
           </button>
           <button
@@ -335,6 +360,21 @@ function Home() {
           </div>
         </section>
       </section>
+
+      {/* <section className="home-carousel">
+        <h2 className="home-carousel-title">Skeleton Test</h2>
+
+        <section className="home-carousel">
+          <div className="home-carousel__row">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="home-card">
+                <Skeleton width="148px" height="148px" borderRadius="6px" />
+                <Skeleton height="1rem" style={{ marginTop: "9px" }} />
+              </div>
+            ))}
+          </div>
+        </section>
+      </section> */}
     </div>
   );
 }

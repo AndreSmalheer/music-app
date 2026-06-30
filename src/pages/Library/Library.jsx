@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Music, ListMusic, DownloadCloud } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
@@ -34,7 +34,7 @@ function Library() {
   const [activeTab, setActiveTab] = useState("playlists");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
-  const { hasActiveDownloads } = useDownload();
+  const { hasActiveDownloads, subscribeReplaced } = useDownload();
 
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
@@ -66,6 +66,52 @@ function Library() {
       active = false;
     };
   }, []);
+
+  // When a YouTube song is replaced by a local download, update UI state instantly
+  useEffect(() => {
+    const unsubscribe = subscribeReplaced("*", ({ youtubeId, localSong }) => {
+      // Remove the old YouTube song from the youtube list
+      setYoutubeSongs((prev) =>
+        prev.filter((s) => s.youtubeId !== youtubeId && s.sourceYoutubeId !== youtubeId)
+      );
+
+      // Add the new local song to the uploads list (avoid duplicates)
+      if (localSong) {
+        setSongs((prev) => {
+          const exists = prev.some((s) => s.id === localSong.id);
+          return exists ? prev : [localSong, ...prev];
+        });
+      }
+
+      // Update artists: remove the YouTube artist variant if empty,
+      // and add the song to the matching local artist
+      if (localSong?.artist) {
+        setArtists((prev) => {
+          return prev
+            .map((art) => {
+              if (art.name === localSong.artist) {
+                const hasSong = art.songs?.some((s) =>
+                  (typeof s === "object" ? s.id : s) === localSong.id
+                );
+                return hasSong
+                  ? art
+                  : { ...art, songs: [...(art.songs || []), localSong] };
+              }
+              // Remove the replaced song ID from other artists' lists
+              return {
+                ...art,
+                songs: (art.songs || []).filter((s) =>
+                  (typeof s === "object" ? s.sourceYoutubeId : null) !== youtubeId
+                ),
+              };
+            })
+            .filter((art) => (art.songs?.length ?? 0) > 0);
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribeReplaced]);
 
   const handleDeleteSong = (song) => {
     setSongToDelete(song);

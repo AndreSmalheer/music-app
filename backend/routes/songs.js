@@ -8,6 +8,8 @@ import { pipeline } from "node:stream/promises";
 
 import Song from "../models/Song.js";
 import Artist from "../models/Artist.js";
+import Playlist from "../models/Playlist.js";
+import RecentlyPlayed from "../models/RecentlyPlayed.js";
 import upload from "../middleware/upload.js";
 import { resolveAudio } from "./youtube.js";
 
@@ -238,7 +240,42 @@ router.post("/download-local", async (req, res, next) => {
       });
     }
 
-    res.status(201).json(song);
+    // ---- Verwijder de oude YouTube-song (zelfde youtubeId) uit de database ----
+    // Zoek de YouTube-song die we nu lokaal hebben opgeslagen
+    const oldYtSong = await Song.findOne({ youtubeId });
+
+    if (oldYtSong && oldYtSong._id.toString() !== song._id.toString()) {
+      const oldId = oldYtSong._id;
+
+      // 1. Vervang de oude song in alle playlists door de nieuwe lokale song
+      await Playlist.updateMany(
+        { songs: oldId },
+        { $set: { "songs.$": song._id } }
+      );
+
+      // 2. Vervang de oude song in alle artiest-song-arrays door de nieuwe
+      await Artist.updateMany(
+        { songs: oldId },
+        { $set: { "songs.$": song._id } }
+      );
+
+      // 3. Vervang de oude song in recently-played door de nieuwe
+      await RecentlyPlayed.updateMany(
+        { song: oldId },
+        { $set: { song: song._id } }
+      );
+
+      // 4. Verwijder het oude YouTube-song document
+      await Song.findByIdAndDelete(oldId);
+
+      res.status(201).json({
+        ...song.toObject(),
+        replacedYoutubeId: youtubeId,
+        replacedSongId: oldId.toString(),
+      });
+    } else {
+      res.status(201).json(song);
+    }
   } catch (err) {
     next(err);
   }

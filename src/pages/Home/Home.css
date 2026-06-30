@@ -121,9 +121,16 @@
 
 /* Gradient-fallback voor covers zonder afbeelding. */
 .home-card__fallback {
+  display: flex;
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.85);
+}
+
+.home-card__fallback svg {
+  display: block;
+  margin: auto;
+  flex-shrink: 0;
 }
 
 .home-card__title {

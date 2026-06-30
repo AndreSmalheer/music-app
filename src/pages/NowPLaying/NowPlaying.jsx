@@ -207,26 +207,15 @@ function NowPlaying() {
           if (playlist.id === "no-playlists") return;
 
           try {
-            let trackId = currentTrack?.id;
-            if (!trackId && currentTrack?.youtubeId) {
-              // YouTube track without a local ID — save it first
-              const { downloadYoutubeToLibrary } =
-                await import("../../services/api");
-              const saved = await downloadYoutubeToLibrary({
-                url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
-                title: currentTrack.title,
-                artist: currentTrack.artist,
-                thumbnail: currentTrack.coverSrc,
-              });
-              trackId = saved?.id;
-            }
-            if (trackId) {
-              await addSongToPlaylist(playlist.id, trackId);
-            } else {
-              console.warn(
-                "Unable to determine track ID for playlist addition.",
-              );
-            }
+            async (playlist) => {
+              if (playlist.id === "no-playlists") return;
+
+              try {
+                await addSongToPlaylist(playlist.id, item.track);
+              } catch (e) {
+                console.error("Failed to add song to playlist:", e);
+              }
+            };
           } catch (e) {
             console.error("Failed to add song to playlist:", e);
           }

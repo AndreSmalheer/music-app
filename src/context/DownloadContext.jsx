@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { downloadYoutubeToLibrary } from "../services/api";
 
 const DownloadContext = createContext();
@@ -6,6 +6,29 @@ const DownloadContext = createContext();
 export function DownloadProvider({ children }) {
   const [downloads, setDownloads] = useState([]);
   const [toast, setToast] = useState(null);
+
+  // Listeners that want to know when a YouTube song is replaced by a local one.
+  // Map<youtubeId, Set<callback>> — components subscribe via useOnSongReplaced().
+  const replacedListeners = useRef(new Map());
+
+  const subscribeReplaced = (youtubeId, cb) => {
+    if (!replacedListeners.current.has(youtubeId)) {
+      replacedListeners.current.set(youtubeId, new Set());
+    }
+    replacedListeners.current.get(youtubeId).add(cb);
+    return () => {
+      replacedListeners.current.get(youtubeId)?.delete(cb);
+    };
+  };
+
+  // Notify all subscribers that youtubeId was replaced by localSong
+  const notifyReplaced = (youtubeId, localSong) => {
+    replacedListeners.current.get(youtubeId)?.forEach((cb) => cb(localSong));
+    // Also fire "any" listeners (youtubeId === "*")
+    replacedListeners.current.get("*")?.forEach((cb) =>
+      cb({ youtubeId, localSong })
+    );
+  };
 
   // Auto-hide toast after 4 seconds
   useEffect(() => {
@@ -16,8 +39,8 @@ export function DownloadProvider({ children }) {
   }, [toast]);
 
   const startDownload = async ({ url, title, artist, thumbnail }) => {
-    // Generate a unique ID for this download task
-    const downloadId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const downloadId =
+      Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const abortController = new AbortController();
 
     const newDownload = {
@@ -34,7 +57,7 @@ export function DownloadProvider({ children }) {
 
     setDownloads((prev) => [newDownload, ...prev]);
 
-    // Simulate progress from 0% to 92% over time
+    // Simulate progress from 0 → 92 % while the backend is working
     const progressInterval = setInterval(() => {
       setDownloads((prev) =>
         prev.map((dl) => {
@@ -49,23 +72,26 @@ export function DownloadProvider({ children }) {
     }, 800);
 
     try {
-      await downloadYoutubeToLibrary(
+      const result = await downloadYoutubeToLibrary(
         { url, title, artist, thumbnail },
         abortController.signal
       );
-      
+
       clearInterval(progressInterval);
-      
+
       setDownloads((prev) =>
-        prev.map((dl) => {
-          if (dl.id === downloadId) {
-            return { ...dl, status: "completed", progress: 100 };
-          }
-          return dl;
-        })
+        prev.map((dl) =>
+          dl.id === downloadId
+            ? { ...dl, status: "completed", progress: 100, localSong: result }
+            : dl
+        )
       );
 
-      // Trigger global success toast
+      // If the backend replaced an old YouTube entry, notify all listeners
+      if (result?.replacedYoutubeId) {
+        notifyReplaced(result.replacedYoutubeId, result);
+      }
+
       setToast({
         type: "success",
         message: `"${title}" succesvol gedownload!`,
@@ -75,27 +101,22 @@ export function DownloadProvider({ children }) {
 
       if (err.name === "AbortError" || err.message?.includes("aborted")) {
         console.log(`Download of "${title}" was aborted by user.`);
-        // Remove from list if aborted
         setDownloads((prev) => prev.filter((dl) => dl.id !== downloadId));
       } else {
         console.error(`Download of "${title}" failed:`, err);
         setDownloads((prev) =>
-          prev.map((dl) => {
-            if (dl.id === downloadId) {
-              return {
-                ...dl,
-                status: "failed",
-                error: err.message || "Download mislukt",
-              };
-            }
-            return dl;
-          })
+          prev.map((dl) =>
+            dl.id === downloadId
+              ? { ...dl, status: "failed", error: err.message || "Download mislukt" }
+              : dl
+          )
         );
 
-        // Trigger global error toast
         setToast({
           type: "error",
-          message: `Fout bij downloaden van "${title}": ${err.message || "Onbekende fout"}`,
+          message: `Fout bij downloaden van "${title}": ${
+            err.message || "Onbekende fout"
+          }`,
         });
       }
     }
@@ -125,6 +146,7 @@ export function DownloadProvider({ children }) {
         cancelDownload,
         clearCompleted,
         hasActiveDownloads,
+        subscribeReplaced,
         toast,
         setToast,
       }}

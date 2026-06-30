@@ -92,6 +92,8 @@ export function toUiTrack(song) {
     youtubeId: song.youtubeId,
     sourceYoutubeId: song.sourceYoutubeId,
     type: song.type,
+    replacedYoutubeId: song.replacedYoutubeId,
+    replacedSongId: song.replacedSongId,
   };
 }
 
