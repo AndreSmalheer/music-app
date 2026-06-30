@@ -5,7 +5,15 @@ import Skeleton from "../../components/Skeleton/Skeleton";
 import { useState, useContext, useEffect } from "react";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import { ChevronLeft, Download, Shuffle, Play, MoreHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  Download,
+  Shuffle,
+  Play,
+  MoreHorizontal,
+  FileAudio,
+} from "lucide-react";
+
 import {
   getPlaylist,
   addRecent,
@@ -14,9 +22,17 @@ import {
 import { playTrackList } from "../../utils/playback";
 import "./PlaylistDetail.css";
 
-function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong, isCurrent }) {
+function PlaylistSongRow({
+  song,
+  index,
+  onPlaySong,
+  onRemoveSong,
+  isCurrent,
+  type,
+}) {
   const { showOptions } = useModal();
   const tapFeedback = { scale: 0.98 };
+  console.log(type);
   const openMenu = () =>
     showOptions(["Play", "Remove from Playlist"], async (option) => {
       if (option === "Play") {
@@ -40,7 +56,9 @@ function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong, isCurrent }) {
       >
         <div
           className="song-row-cover"
-          style={song.cover ? { backgroundImage: `url(${song.cover})` } : undefined}
+          style={
+            song.cover ? { backgroundImage: `url(${song.cover})` } : undefined
+          }
         />
         <div className="song-row-info">
           <p className={`song-row-title${isCurrent ? " current" : ""}`}>
@@ -48,6 +66,9 @@ function PlaylistSongRow({ song, index, onPlaySong, onRemoveSong, isCurrent }) {
           </p>
           <p className="song-row-artist">{song.artist}</p>
         </div>
+
+        {type === "mp3" && <FileAudio size={14} className="song-row-type" />}
+
         <span className="song-duration">{song.durationLabel}</span>
       </motion.button>
       <button
@@ -75,6 +96,7 @@ function PlaylistDetail() {
     (async () => {
       try {
         const data = await getPlaylist(id);
+        console.log(data);
         if (!active) return;
         setPlaylist(data);
         setSongs(data?.songs || []);
@@ -164,9 +186,6 @@ function PlaylistDetail() {
 
       <div className="playlist-actions">
         <div className="playlist-actions-left">
-          <button type="button" className="playlist-action-icon" aria-label="Download">
-            <Download size={26} strokeWidth={1.8} />
-          </button>
           <motion.button
             type="button"
             className="playlist-action-icon"
@@ -218,6 +237,7 @@ function PlaylistDetail() {
                 onPlaySong={handlePlaySong}
                 onRemoveSong={handleRemoveSong}
                 isCurrent={currentTrack?.src === song.src}
+                type={song.type}
               />
             ))}
       </div>

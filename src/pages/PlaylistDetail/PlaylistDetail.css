@@ -72,6 +72,8 @@
 }
 
 .playlist-actions-left {
+  margin-left: auto;
+  margin-right: 22px;
   display: flex;
   align-items: center;
   gap: 22px;
@@ -183,4 +185,17 @@
   color: var(--text-secondary);
   display: flex;
   flex-shrink: 0;
+}
+
+.song-row-type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.song-row-type svg {
+  width: 14px;
+  height: 14px;
 }
