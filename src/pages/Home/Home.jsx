@@ -25,6 +25,8 @@ import {
   PLACEHOLDER_TRACKS,
   gradientFor,
 } from "../../data/placeholderContent";
+import HomeCard from "../../components/items/HomeCard";
+import HomeTile from "../../components/items/HomeTile";
 
 // Husselt een array (Fisher-Yates) zodat we elke keer een andere selectie
 // "populaire" nummers kunnen tonen.
@@ -255,6 +257,7 @@ function Home() {
           sub: track.artist,
           cover: track.cover,
           gradient: track.gradient || gradientFor(track.title),
+          track,
           onClick: () => handleSongClick(track),
         }));
 
@@ -287,98 +290,49 @@ function Home() {
       </div>
 
       <div className="home-tiles">
-        {MOOD_TILES.map((tile, i) => {
-          const cover = filler[i]?.cover;
-          return (
-            <motion.button
-              key={tile.name}
-              className="home-tile"
-              whileTap={tapFeedback}
-              onClick={() => handleMoodTile(tile)}
-            >
-              {cover ? (
-                <img
-                  className="home-tile__cover"
-                  src={cover}
-                  alt=""
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    e.currentTarget.nextElementSibling?.style.setProperty(
-                      "display",
-                      "block",
-                    );
-                  }}
-                />
-              ) : null}
-              <span
-                className="home-tile__cover"
-                style={{
-                  background: tile.gradient,
-                  display: cover ? "none" : "block",
-                }}
-              />
-              <span className="home-tile__title">{tile.name}</span>
-            </motion.button>
-          );
-        })}
+        {MOOD_TILES.map((tile, i) => (
+          <HomeTile
+            key={tile.name}
+            tile={tile}
+            track={filler[i]}
+            cover={filler[i]?.cover}
+            tapFeedback={tapFeedback}
+            handleMoodTile={handleMoodTile}
+          />
+        ))}
       </div>
 
       <RecentlyPlayed InculdeYt={true} fallbackTracks={filler} />
 
       <section className="home-carousel">
         <h2 className="home-carousel-title">{specialTitle}</h2>
-        <div className="home-carousel__row">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="home-card">
-                <Skeleton width="148px" height="148px" borderRadius="6px" />
-                <Skeleton height="1rem" style={{ marginTop: "9px" }} />
-              </div>
-            ))
-          ) : displayRecommendations.length > 0 ? (
-            displayRecommendations.map((item) => (
-              <motion.button
-                key={item.key}
-                className="home-card"
-                whileTap={tapFeedback}
-                onClick={item.onClick}
-              >
-                {item.cover ? (
-                  <img
-                    className="home-card__cover"
-                    src={item.cover}
-                    alt=""
-                    onError={(e) => {
-                      // Val terug op de gradient als de afbeelding niet laadt.
-                      e.currentTarget.style.display = "none";
-                      e.currentTarget.nextElementSibling?.style.setProperty(
-                        "display",
-                        "flex",
-                      );
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="home-card__cover home-card__fallback"
-                  style={{
-                    background: item.gradient,
-                    display: item.cover ? "none" : "flex",
-                  }}
-                >
+        <section className="home-carousel">
+          <div className="home-carousel__row">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="home-card">
+                  <Skeleton width="148px" height="148px" borderRadius="6px" />
+                  <Skeleton height="1rem" style={{ marginTop: "9px" }} />
+                </div>
+              ))
+            ) : displayRecommendations.length > 0 ? (
+              displayRecommendations.map((item) => (
+                <HomeCard
+                  key={item.key}
+                  item={item}
+                  tapFeedback={tapFeedback}
+                  handleSongClick={handleSongClick}
+                />
+              ))
+            ) : (
+              <div className="home-card">
+                <div className="home-card__cover home-card__fallback">
                   <Music size={34} strokeWidth={1.8} />
                 </div>
-                <div className="home-card__title">{item.title}</div>
-                <div className="home-card__sub">{item.sub}</div>
-              </motion.button>
-            ))
-          ) : (
-            <div className="home-card">
-              <div className="home-card__cover home-card__fallback">
-                <Music size={34} strokeWidth={1.8} />
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       </section>
     </div>
   );

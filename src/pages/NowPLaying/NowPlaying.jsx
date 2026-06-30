@@ -112,40 +112,19 @@ function NowPlaying() {
       return;
     }
 
+    const isAlreadyPlaying = audio.currentTime > 0 && !audio.paused;
     if (loadedTrackRef.current !== currentTrack.youtubeId) {
-      setYtLoading(true);
+      if (!isAlreadyPlaying) {
+        setYtLoading(true);
+      }
       loadedTrackRef.current = currentTrack.youtubeId;
+    } else if (isAlreadyPlaying) {
+      setYtLoading(false);
     }
 
-    const handlePlaying = () => {
-      setYtLoading(false);
+    const handleLoadStart = () => {
+      setYtLoading(true);
     };
-
-    audio.addEventListener("playing", handlePlaying);
-
-    return () => {
-      audio.removeEventListener("playing", handlePlaying);
-    };
-  }, [currentTrack, audioPlayerRef]);
-
-  useEffect(() => {
-    const audio = audioPlayerRef.current;
-
-    if (!currentTrack?.youtubeId || !audio) {
-      setYtLoading(false);
-      return;
-    }
-
-    const isNewTrack = loadedTrackRef.current !== currentTrack.youtubeId;
-
-    if (!isNewTrack) {
-      setYtLoading(false);
-      return;
-    }
-
-    loadedTrackRef.current = currentTrack.youtubeId;
-
-    setYtLoading(true);
 
     const handlePlaying = () => {
       setYtLoading(false);
@@ -155,14 +134,22 @@ function NowPlaying() {
       setYtLoading(false);
     };
 
+    const handleError = () => {
+      setYtLoading(false);
+    };
+
+    audio.addEventListener("loadstart", handleLoadStart);
     audio.addEventListener("playing", handlePlaying);
     audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("error", handleError);
 
     return () => {
+      audio.removeEventListener("loadstart", handleLoadStart);
       audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("error", handleError);
     };
-  }, [currentTrack]);
+  }, [currentTrack, audioPlayerRef]);
 
   useEffect(() => {
     if (!downloadSuccess) return undefined;
@@ -313,35 +300,6 @@ function NowPlaying() {
     }
   };
 
-  if (ytLoading && !isPlaying) {
-    return (
-      <div className="now-playing-loading">
-        <div className="skeleton skeleton-album"></div>
-
-        <div className="skeleton-info">
-          <div className="skeleton-text">
-            <div className="skeleton skeleton-title"></div>
-            <div className="skeleton skeleton-artist"></div>
-          </div>
-
-          <div className="skeleton skeleton-actions"></div>
-        </div>
-
-        <div className="skeleton skeleton-progress"></div>
-
-        <div className="skeleton-controls">
-          <div className="skeleton skeleton-control-btn small"></div>
-          <div className="skeleton skeleton-control-btn"></div>
-          <div className="skeleton skeleton-control-btn play"></div>
-          <div className="skeleton skeleton-control-btn"></div>
-          <div className="skeleton skeleton-control-btn small"></div>
-        </div>
-
-        <div className="skeleton skeleton-volume"></div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="now-playing-page">
@@ -370,183 +328,211 @@ function NowPlaying() {
           </button>
         </div>
 
-        <div className="np-cover-wrap">
-          <img
-            className="album-cover"
-            src={currentTrack.coverSrc}
-            alt="Album Cover"
-          />
-        </div>
+        {ytLoading ? (
+          <div className="now-playing-loading">
+            <div className="skeleton skeleton-album"></div>
 
-        <div className="np-bottom">
-          <div className="now-playing-info">
-            <div className="now-playing-text">
-              <h1 className="now-playing-title">{currentTrack.title}</h1>
-              <h2 className="now-playing-artist">{currentTrack.artist}</h2>
+            <div className="skeleton-info">
+              <div className="skeleton-text">
+                <div className="skeleton skeleton-title"></div>
+                <div className="skeleton skeleton-artist"></div>
+              </div>
+
+              <div className="skeleton skeleton-actions"></div>
             </div>
 
-            <div className="now-playing-actions">
-              {isYoutube ? //   type="button" // <MotionButton
-              //   className="download-btn"
-              //   onClick={() => setDownloadConfirmOpen(true)}
-              //   whileTap={{ scale: 0.92 }}
-              //   aria-label="Download to library"
-              // >
-              //   <Download size={26} strokeWidth={2} />
-              // </MotionButton>
-              null : (
-                <button
-                  type="button"
-                  className={`favroute-btn ${favroute ? "active" : ""}`}
-                  onClick={() => setFavroute(!favroute)}
-                  aria-label="Favorite"
-                >
-                  <Heart
-                    size={27}
-                    strokeWidth={2}
-                    fill={favroute ? "currentColor" : "none"}
-                  />
+            <div className="skeleton skeleton-progress"></div>
+
+            <div className="skeleton-controls">
+              <div className="skeleton skeleton-control-btn small"></div>
+              <div className="skeleton skeleton-control-btn"></div>
+              <div className="skeleton skeleton-control-btn play"></div>
+              <div className="skeleton skeleton-control-btn"></div>
+              <div className="skeleton skeleton-control-btn small"></div>
+            </div>
+
+            <div className="skeleton skeleton-volume"></div>
+          </div>
+        ) : (
+          <>
+            <div className="np-cover-wrap">
+              <img
+                className="album-cover"
+                src={currentTrack.coverSrc}
+                alt="Album Cover"
+              />
+            </div>
+
+            <div className="np-bottom">
+              <div className="now-playing-info">
+                <div className="now-playing-text">
+                  <h1 className="now-playing-title">{currentTrack.title}</h1>
+                  <h2 className="now-playing-artist">{currentTrack.artist}</h2>
+                </div>
+
+                <div className="now-playing-actions">
+                  {isYoutube ? //   type="button" // <MotionButton
+                  //   className="download-btn"
+                  //   onClick={() => setDownloadConfirmOpen(true)}
+                  //   whileTap={{ scale: 0.92 }}
+                  //   aria-label="Download to library"
+                  // >
+                  //   <Download size={26} strokeWidth={2} />
+                  // </MotionButton>
+                  null : (
+                    <button
+                      type="button"
+                      className={`favroute-btn ${favroute ? "active" : ""}`}
+                      onClick={() => setFavroute(!favroute)}
+                      aria-label="Favorite"
+                    >
+                      <Heart
+                        size={27}
+                        strokeWidth={2}
+                        fill={favroute ? "currentColor" : "none"}
+                      />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="progress-bar">
+                <Slider
+                  value={currentTime}
+                  max={safeDuration || 1}
+                  onChange={(val) => {
+                    if (audioPlayerRef.current && hasKnownDuration) {
+                      audioPlayerRef.current.currentTime = val;
+                    }
+                  }}
+                  onDragEnd={() => {
+                    if (!isPlaying) handlePlay();
+                  }}
+                />
+                <div className="progress-bar-times">
+                  <div className="progress-time progress-time-start">
+                    {formatTime(currentTime)}
+                  </div>
+                  <div className="progress-time progress-time-end">
+                    {hasKnownDuration
+                      ? `-${formatTime(safeDuration - currentTime)}`
+                      : "Live"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="player-controls">
+                <div className="control-group control-group--main">
+                  <button
+                    className={`control control--shuffle media-control-button ${
+                      shuffle ? "active" : ""
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleShuffle();
+                    }}
+                    aria-label="Shuffle"
+                  >
+                    <Shuffle size={24} strokeWidth={2} />
+                  </button>
+
+                  <button
+                    className="control control--previous media-control-button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePrevious();
+                    }}
+                    aria-label="Previous"
+                  >
+                    <SkipBack size={30} strokeWidth={1.5} fill="currentColor" />
+                  </button>
+
+                  <button
+                    className="control control--play-pause media-control-button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isPlaying) {
+                        handlePause();
+                      } else {
+                        handlePlay();
+                      }
+                    }}
+                    aria-label={isPlaying ? "Pause" : "Play"}
+                  >
+                    {isPlaying ? (
+                      <Pause size={30} strokeWidth={1.5} fill="currentColor" />
+                    ) : (
+                      <Play size={30} strokeWidth={1.5} fill="currentColor" />
+                    )}
+                  </button>
+
+                  <button
+                    className="control control--next media-control-button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNext();
+                    }}
+                    aria-label="Next"
+                  >
+                    <SkipForward size={30} strokeWidth={1.5} fill="currentColor" />
+                  </button>
+
+                  <button
+                    className={`control control--repeat media-control-button ${
+                      isActive ? "active" : ""
+                    }`}
+                    onClick={onRepeatClick}
+                    aria-label="Repeat"
+                  >
+                    {repeatMode === "repeat-one" ? (
+                      <Repeat1 size={24} strokeWidth={2} />
+                    ) : (
+                      <Repeat size={24} strokeWidth={2} />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="audio-volume">
+                <div className="volume-icon volume-icon--down">
+                  <Volume1 size={20} strokeWidth={2} />
+                </div>
+
+                <Slider
+                  value={volume}
+                  max={1}
+                  onChange={(val) => handleVolumeChange(val)}
+                />
+
+                <div className="volume-icon volume-icon--up">
+                  <Volume2 size={20} strokeWidth={2} />
+                </div>
+              </div>
+
+              <div className="player-utilities">
+                <button className="airplay-btn utiletie-btn" aria-label="Airplay">
+                  <Airplay size={22} strokeWidth={1.8} />
                 </button>
-              )}
-            </div>
-          </div>
 
-          <div className="progress-bar">
-            <Slider
-              value={currentTime}
-              max={safeDuration || 1}
-              onChange={(val) => {
-                if (audioPlayerRef.current && hasKnownDuration) {
-                  audioPlayerRef.current.currentTime = val;
-                }
-              }}
-              onDragEnd={() => {
-                if (!isPlaying) handlePlay();
-              }}
-            />
-            <div className="progress-bar-times">
-              <div className="progress-time progress-time-start">
-                {formatTime(currentTime)}
-              </div>
-              <div className="progress-time progress-time-end">
-                {hasKnownDuration
-                  ? `-${formatTime(safeDuration - currentTime)}`
-                  : "Live"}
+                <button className="share-btn utiletie-btn" aria-label="Share">
+                  <Share2 size={22} strokeWidth={1.8} />
+                </button>
+
+                <button
+                  className="queu-btn utiletie-btn"
+                  onClick={() => setQueueOpen(true)}
+                  aria-label="Queue"
+                >
+                  <ListMusic size={22} strokeWidth={1.8} />
+                </button>
               </div>
             </div>
-          </div>
-
-          <div className="player-controls">
-            <div className="control-group control-group--main">
-              <button
-                className={`control control--shuffle media-control-button ${
-                  shuffle ? "active" : ""
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleShuffle();
-                }}
-                aria-label="Shuffle"
-              >
-                <Shuffle size={24} strokeWidth={2} />
-              </button>
-
-              <button
-                className="control control--previous media-control-button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handlePrevious();
-                }}
-                aria-label="Previous"
-              >
-                <SkipBack size={30} strokeWidth={1.5} fill="currentColor" />
-              </button>
-
-              <button
-                className="control control--play-pause media-control-button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  if (isPlaying) {
-                    handlePause();
-                  } else {
-                    handlePlay();
-                  }
-                }}
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? (
-                  <Pause size={30} strokeWidth={1.5} fill="currentColor" />
-                ) : (
-                  <Play size={30} strokeWidth={1.5} fill="currentColor" />
-                )}
-              </button>
-
-              <button
-                className="control control--next media-control-button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleNext();
-                }}
-                aria-label="Next"
-              >
-                <SkipForward size={30} strokeWidth={1.5} fill="currentColor" />
-              </button>
-
-              <button
-                className={`control control--repeat media-control-button ${
-                  isActive ? "active" : ""
-                }`}
-                onClick={onRepeatClick}
-                aria-label="Repeat"
-              >
-                {repeatMode === "repeat-one" ? (
-                  <Repeat1 size={24} strokeWidth={2} />
-                ) : (
-                  <Repeat size={24} strokeWidth={2} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="audio-volume">
-            <div className="volume-icon volume-icon--down">
-              <Volume1 size={20} strokeWidth={2} />
-            </div>
-
-            <Slider
-              value={volume}
-              max={1}
-              onChange={(val) => handleVolumeChange(val)}
-            />
-
-            <div className="volume-icon volume-icon--up">
-              <Volume2 size={20} strokeWidth={2} />
-            </div>
-          </div>
-
-          <div className="player-utilities">
-            <button className="airplay-btn utiletie-btn" aria-label="Airplay">
-              <Airplay size={22} strokeWidth={1.8} />
-            </button>
-
-            <button className="share-btn utiletie-btn" aria-label="Share">
-              <Share2 size={22} strokeWidth={1.8} />
-            </button>
-
-            <button
-              className="queu-btn utiletie-btn"
-              onClick={() => setQueueOpen(true)}
-              aria-label="Queue"
-            >
-              <ListMusic size={22} strokeWidth={1.8} />
-            </button>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       <AnimatePresence>
