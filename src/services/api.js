@@ -198,12 +198,12 @@ export async function downloadYoutubeToLibrary({
   title,
   artist,
   thumbnail,
-}) {
-  const song = await postJSON("/api/songs/download-local", {
-    url,
-    title,
-    artist,
-    thumbnail,
+}, signal) {
+  const song = await request("/api/songs/download-local", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, title, artist, thumbnail }),
+    signal,
   });
   return toUiTrack(song);
 }

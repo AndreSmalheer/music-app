@@ -11,7 +11,7 @@ import {
   useDragControls,
 } from "framer-motion";
 import { useRef } from "react";
-import { downloadYoutubeToLibrary } from "../../services/api";
+import { useDownload } from "../../context/DownloadContext";
 import {
   Download,
   Check,
@@ -32,7 +32,8 @@ import {
   ListMusic,
   GripVertical,
 } from "lucide-react";
-import { addSongToPlaylist, getPlaylists } from "../../services/api";
+import { addSongToPlaylist, getPlaylists, deleteSong } from "../../services/api";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -98,8 +99,11 @@ function NowPlaying() {
   const [queueOpen, setQueueOpen] = useState(false);
   const [ytLoading, setYtLoading] = useState(false);
   const [downloadConfirmOpen, setDownloadConfirmOpen] = useState(false);
-  const [downloadInFlight, setDownloadInFlight] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [songToDelete, setSongToDelete] = useState(null);
+  const { downloads, startDownload } = useDownload();
+  const isCurrentlyDownloading = downloads.some(
+    (dl) => dl.url.includes(currentTrack?.youtubeId) && dl.status === "downloading"
+  );
   const loadedTrackRef = useRef(null);
   const modalControls = useDragControls();
 
@@ -151,15 +155,7 @@ function NowPlaying() {
     };
   }, [currentTrack, audioPlayerRef]);
 
-  useEffect(() => {
-    if (!downloadSuccess) return undefined;
 
-    const timer = setTimeout(() => {
-      setDownloadSuccess(false);
-    }, 2200);
-
-    return () => clearTimeout(timer);
-  }, [downloadSuccess]);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);
@@ -210,6 +206,8 @@ function NowPlaying() {
           try {
             let trackId = currentTrack?.id;
             if (!trackId && currentTrack?.youtubeId) {
+              // YouTube track without a local ID — save it first
+              const { downloadYoutubeToLibrary } = await import("../../services/api");
               const saved = await downloadYoutubeToLibrary({
                 url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
                 title: currentTrack.title,
@@ -239,6 +237,10 @@ function NowPlaying() {
     switch (option) {
       case "Add to Playlist":
         setTimeout(showPlaylistOptions, 100);
+        break;
+
+      case "Delete":
+        setSongToDelete(currentTrack);
         break;
 
       default:
@@ -271,33 +273,21 @@ function NowPlaying() {
   const hasKnownDuration = Number.isFinite(duration) && duration > 0;
   const safeDuration = hasKnownDuration ? duration : 0;
 
-  const menuOptions = ["Add to Playlist"];
+  const menuOptions = currentTrack?.youtubeId
+    ? ["Add to Playlist"]
+    : ["Add to Playlist", "Delete"];
 
   const isYoutube = !!currentTrack.youtubeId;
 
-  const handleDownload = async () => {
-    if (!currentTrack.youtubeId || downloadInFlight) return;
-    const trackToDownload = { ...currentTrack };
-
-    try {
-      setDownloadInFlight(true);
-      const savedSong = await downloadYoutubeToLibrary({
-        url: `https://www.youtube.com/watch?v=${trackToDownload.youtubeId}`,
-        title: trackToDownload.title,
-        artist: trackToDownload.artist,
-        thumbnail: trackToDownload.coverSrc,
-      });
-
-      setDownloadSuccess(true);
-
-      if (savedSong?.id) {
-        console.log("Saved to local library:", savedSong.id);
-      }
-    } catch (err) {
-      console.error("Download failed:", err);
-    } finally {
-      setDownloadInFlight(false);
-    }
+  const handleDownload = () => {
+    if (!currentTrack?.youtubeId || isCurrentlyDownloading) return;
+    startDownload({
+      url: `https://www.youtube.com/watch?v=${currentTrack.youtubeId}`,
+      title: currentTrack.title,
+      artist: currentTrack.artist,
+      thumbnail: currentTrack.coverSrc || currentTrack.cover || currentTrack.img,
+    });
+    setDownloadConfirmOpen(false);
   };
 
   return (
@@ -575,26 +565,16 @@ function NowPlaying() {
                 <button
                   className="download-sheet__btn download-sheet__btn--confirm"
                   onClick={handleDownload}
-                  disabled={downloadInFlight}
+                  disabled={isCurrentlyDownloading}
                 >
-                  {downloadInFlight ? "Downloading..." : "Download"}
+                  {isCurrentlyDownloading ? "Downloading..." : "Download"}
                 </button>
               </div>
             </MotionDiv>
           </MotionDiv>
         )}
 
-        {downloadSuccess && (
-          <MotionDiv
-            className="download-toast"
-            initial={{ opacity: 0, y: 20, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.96 }}
-          >
-            <Check size={22} strokeWidth={2.5} />
-            <span>Saved to local library</span>
-          </MotionDiv>
-        )}
+
 
         {queueOpen && (
           <MotionDiv
@@ -665,6 +645,24 @@ function NowPlaying() {
           </MotionDiv>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!songToDelete}
+        onClose={() => setSongToDelete(null)}
+        onConfirm={async () => {
+          if (!songToDelete) return;
+          try {
+            await deleteSong(songToDelete.id);
+            // Stop playback and go back since the song is gone
+            navigate(-1);
+          } catch (err) {
+            console.error("Fout bij het verwijderen van nummer:", err);
+          } finally {
+            setSongToDelete(null);
+          }
+        }}
+        message={songToDelete ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen? Dit verwijdert het ook uit je bibliotheek.` : ""}
+      />
     </>
   );
 }

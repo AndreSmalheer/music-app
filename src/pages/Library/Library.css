@@ -31,6 +31,21 @@
   display: flex;
 }
 
+.library-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.library-icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-primary, #fff);
+  display: flex;
+}
+
 /* ---- Tabs ---- */
 .library-tabs {
   display: grid;

@@ -5,7 +5,7 @@ import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
 import { motion } from "framer-motion";
-import { ArrowRight, Upload, Settings, Music } from "lucide-react";
+import { ArrowRight, Upload, Settings, Music, DownloadCloud } from "lucide-react";
 import {
   getArtists,
   getPlaylists,
@@ -18,6 +18,7 @@ import {
 import "./Home.css";
 import ArtistItem from "../../components/items/ArtistItems";
 import { useModal } from "../../context/ModalContext";
+import { useDownload } from "../../context/DownloadContext";
 import SongItem from "../../components/items/SongItem";
 import PlaylistItem from "../../components/items/PlaylistItem";
 import {
@@ -68,6 +69,7 @@ function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [artists, setArtists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
+  const { hasActiveDownloads } = useDownload();
   const [popular, setPopular] = useState([]);
   // Echte YouTube-tracks (mét echte cover-thumbnails) om de Home te vullen
   // zolang er nog geen eigen songs in de database staan.
@@ -269,13 +271,15 @@ function Home() {
       <div className="home-topbar">
         <h1 className="home-greeting">Goedemiddag</h1>
         <div className="home-topbar__actions">
-          {/* <button
+          <button
             className="home-icon-btn"
-            aria-label="Upload"
-            onClick={() => navigate("/upload")}
+            style={{ position: "relative" }}
+            aria-label="Downloads"
+            onClick={() => navigate("/downloads")}
           >
-            <Upload size={24} strokeWidth={1.9} />
-          </button> */}
+            <DownloadCloud size={24} strokeWidth={1.9} className={hasActiveDownloads ? "download-icon-pulse" : ""} />
+            {hasActiveDownloads && <span className="download-badge-dot" />}
+          </button>
           <button
             className="home-icon-btn"
             aria-label="Settings"

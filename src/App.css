@@ -39,3 +39,39 @@
 .page-padding {
   padding: 0 var(--spacing-horizontal);
 }
+
+.App.has-player .downloads-page {
+  padding-bottom: calc(var(--mini-player-height) + 20px);
+}
+
+/* Micro-animations for downloads */
+@keyframes downloadPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.download-icon-pulse {
+  animation: downloadPulse 1.8s infinite ease-in-out;
+  color: var(--accent) !important;
+}
+
+.download-badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent);
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-elevated);
+}

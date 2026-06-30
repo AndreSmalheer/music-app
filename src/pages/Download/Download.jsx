@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil } from "lucide-react";
+import { Pencil, ChevronLeft } from "lucide-react";
 import { downloadFromYoutube } from "../../services/api";
 import "./Download.css";
 
@@ -59,6 +59,9 @@ function Download() {
   return (
     <div className="download-page">
       <div className="download-header">
+        <button className="download-back" onClick={() => navigate(-1)} aria-label="Terug">
+          <ChevronLeft size={26} strokeWidth={2.2} />
+        </button>
         <h1>Download</h1>
       </div>
 

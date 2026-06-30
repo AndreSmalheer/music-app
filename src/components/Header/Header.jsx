@@ -26,8 +26,7 @@ function Header() {
   const isLegacyBackPage =
     path.includes("see-all") ||
     path.includes("artist") ||
-    path.includes("edit-playlist") ||
-    path.includes("download");
+    path.includes("edit-playlist");
 
   if (!isLegacyBackPage) return null;
 

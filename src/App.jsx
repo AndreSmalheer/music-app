@@ -30,6 +30,9 @@ import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { useState } from "react";
 import { ModalProvider } from "./context/ModalContext";
 import { checkHealth } from "./services/api";
+import Downloads from "./pages/Downloads/Downloads";
+import { DownloadProvider, useDownload } from "./context/DownloadContext";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 function PageWrapper({ children }) {
   return (
@@ -53,6 +56,7 @@ function AppContent() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const location = useLocation();
   const { currentTrack } = useContext(PlayerContext);
+  const { toast } = useDownload();
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -205,11 +209,35 @@ function AppContent() {
                 </PageWrapper>
               }
             />
+            <Route
+              path="/downloads"
+              element={
+                <PageWrapper>
+                  <Downloads />
+                </PageWrapper>
+              }
+            />
           </Routes>
         </AnimatePresence>
       </div>
 
       {!isOnboarding && <Footer />}
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            className="download-toast"
+            initial={{ opacity: 0, y: 30, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            style={{ bottom: hasActiveTrack ? "170px" : "110px" }}
+          >
+            {toast.type === "success" ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -244,11 +272,13 @@ function App() {
           <ServerOffline onRetry={performHealthCheck} />
         </ModalProvider>
       ) : (
-        <MediaPlayer>
-          <ModalProvider>
-            <AppContent />
-          </ModalProvider>
-        </MediaPlayer>
+        <DownloadProvider>
+          <MediaPlayer>
+            <ModalProvider>
+              <AppContent />
+            </ModalProvider>
+          </MediaPlayer>
+        </DownloadProvider>
       )}
     </>
   );

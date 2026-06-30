@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Upload, Music, ListMusic } from "lucide-react";
+import { Plus, Upload, Music, ListMusic, DownloadCloud } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
 import {
@@ -16,6 +16,7 @@ import "./Library.css";
 import LibraryRow from "../../components/items/LibraryRow";
 import { useModal } from "../../context/ModalContext";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import { useDownload } from "../../context/DownloadContext";
 
 const TABS = [
   { key: "playlists", label: "Afspeellijsten" },
@@ -33,6 +34,7 @@ function Library() {
   const [activeTab, setActiveTab] = useState("playlists");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
+  const { hasActiveDownloads } = useDownload();
 
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
@@ -225,14 +227,26 @@ function Library() {
     <div className="library-page">
       <div className="library-header">
         <h1 className="library-title">Jouw bibliotheek</h1>
-        <motion.button
-          className="library-add-btn"
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setSheetOpen(true)}
-          aria-label="Toevoegen"
-        >
-          <Plus size={26} strokeWidth={2} />
-        </motion.button>
+        <div className="library-header-actions">
+          <motion.button
+            className="library-icon-btn"
+            style={{ position: "relative" }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate("/downloads")}
+            aria-label="Downloads"
+          >
+            <DownloadCloud size={20} strokeWidth={1.9} className={hasActiveDownloads ? "download-icon-pulse" : ""} />
+            {hasActiveDownloads && <span className="download-badge-dot" />}
+          </motion.button>
+          <motion.button
+            className="library-add-btn"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setSheetOpen(true)}
+            aria-label="Toevoegen"
+          >
+            <Plus size={26} strokeWidth={2} />
+          </motion.button>
+        </div>
       </div>
 
       <div className="library-tabs">
