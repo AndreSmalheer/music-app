@@ -12,7 +12,11 @@ import upload from "../middleware/upload.js";
 import { resolveAudio } from "./youtube.js";
 
 // Zoekt artiest op naam + bron op, maakt hem aan als hij niet bestaat, en voegt songId toe.
-async function syncArtist(artistName, songId, { isYoutubeArtist = false, thumbnail } = {}) {
+async function syncArtist(
+  artistName,
+  songId,
+  { isYoutubeArtist = false, thumbnail } = {},
+) {
   if (!artistName || artistName === "Unknown") return;
 
   const update = {
@@ -24,11 +28,10 @@ async function syncArtist(artistName, songId, { isYoutubeArtist = false, thumbna
     update.$set = { thumbnail };
   }
 
-  await Artist.findOneAndUpdate(
-    { name: artistName, isYoutubeArtist },
-    update,
-    { upsert: true, new: true },
-  );
+  await Artist.findOneAndUpdate({ name: artistName, isYoutubeArtist }, update, {
+    upsert: true,
+    new: true,
+  });
 }
 
 function normalizeDuration(duration) {
@@ -116,13 +119,16 @@ router.post(
 router.post("/download", async (req, res, next) => {
   try {
     const { url, title, artist, thumbnail } = req.body;
-    if (!url) return res.status(400).json({ error: "Geen YouTube-URL ontvangen" });
+    if (!url)
+      return res.status(400).json({ error: "Geen YouTube-URL ontvangen" });
 
     // YouTube video-id uit de URL halen
     const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
     const youtubeId = match ? match[1] : undefined;
     if (!youtubeId) {
-      return res.status(400).json({ error: "Geen geldige YouTube video-id gevonden" });
+      return res
+        .status(400)
+        .json({ error: "Geen geldige YouTube video-id gevonden" });
     }
 
     const { duration } = await resolveAudio(youtubeId);
@@ -162,19 +168,35 @@ router.post("/download", async (req, res, next) => {
 router.post("/download-local", async (req, res, next) => {
   try {
     const { url, title, artist, thumbnail } = req.body;
-    if (!url) return res.status(400).json({ error: "Geen YouTube-URL ontvangen" });
+    if (!url)
+      return res.status(400).json({ error: "Geen YouTube-URL ontvangen" });
 
     const match = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
     const youtubeId = match ? match[1] : undefined;
     if (!youtubeId) {
-      return res.status(400).json({ error: "Geen geldige YouTube video-id gevonden" });
+      return res
+        .status(400)
+        .json({ error: "Geen geldige YouTube video-id gevonden" });
     }
 
     const existing = await Song.findOne({ sourceYoutubeId: youtubeId });
-    const publicMusicDir = path.join(__dirname, "..", "..", "public", "music", "downloads");
+    const publicMusicDir = path.join(
+      __dirname,
+      "..",
+      "..",
+      "public",
+      "music",
+      "downloads",
+    );
 
     if (existing?.filePath) {
-      const existingPath = path.join(__dirname, "..", "..", "public", existing.filePath.replace(/^\//, ""));
+      const existingPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "public",
+        existing.filePath.replace(/^\//, ""),
+      );
       if (fs.existsSync(existingPath)) {
         res.status(200).json(existing);
         return;
@@ -235,7 +257,13 @@ router.delete("/:id", async (req, res, next) => {
     }
 
     if (song.filePath?.startsWith("/music/")) {
-      const filePath = path.join(__dirname, "..", "..", "public", song.filePath.replace(/^\//, ""));
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "public",
+        song.filePath.replace(/^\//, ""),
+      );
       fs.promises.unlink(filePath).catch(() => {});
     }
 
@@ -245,7 +273,7 @@ router.delete("/:id", async (req, res, next) => {
       const updatedArtist = await Artist.findOneAndUpdate(
         { name: song.artist, isYoutubeArtist },
         { $pull: { songs: song._id } },
-        { new: true }
+        { new: true },
       );
 
       if (updatedArtist && updatedArtist.songs.length === 0) {
@@ -256,6 +284,42 @@ router.delete("/:id", async (req, res, next) => {
     res.json({ success: true });
   } catch (err) {
     next(err);
+  }
+});
+
+router.post("/youtube", async (req, res) => {
+  const { youtubeId, title, artist, thumbnail, duration = 0 } = req.body;
+
+  if (!youtubeId) {
+    return res.status(400).json({ error: "Missing youtubeId" });
+  }
+
+  try {
+    let song = await Song.findOne({ youtubeId });
+
+    if (!song) {
+      song = await Song.create({
+        title,
+        artist,
+        youtubeId,
+        thumbnail,
+        duration,
+        type: "youtube",
+      });
+    }
+
+    res.json({
+      id: song._id,
+      title: song.title,
+      artist: song.artist,
+      youtubeId: song.youtubeId,
+      thumbnail: song.thumbnail,
+      duration: song.duration,
+      type: song.type,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create YouTube song" });
   }
 });
 

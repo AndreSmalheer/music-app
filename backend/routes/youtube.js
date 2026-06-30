@@ -114,7 +114,12 @@ async function searchViaYtdlp(q, max = 15) {
 async function videoViaYtdlp(videoId) {
   const info = await getYoutubedl()(
     `https://www.youtube.com/watch?v=${videoId}`,
-    { dumpSingleJson: true, noWarnings: true, noPlaylist: true, skipDownload: true },
+    {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noPlaylist: true,
+      skipDownload: true,
+    },
   );
   return {
     results: [
@@ -139,8 +144,7 @@ router.get("/search", async (req, res, next) => {
     const pageToken = (req.query.pageToken || "").trim();
     const paged = req.query.paged === "true";
 
-    const reply = (payload) =>
-      res.json(paged ? payload : payload.results);
+    const reply = (payload) => res.json(paged ? payload : payload.results);
 
     if (!q) return reply({ results: [], nextPageToken: null });
 
@@ -158,7 +162,10 @@ router.get("/search", async (req, res, next) => {
     } else {
       // Probeer de Data API; bij falen (bv. quota) terugvallen op yt-dlp.
       payload = await searchViaApi(q, pageToken).catch((err) => {
-        console.warn("Data API zoeken faalde, val terug op yt-dlp:", err.message);
+        console.warn(
+          "Data API zoeken faalde, val terug op yt-dlp:",
+          err.message,
+        );
         return searchViaYtdlp(q);
       });
     }

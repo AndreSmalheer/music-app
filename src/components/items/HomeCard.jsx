@@ -27,7 +27,7 @@ function HomeCard({ item, tapFeedback, handleSongClick }) {
         async (playlist) => {
           if (playlist.id === "no-playlists") return;
 
-          await addSongToPlaylist(playlist.id, item.track.id);
+          await addSongToPlaylist(playlist.id, item.track);
         },
       );
     } catch (err) {

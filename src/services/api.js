@@ -155,6 +155,16 @@ export async function checkHealth() {
 
 // ---- Songs --------------------------------------------------------------
 
+export async function createYoutubeSong(track) {
+  return await postJSON("/api/songs/youtube", {
+    youtubeId: track.youtubeId,
+    title: track.title,
+    artist: track.artist,
+    thumbnail: track.cover || track.img,
+    duration: track.duration,
+  });
+}
+
 export async function getSongs() {
   const data = await getJSON("/api/songs");
   return data.map(toUiTrack);
@@ -237,10 +247,25 @@ export async function updatePlaylist(id, data) {
   return toUiPlaylist(await putJSON(`/api/playlists/${id}`, body));
 }
 
-export async function addSongToPlaylist(playlistId, songId) {
+export async function addSongToPlaylist(playlistId, song) {
+  let songId;
+
+  if (typeof song === "string" && /^[a-f\d]{24}$/i.test(song)) {
+    songId = song;
+  } else if (song && typeof song === "object" && song.youtubeId) {
+    const createdSong = await createYoutubeSong(song);
+    songId = createdSong.id || createdSong._id;
+  } else {
+    throw new Error(
+      "addSongToPlaylist expects a MongoDB song id or a full YouTube track object",
+    );
+  }
+
   const playlist = await getPlaylist(playlistId);
 
-  const songs = playlist.songs.map((s) => (typeof s === "string" ? s : s.id));
+  const songs = playlist.songs.map((s) =>
+    typeof s === "string" ? s : s.id || s._id?.toString(),
+  );
 
   if (!songs.includes(songId)) {
     songs.push(songId);

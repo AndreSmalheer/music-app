@@ -31,7 +31,7 @@ function HomeTile({ tile, track, cover, tapFeedback, handleMoodTile }) {
         async (playlist) => {
           if (playlist.id === "no-playlists") return;
 
-          await addSongToPlaylist(playlist.id, track.id);
+          await addSongToPlaylist(playlist.id, track);
         },
       );
     } catch (err) {
