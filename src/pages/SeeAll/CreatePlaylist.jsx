@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "../../components/Skeleton/Skeleton";
@@ -11,40 +11,61 @@ function CreatePlaylist() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [cover, setCover] = useState(null);
+  const [coverPreview, setCoverPreview] = useState("");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+    };
+  }, [coverPreview]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCover(file);
+
+    if (coverPreview) {
+      URL.revokeObjectURL(coverPreview);
+    }
+
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
   const handleCreate = async () => {
     if (!name.trim() || saving) return;
     setSaving(true);
+
     try {
-      // cover is een base64 data-URL uit de file-input; we slaan 'm op als thumbnail.
-      const playlist = await createPlaylist({ name: name.trim(), thumbnail: cover });
-      navigate(`/playlist/${playlist.id}`);
+      const playlist = await createPlaylist({
+        name: name.trim(),
+        description,
+        thumbnail: cover,
+      });
+
+      navigate(`/playlist/${playlist._id || playlist.id}`);
     } catch (err) {
       console.error("Playlist aanmaken mislukt:", err);
       setSaving(false);
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setCover(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="create-playlist-page">
       <div className="create-header">
-        <button className="create-back" onClick={() => navigate(-1)} aria-label="Terug">
+        <button
+          className="create-back"
+          onClick={() => navigate(-1)}
+          aria-label="Terug"
+        >
           <ChevronLeft size={26} strokeWidth={2.2} />
         </button>
         <h1>Nieuwe afspeellijst</h1>
@@ -52,9 +73,21 @@ function CreatePlaylist() {
 
       {isLoading ? (
         <div style={{ padding: "0 16px" }}>
-          <Skeleton height="200px" borderRadius="12px" style={{ marginBottom: '24px' }} />
-          <Skeleton height="60px" borderRadius="12px" style={{ marginBottom: '16px' }} />
-          <Skeleton height="100px" borderRadius="12px" style={{ marginBottom: '24px' }} />
+          <Skeleton
+            height="200px"
+            borderRadius="12px"
+            style={{ marginBottom: "24px" }}
+          />
+          <Skeleton
+            height="60px"
+            borderRadius="12px"
+            style={{ marginBottom: "16px" }}
+          />
+          <Skeleton
+            height="100px"
+            borderRadius="12px"
+            style={{ marginBottom: "24px" }}
+          />
           <Skeleton height="50px" borderRadius="12px" />
         </div>
       ) : (
@@ -64,22 +97,24 @@ function CreatePlaylist() {
               type="button"
               className="playlist-cover-preview"
               whileTap={{ scale: 0.98 }}
-              onClick={() => document.getElementById('playlist-upload').click()}
+              onClick={() => fileInputRef.current?.click()}
             >
-              {cover ? (
-                <img src={cover} alt="Preview" />
+              {coverPreview ? (
+                <img src={coverPreview} alt="Preview" />
               ) : (
                 <div className="cover-placeholder">
                   <Image size={30} strokeWidth={1.7} />
                   <span>Kies hoes</span>
                 </div>
               )}
+
               <input
+                ref={fileInputRef}
                 type="file"
                 id="playlist-upload"
                 accept="image/*"
                 onChange={handleImageChange}
-                style={{ display: 'none' }}
+                style={{ display: "none" }}
               />
             </motion.button>
           </div>
@@ -116,10 +151,27 @@ function CreatePlaylist() {
                   <div className="create-add-cover" />
                   <div className="create-add-info">
                     <div className="create-add-name">Nummer toevoegen</div>
-                    <div className="create-add-artist">Zoek in je bibliotheek</div>
+                    <div className="create-add-artist">
+                      Zoek in je bibliotheek
+                    </div>
                   </div>
-                  <button type="button" className="create-add-btn" aria-label="Toevoegen">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                  <button
+                    type="button"
+                    className="create-add-btn"
+                    aria-label="Toevoegen"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                   </button>
                 </div>
               ))}

@@ -221,4 +221,5 @@
 .btn-create-confirm:disabled {
   opacity: 0.5;
   cursor: default;
+  margin-bottom: 15px;
 }

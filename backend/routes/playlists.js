@@ -1,7 +1,24 @@
 import { Router } from "express";
 import Playlist from "../models/Playlist.js";
+import multer from "multer";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const router = Router();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../uploads"));
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
 
 // GET /api/playlists — alle playlists
 router.get("/", async (req, res, next) => {
@@ -17,7 +34,8 @@ router.get("/", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const playlist = await Playlist.findById(req.params.id).populate("songs");
-    if (!playlist) return res.status(404).json({ error: "Playlist niet gevonden" });
+    if (!playlist)
+      return res.status(404).json({ error: "Playlist niet gevonden" });
     res.json(playlist);
   } catch (err) {
     next(err);
@@ -25,12 +43,22 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // POST /api/playlists — nieuwe playlist
-router.post("/", async (req, res, next) => {
+router.post("/", upload.single("thumbnail"), async (req, res, next) => {
   try {
-    const { name, thumbnail, songs } = req.body;
-    if (!name) return res.status(400).json({ error: "Naam is verplicht" });
+    const { name, songs } = req.body;
 
-    const playlist = await Playlist.create({ name, thumbnail, songs: songs || [] });
+    if (!name) {
+      return res.status(400).json({ error: "Naam is verplicht" });
+    }
+
+    const thumbnailUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const playlist = await Playlist.create({
+      name,
+      thumbnail: thumbnailUrl,
+      songs: songs ? JSON.parse(songs) : [],
+    });
+
     res.status(201).json(playlist);
   } catch (err) {
     next(err);
@@ -45,7 +73,8 @@ router.put("/:id", async (req, res, next) => {
       { $set: req.body },
       { new: true, runValidators: true },
     );
-    if (!playlist) return res.status(404).json({ error: "Playlist niet gevonden" });
+    if (!playlist)
+      return res.status(404).json({ error: "Playlist niet gevonden" });
     res.json(playlist);
   } catch (err) {
     next(err);
@@ -56,7 +85,8 @@ router.put("/:id", async (req, res, next) => {
 router.delete("/:id", async (req, res, next) => {
   try {
     const playlist = await Playlist.findByIdAndDelete(req.params.id);
-    if (!playlist) return res.status(404).json({ error: "Playlist niet gevonden" });
+    if (!playlist)
+      return res.status(404).json({ error: "Playlist niet gevonden" });
     res.json({ success: true });
   } catch (err) {
     next(err);

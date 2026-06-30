@@ -233,10 +233,25 @@ export async function getPlaylist(id) {
   return toUiPlaylist(await getJSON(`/api/playlists/${id}`));
 }
 
-export async function createPlaylist({ name, thumbnail, songs }) {
-  return toUiPlaylist(
-    await postJSON("/api/playlists", { name, thumbnail, songs }),
-  );
+export async function createPlaylist({ name, thumbnail, songs, description }) {
+  const formData = new FormData();
+
+  console.log("thumbnail type:", thumbnail);
+  console.log("is File?", thumbnail instanceof File);
+
+  formData.append("name", name);
+  formData.append("description", description || "");
+
+  if (thumbnail) {
+    formData.append("thumbnail", thumbnail);
+  }
+
+  const res = await fetch("/api/playlists", {
+    method: "POST",
+    body: formData,
+  });
+
+  return res.json();
 }
 
 export async function updatePlaylist(id, data) {
