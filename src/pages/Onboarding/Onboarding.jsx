@@ -5,20 +5,19 @@ import "./Onboarding.css";
 
 const steps = [
   {
-    title: "Explore Music",
+    title: "Stream vanaf YouTube",
     description:
-      "Browse and search your favorite artists and tracks effortlessly.",
-    image: "/icons/explore.svg",
+      "Speel miljoenen nummers direct af vanaf YouTube zonder ze eerst te downloaden.",
   },
   {
-    title: "Create Playlists",
-    description: "Build your own collection by creating custom playlists.",
-    image: "/icons/playlist.svg",
+    title: "Download naar je apparaat",
+    description:
+      "Sla nummers lokaal op voor je eigen collectie. Downloads worden op je apparaat opgeslagen en zijn niet bedoeld voor offline streaming.",
   },
   {
-    title: "Create Account",
+    title: "Maak je account aan",
     description:
-      "Join us to save your favorites and access your library anywhere.",
+      "Log in om je bibliotheek, favorieten en instellingen op al je apparaten te synchroniseren.",
     type: "form",
   },
 ];
@@ -111,12 +110,6 @@ function Onboarding() {
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
-          {steps[currentStep].type !== "form" && (
-            <div className="onboarding-image-wrapper">
-              <div className="onboarding-image-placeholder" />
-            </div>
-          )}
-
           <h1>{steps[currentStep].title}</h1>
           <p>{steps[currentStep].description}</p>
 
