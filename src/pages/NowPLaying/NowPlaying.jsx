@@ -213,7 +213,7 @@ function NowPlaying() {
           if (playlist.id === "no-playlists") return;
 
           try {
-            console.log("adding song to playlist");
+            console.log("currentTrack:", currentTrack);
             await addSongToPlaylist(playlist.id, currentTrack);
           } catch (e) {
             console.error("Failed to add song to playlist:", e);

@@ -274,7 +274,9 @@ export async function addSongToPlaylist(playlistId, song) {
 
   if (typeof song === "string" && /^[a-f\d]{24}$/i.test(song)) {
     songId = song;
-  } else if (song && typeof song === "object" && song.youtubeId) {
+  } else if (song?.id || song?._id) {
+    songId = song.id || song._id;
+  } else if (song?.youtubeId) {
     const createdSong = await createYoutubeSong(song);
     songId = createdSong.id || createdSong._id;
   } else {
