@@ -241,7 +241,11 @@ function NowPlaying() {
         });
       }
 
-      await addSongToPlaylist(favouritePlaylist.id, currentTrack);
+      const playlistId = favouritePlaylist.id || favouritePlaylist._id;
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      await addSongToPlaylist(playlistId, currentTrack);
     } catch (err) {
       console.error("Failed to add song to Favourite playlist:", err);
     }
