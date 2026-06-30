@@ -9,11 +9,13 @@ import {
   getLocalSongs,
   getSavedYoutubeSongs,
   getArtists,
+  deleteSong,
 } from "../../services/api";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import "./Library.css";
 import LibraryRow from "../../components/items/LibraryRow";
 import { useModal } from "../../context/ModalContext";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 
 const TABS = [
   { key: "playlists", label: "Afspeellijsten" },
@@ -30,6 +32,7 @@ function Library() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("playlists");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [songToDelete, setSongToDelete] = useState(null);
 
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
@@ -61,6 +64,10 @@ function Library() {
       active = false;
     };
   }, []);
+
+  const handleDeleteSong = (song) => {
+    setSongToDelete(song);
+  };
 
   const playSongList = (song, list) => {
     const ordered = [song, ...list.filter((s) => s.id !== song.id)];
@@ -158,6 +165,7 @@ function Library() {
               navigate={navigate}
               playSongList={(song) => playSongList(song, songs)}
               showOptions={showOptions}
+              onDelete={handleDeleteSong}
             />
           ))}
         </div>
@@ -283,6 +291,46 @@ function Library() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!songToDelete}
+        onClose={() => setSongToDelete(null)}
+        onConfirm={async () => {
+          if (!songToDelete) return;
+          try {
+            console.log("Attempting to delete song via backend API, ID:", songToDelete.id);
+            await deleteSong(songToDelete.id);
+            console.log("Successfully deleted song from backend database and storage.");
+
+            // Remove from local state immediately
+            setSongs((prev) => prev.filter((s) => s.id !== songToDelete.id));
+            setPlaylists((prev) =>
+              prev.map((pl) => {
+                const updatedSongs = pl.songs.filter((s) => (typeof s === "object" ? s.id : s) !== songToDelete.id);
+                return {
+                  ...pl,
+                  songs: updatedSongs,
+                  songCount: updatedSongs.length,
+                };
+              })
+            );
+            setArtists((prev) =>
+              prev
+                .map((art) => ({
+                  ...art,
+                  songs: art.songs.filter((s) => (typeof s === "object" ? s.id : s) !== songToDelete.id),
+                }))
+                .filter((art) => art.songs.length > 0)
+            );
+          } catch (err) {
+            console.error("Fout bij het verwijderen van nummer:", err);
+            alert(`Fout bij het verwijderen: ${err.message || err}`);
+          } finally {
+            setSongToDelete(null);
+          }
+        }}
+        message={songToDelete ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen?` : ""}
+      />
     </div>
   );
 }

@@ -246,20 +246,17 @@ function Home() {
 
   // Voorrang: eigen playlists/artiesten → persoonlijke aanbevelingen (op basis
   // van wat je speelde) → algemene vulling. Zo past "Speciaal voor jou" zich aan.
-  const personalized =
-    recommended.length > 0 ? recommended : filler.slice(6, 14);
-  const displayRecommendations =
-    recommendations.length > 0
-      ? recommendations
-      : personalized.map((track) => ({
-          key: `fill-${track.id}`,
-          title: track.title,
-          sub: track.artist,
-          cover: track.cover,
-          gradient: track.gradient || gradientFor(track.title),
-          track,
-          onClick: () => handleSongClick(track),
-        }));
+  const personalized = recommended;
+
+  const displayRecommendations = personalized.map((track) => ({
+    key: `rec-${track.youtubeId || track.id}`,
+    title: track.title,
+    sub: track.artist,
+    cover: track.cover,
+    gradient: track.gradient || gradientFor(track.title),
+    track,
+    onClick: () => handleSongClick(track),
+  }));
 
   // Titel toont waarom het wordt aanbevolen zodra het gepersonaliseerd is.
   const specialTitle =

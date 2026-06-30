@@ -2,13 +2,22 @@ import { motion } from "framer-motion";
 import useLongPress from "../../hooks/useLongPress";
 import { addSongToPlaylist, getPlaylists } from "../../services/api";
 
-function LibraryRow({ item, type, navigate, playSongList, showOptions }) {
+function LibraryRow({
+  item,
+  type,
+  navigate,
+  playSongList,
+  showOptions,
+  onDelete,
+}) {
   const getMenuOptions = () => {
     switch (type) {
       case "playlist":
         return ["Open Playlist"];
 
       case "song":
+        return ["Play", "Add to Playlist", "Delete"];
+
       case "youtube":
         return ["Play", "Add to Playlist"];
 
@@ -61,6 +70,10 @@ function LibraryRow({ item, type, navigate, playSongList, showOptions }) {
 
         case "Add to Playlist":
           setTimeout(showPlaylistOptions, 100);
+          break;
+
+        case "Delete":
+          onDelete?.(item);
           break;
 
         default:

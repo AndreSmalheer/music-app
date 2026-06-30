@@ -239,12 +239,18 @@ router.delete("/:id", async (req, res, next) => {
       fs.promises.unlink(filePath).catch(() => {});
     }
 
-    // Song uit artiest verwijderen
+    // Song uit artiest verwijderen en artiest verwijderen als deze geen nummers meer heeft
     if (song.artist && song.artist !== "Unknown") {
-      await Artist.findOneAndUpdate(
-        { name: song.artist, isYoutubeArtist: song.type === "youtube" || !!song.youtubeId },
+      const isYoutubeArtist = song.type === "youtube" || !!song.youtubeId;
+      const updatedArtist = await Artist.findOneAndUpdate(
+        { name: song.artist, isYoutubeArtist },
         { $pull: { songs: song._id } },
+        { new: true }
       );
+
+      if (updatedArtist && updatedArtist.songs.length === 0) {
+        await Artist.findByIdAndDelete(updatedArtist._id);
+      }
     }
 
     res.json({ success: true });
