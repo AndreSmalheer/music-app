@@ -43,13 +43,6 @@ function SeeAllArtists() {
     return (
       <div className="see-all-page">
         <div className="see-all-header">
-          <button
-            className="see-all-back"
-            onClick={() => navigate(-1)}
-            aria-label="Terug"
-          >
-            <ChevronLeft size={26} />
-          </button>
           <Skeleton width="160px" height="28px" />
         </div>
 
@@ -87,13 +80,6 @@ function SeeAllArtists() {
   return (
     <div className="see-all-page">
       <div className="see-all-header">
-        <button
-          className="see-all-back"
-          onClick={() => navigate(-1)}
-          aria-label="Terug"
-        >
-          <ChevronLeft size={26} />
-        </button>
         <h1 className="see-all-title">Alle artiesten</h1>
       </div>
 

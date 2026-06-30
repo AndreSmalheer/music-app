@@ -97,13 +97,6 @@ function SeeAllPlaylists() {
       <div className="see-all-page">
         <div className="see-all-header-row">
           <div className="see-all-header">
-            <button
-              className="see-all-back"
-              onClick={() => navigate(-1)}
-              aria-label="Terug"
-            >
-              <ChevronLeft size={26} />
-            </button>
             <Skeleton width="160px" height="28px" />
           </div>
           <Skeleton width="32px" height="32px" borderRadius="8px" />
@@ -118,13 +111,6 @@ function SeeAllPlaylists() {
     <div className="see-all-page">
       <div className="see-all-header-row">
         <div className="see-all-header">
-          <button
-            className="see-all-back"
-            onClick={() => navigate(-1)}
-            aria-label="Terug"
-          >
-            <ChevronLeft size={26} />
-          </button>
           <h1 className="see-all-title">Jouw afspeellijsten</h1>
         </div>
         <motion.button
