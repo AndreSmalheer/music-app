@@ -20,15 +20,15 @@ jobs:
 
       - run: npx cap sync ios
 
-      - name: Archive without signing
+      - name: Archive App
         run: |
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -archivePath build/App.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
+          -project ios/App/App.xcodeproj \
+          -scheme App \
+          -configuration Release \
+          -archivePath build/App.xcarchive \
+          CODE_SIGNING_ALLOWED=NO \
+          archive
 
       - name: Create IPA
         run: |
