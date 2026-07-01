@@ -30,18 +30,23 @@ function OptionsMenu({ isOpen, onClose, options, onOptionClick }) {
               <div className="options-menu-handle"></div>
             </div>
             <div className="options-list">
-              {options.map((option) => (
-                <button
-                  key={option}
-                  className="options-item"
-                  onClick={() => {
-                    onOptionClick?.(option);
-                    onClose();
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
+              {options.map((option) => {
+                const Icon = option.icon;
+
+                return (
+                  <button
+                    key={option.label}
+                    className="options-item"
+                    onClick={() => {
+                      onOptionClick(option);
+                      onClose();
+                    }}
+                  >
+                    {Icon && <Icon size={20} />}
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
               <button
                 className="options-item options-item--cancel"
                 onClick={onClose}

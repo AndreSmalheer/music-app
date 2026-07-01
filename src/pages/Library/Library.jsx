@@ -17,6 +17,7 @@ import LibraryRow from "../../components/items/LibraryRow";
 import { useModal } from "../../context/ModalContext";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import { useDownload } from "../../context/DownloadContext";
+import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
 
 const TABS = [
   { key: "playlists", label: "Afspeellijsten" },
@@ -72,7 +73,9 @@ function Library() {
     const unsubscribe = subscribeReplaced("*", ({ youtubeId, localSong }) => {
       // Remove the old YouTube song from the youtube list
       setYoutubeSongs((prev) =>
-        prev.filter((s) => s.youtubeId !== youtubeId && s.sourceYoutubeId !== youtubeId)
+        prev.filter(
+          (s) => s.youtubeId !== youtubeId && s.sourceYoutubeId !== youtubeId,
+        ),
       );
 
       // Add the new local song to the uploads list (avoid duplicates)
@@ -90,8 +93,8 @@ function Library() {
           return prev
             .map((art) => {
               if (art.name === localSong.artist) {
-                const hasSong = art.songs?.some((s) =>
-                  (typeof s === "object" ? s.id : s) === localSong.id
+                const hasSong = art.songs?.some(
+                  (s) => (typeof s === "object" ? s.id : s) === localSong.id,
                 );
                 return hasSong
                   ? art
@@ -100,8 +103,10 @@ function Library() {
               // Remove the replaced song ID from other artists' lists
               return {
                 ...art,
-                songs: (art.songs || []).filter((s) =>
-                  (typeof s === "object" ? s.sourceYoutubeId : null) !== youtubeId
+                songs: (art.songs || []).filter(
+                  (s) =>
+                    (typeof s === "object" ? s.sourceYoutubeId : null) !==
+                    youtubeId,
                 ),
               };
             })
@@ -132,24 +137,35 @@ function Library() {
     navigate("/now-playing");
   };
 
+  const handleAddOption = (option) => {
+    switch (option.label) {
+      case "Mp3 uploaden":
+        console.log("Navigating to upload");
+        navigate("/upload");
+        break;
+
+      case "YouTube toevoegen":
+        navigate("/radio");
+        break;
+
+      case "Nieuwe afspeellijst":
+        navigate("/create-playlist");
+        break;
+    }
+  };
+
   const addOptions = [
     {
+      label: "Mp3 uploaden",
       icon: Upload,
-      title: "Mp3 uploaden",
-      subtitle: "Vanaf je toestel",
-      onClick: () => navigate("/upload"),
     },
     {
+      label: "YouTube toevoegen",
       icon: Music,
-      title: "YouTube toevoegen",
-      subtitle: "Via link of zoeken",
-      onClick: () => navigate("/radio"),
     },
     {
+      label: "Nieuwe afspeellijst",
       icon: ListMusic,
-      title: "Nieuwe afspeellijst",
-      subtitle: "Maak een lege lijst aan",
-      onClick: () => navigate("/create-playlist"),
     },
   ];
 
@@ -281,7 +297,11 @@ function Library() {
             onClick={() => navigate("/downloads")}
             aria-label="Downloads"
           >
-            <DownloadCloud size={20} strokeWidth={1.9} className={hasActiveDownloads ? "download-icon-pulse" : ""} />
+            <DownloadCloud
+              size={20}
+              strokeWidth={1.9}
+              className={hasActiveDownloads ? "download-icon-pulse" : ""}
+            />
             {hasActiveDownloads && <span className="download-badge-dot" />}
           </motion.button>
           <motion.button
@@ -311,46 +331,12 @@ function Library() {
 
       {renderList()}
 
-      <AnimatePresence>
-        {sheetOpen && (
-          <>
-            <motion.div
-              className="library-sheet-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSheetOpen(false)}
-            />
-            <motion.div
-              className="library-sheet"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            >
-              <div className="library-sheet__handle" />
-              {addOptions.map(({ icon: Icon, title, subtitle, onClick }) => (
-                <button
-                  key={title}
-                  className="library-sheet__option"
-                  onClick={() => {
-                    setSheetOpen(false);
-                    onClick();
-                  }}
-                >
-                  <Icon size={24} strokeWidth={1.9} />
-                  <div>
-                    <div className="library-sheet__option-title">{title}</div>
-                    <div className="library-sheet__option-subtitle">
-                      {subtitle}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <OptionsMenu
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        options={addOptions}
+        onOptionClick={handleAddOption}
+      />
 
       <ConfirmModal
         isOpen={!!songToDelete}
@@ -358,29 +344,39 @@ function Library() {
         onConfirm={async () => {
           if (!songToDelete) return;
           try {
-            console.log("Attempting to delete song via backend API, ID:", songToDelete.id);
+            console.log(
+              "Attempting to delete song via backend API, ID:",
+              songToDelete.id,
+            );
             await deleteSong(songToDelete.id);
-            console.log("Successfully deleted song from backend database and storage.");
+            console.log(
+              "Successfully deleted song from backend database and storage.",
+            );
 
             // Remove from local state immediately
             setSongs((prev) => prev.filter((s) => s.id !== songToDelete.id));
             setPlaylists((prev) =>
               prev.map((pl) => {
-                const updatedSongs = pl.songs.filter((s) => (typeof s === "object" ? s.id : s) !== songToDelete.id);
+                const updatedSongs = pl.songs.filter(
+                  (s) => (typeof s === "object" ? s.id : s) !== songToDelete.id,
+                );
                 return {
                   ...pl,
                   songs: updatedSongs,
                   songCount: updatedSongs.length,
                 };
-              })
+              }),
             );
             setArtists((prev) =>
               prev
                 .map((art) => ({
                   ...art,
-                  songs: art.songs.filter((s) => (typeof s === "object" ? s.id : s) !== songToDelete.id),
+                  songs: art.songs.filter(
+                    (s) =>
+                      (typeof s === "object" ? s.id : s) !== songToDelete.id,
+                  ),
                 }))
-                .filter((art) => art.songs.length > 0)
+                .filter((art) => art.songs.length > 0),
             );
           } catch (err) {
             console.error("Fout bij het verwijderen van nummer:", err);
@@ -389,7 +385,11 @@ function Library() {
             setSongToDelete(null);
           }
         }}
-        message={songToDelete ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen?` : ""}
+        message={
+          songToDelete
+            ? `Weet je zeker dat je "${songToDelete.title}" wilt verwijderen?`
+            : ""
+        }
       />
     </div>
   );

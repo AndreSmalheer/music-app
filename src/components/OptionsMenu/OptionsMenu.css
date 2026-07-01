@@ -65,4 +65,31 @@
   margin-top: 8px;
   color: var(--text-secondary);
   text-align: center;
+  display: flexl;
+  justify-content: center;
+  align-items: center;
+}
+
+.options-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 14px 8px;
+
+  background: none;
+  border: none;
+  color: var(--text-primary);
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+  text-align: left;
+}
+
+.options-item span {
+  flex: 1;
 }
