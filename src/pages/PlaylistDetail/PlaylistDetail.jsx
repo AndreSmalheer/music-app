@@ -13,6 +13,44 @@ import {
   FileAudio,
 } from "lucide-react";
 
+const headerVariants = {
+  hidden: { opacity: 0, y: 18, filter: "blur(6px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+};
+
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      delayChildren: 0.04,
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const rowVariants = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+    scale: 0.98,
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 550,
+      damping: 36,
+    },
+  },
+};
+
 import {
   getPlaylist,
   addRecent,
@@ -21,7 +59,14 @@ import {
 import { playTrackList } from "../../utils/playback";
 import "./PlaylistDetail.css";
 
-function PlaylistSongRow({ song, onPlaySong, onRemoveSong, isCurrent, type }) {
+function PlaylistSongRow({
+  song,
+  onPlaySong,
+  onRemoveSong,
+  isCurrent,
+  type,
+  variants,
+}) {
   const { showOptions } = useModal();
   const tapFeedback = { scale: 0.98 };
 
@@ -43,6 +88,7 @@ function PlaylistSongRow({ song, onPlaySong, onRemoveSong, isCurrent, type }) {
         type="button"
         className="song-row-main"
         whileTap={tapFeedback}
+        variants={variants}
         {...longPressProps}
       >
         <div
@@ -51,16 +97,13 @@ function PlaylistSongRow({ song, onPlaySong, onRemoveSong, isCurrent, type }) {
             song.cover ? { backgroundImage: `url(${song.cover})` } : undefined
           }
         />
-
         <div className="song-row-info">
           <p className={`song-row-title${isCurrent ? " current" : ""}`}>
             {song.title}
           </p>
           <p className="song-row-artist">{song.artist}</p>
         </div>
-
         {type === "mp3" && <FileAudio size={14} className="song-row-type" />}
-
         <span className="song-duration">{song.durationLabel}</span>
       </motion.button>
 
@@ -157,7 +200,12 @@ function PlaylistDetail() {
   const coverUrl = playlist?.cover?.trim() ? playlist.cover : null;
 
   return (
-    <div className="playlist-detail-page">
+    <motion.div
+      className="playlist-detail-page"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
       <div className="playlist-header">
         <button
           className="playlist-back"
@@ -168,57 +216,66 @@ function PlaylistDetail() {
         </button>
 
         <div className="playlist-header-content">
-          <div className="playlist-cover-wrap">
-            {isLoading ? (
-              <Skeleton width="188px" height="188px" borderRadius="6px" />
-            ) : coverUrl ? (
-              <img
-                src={coverUrl}
-                alt="Playlist Cover"
-                className="playlist-main-cover"
-              />
-            ) : (
-              <div className="playlist-main-cover playlist-main-cover-empty" />
-            )}
-          </div>
+          {playlist && (
+            <>
+              <motion.div
+                className="playlist-cover-wrap"
+                initial={{ opacity: 0, scale: 0.96, filter: "blur(6px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+              >
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt="Playlist Cover"
+                    className="playlist-main-cover"
+                  />
+                ) : (
+                  <div className="playlist-main-cover playlist-main-cover-empty" />
+                )}
+              </motion.div>
 
-          {isLoading ? (
-            <div
-              style={{
-                marginTop: 22,
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <Skeleton width="180px" height="28px" />
-              <Skeleton width="260px" height="14px" />
-              <Skeleton width="140px" height="13px" />
-            </div>
-          ) : (
-            <div className="playlist-info">
-              <h1 className="playlist-title">
-                {playlist?.title || "Playlist"}
-              </h1>
-              <p className="playlist-description">
-                {playlist?.description || ""}
-              </p>
-              <div className="playlist-stats">
-                Afspeellijst &middot; {songs.length} nummers &middot;{" "}
-                {totalMinutes} min
-              </div>
-            </div>
+              <motion.div
+                className="playlist-info"
+                variants={headerVariants}
+                initial="hidden"
+                animate="show"
+              >
+                <h1 className="playlist-title">
+                  {playlist.title || "Playlist"}
+                </h1>
+                <p className="playlist-description">
+                  {playlist.description || ""}
+                </p>
+                <div className="playlist-stats">
+                  Afspeellijst &middot; {songs.length} nummers &middot;{" "}
+                  {totalMinutes} min
+                </div>
+              </motion.div>
+            </>
           )}
         </div>
       </div>
 
-      <div className="playlist-actions">
+      <motion.div
+        className="playlist-actions"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
+      >
         <div className="playlist-actions-left">
           <motion.button
             className="playlist-action-icon"
             whileTap={{ scale: 0.9 }}
             onClick={handleShuffle}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              delay: 0.2,
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+            }}
           >
             <Shuffle size={26} strokeWidth={1.8} />
           </motion.button>
@@ -228,47 +285,38 @@ function PlaylistDetail() {
           className="btn-play-circle"
           whileTap={{ scale: 0.95 }}
           onClick={handlePlayAll}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            delay: 0.28,
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+          }}
         >
           <Play size={26} fill="currentColor" stroke="none" />
         </motion.button>
-      </div>
+      </motion.div>
 
-      <div className="songs-list">
-        {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="song-row"
-                style={{ padding: "9px 18px", gap: "14px" }}
-              >
-                <Skeleton width="48px" height="48px" borderRadius="4px" />
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
-                >
-                  <Skeleton height="16px" width="70%" />
-                  <Skeleton height="13px" width="40%" />
-                </div>
-                <Skeleton width="30px" height="13px" />
-              </div>
-            ))
-          : songs.map((song, index) => (
-              <PlaylistSongRow
-                key={song.id || index}
-                song={song}
-                index={index}
-                onPlaySong={handlePlaySong}
-                onRemoveSong={handleRemoveSong}
-                isCurrent={currentTrack?.src === song.src}
-                type={song.type}
-              />
-            ))}
-      </div>
-    </div>
+      <motion.div
+        className="songs-list"
+        initial="hidden"
+        animate="show"
+        variants={listVariants}
+      >
+        {songs.map((song, index) => (
+          <PlaylistSongRow
+            key={song.id || index}
+            song={song}
+            onPlaySong={handlePlaySong}
+            onRemoveSong={handleRemoveSong}
+            isCurrent={currentTrack?.src === song.src}
+            type={song.type}
+            variants={rowVariants}
+          />
+        ))}
+      </motion.div>
+    </motion.div>
   );
 }
 
