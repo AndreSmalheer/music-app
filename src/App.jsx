@@ -56,6 +56,13 @@ function AppContent() {
   const location = useLocation();
   const { currentTrack } = useContext(PlayerContext);
   const { toast } = useDownload();
+  const lastActiveLocationRef = useRef(location);
+
+  if (location.pathname !== "/now-playing") {
+    lastActiveLocationRef.current = location;
+  } else if (lastActiveLocationRef.current.pathname === "/now-playing") {
+    lastActiveLocationRef.current = { ...location, pathname: "/" };
+  }
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -79,7 +86,7 @@ function AppContent() {
 
       <div className="page">
         <AnimatePresence mode="popLayout">
-          <Routes location={location} key={location.pathname}>
+          <Routes location={lastActiveLocationRef.current} key={lastActiveLocationRef.current.pathname}>
             <Route
               path="/"
               element={
@@ -95,10 +102,6 @@ function AppContent() {
                   <Search />
                 </PageWrapper>
               }
-            />
-            <Route
-              path="/now-playing"
-              element={<NowPlaying />}
             />
 
             <Route
@@ -214,6 +217,12 @@ function AppContent() {
               }
             />
           </Routes>
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isNowPlayingPage && (
+            <NowPlaying key="now-playing" />
+          )}
         </AnimatePresence>
       </div>
 

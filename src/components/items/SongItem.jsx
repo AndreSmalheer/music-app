@@ -162,14 +162,6 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
           />
         ) : null}
 
-        <div
-          className="home-tile__cover home-tile__fallback"
-          style={{
-            background: song.gradient || gradientFor(song.title || song.id),
-            display: cover ? "none" : "block",
-          }}
-        />
-
         <div className="home-tile__content">
           <p className="home-tile__title">{song.title}</p>
 

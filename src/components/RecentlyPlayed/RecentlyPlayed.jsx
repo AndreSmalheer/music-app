@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import useDelayedLoading from "../../hooks/useDelayedLoading";
 import "./RecentlyPlayed.css";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useState, useContext, useEffect } from "react";
@@ -21,6 +22,7 @@ function RecentlyPlayed({
   YtSearchStyling = false,
 }) {
   const [isLoading, setIsLoading] = useState(true);
+  const showLoading = useDelayedLoading(isLoading, 150);
   const [tracks, setTracks] = useState(tracksProp || []);
 
   const navigate = useNavigate();
@@ -99,45 +101,62 @@ function RecentlyPlayed({
         </button>
       </div> */}
 
-      <div className="recently-played__list home-tiles">
-        {(() => {
-          const list = tracks.length > 0 ? tracks : fallbackTracks;
-
-          if (isLoading) {
-            return Array.from({ length: 3 }).map((_, i) => (
+      <AnimatePresence mode="wait">
+        {showLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="recently-played__list home-tiles"
+          >
+            {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="home-tile">
                 <Skeleton height="140px" borderRadius="12px" />
                 <Skeleton height="1rem" style={{ marginTop: "10px" }} />
               </div>
-            ));
-          }
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="recently-played__list home-tiles"
+          >
+            {(() => {
+              const list = tracks.length > 0 ? tracks : fallbackTracks;
+              return list.length > 0 ? (
+                <>
+                  {list.slice(0, 6).map((track) => (
+                    <SongItem
+                      key={track.id}
+                      song={track}
+                      handlePlaySong={handleTrackClick}
+                      showOptions={showOptions}
+                      variant="tile"
+                    />
+                  ))}
 
-          return list.length > 0 ? (
-            <>
-              {list.slice(0, 6).map((track) => (
-                <SongItem
-                  key={track.id}
-                  song={track}
-                  handlePlaySong={handleTrackClick}
-                  showOptions={showOptions}
-                  variant="tile"
-                />
-              ))}
-
-              <div
-                className="home-tile-see-all-tile"
-                onClick={() => navigate(`/see-all?includeYt=${InculdeYt}`)}
-              >
-                <h3>See All</h3>
-              </div>
-            </>
-          ) : (
-            <div className="empty-track-card home-tile">
-              <div className="empty-track-cover" />
-            </div>
-          );
-        })()}
-      </div>
+                  <div
+                    className="home-tile-see-all-tile"
+                    onClick={() => navigate(`/see-all?includeYt=${InculdeYt}`)}
+                  >
+                    <h3>See All</h3>
+                  </div>
+                </>
+              ) : (
+                <div className="empty-track-card home-tile">
+                  <div className="empty-track-cover" />
+                </div>
+              );
+            })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

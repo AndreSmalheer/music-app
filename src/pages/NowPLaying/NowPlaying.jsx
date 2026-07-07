@@ -269,6 +269,7 @@ function NowPlaying() {
         layoutId="player-container"
         layout
         transition={LAYOUT_TRANSITION}
+        exit={{ opacity: 0 }}
       >
         {/* Top bar – fades in; no counterpart in mini-player */}
         <motion.div className="np-topbar" {...NP_FADE_IN}>

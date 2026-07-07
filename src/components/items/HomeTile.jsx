@@ -54,6 +54,9 @@ function HomeTile({ tile, track, cover, tapFeedback, handleMoodTile }) {
     showOptions(menuOptions, handleMenuOption),
   );
 
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
   return (
     <motion.button
       className="home-tile"
@@ -61,21 +64,27 @@ function HomeTile({ tile, track, cover, tapFeedback, handleMoodTile }) {
       whileTap={tapFeedback}
       onClick={() => handleMoodTile(tile)}
     >
-      {cover ? (
-        <img
+      {cover && !failed ? (
+        <motion.img
           className="home-tile__cover"
           src={cover}
-          alt=""
-          onError={(e) => {
-            // Val terug op de gradient als de afbeelding niet laadt.
-            e.currentTarget.style.display = "none";
-            e.currentTarget.nextElementSibling?.style.setProperty(
-              "display",
-              "block",
-            );
+          alt={song.title}
+          layoutId={`cover-${song.id}`}
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{
+            opacity: loaded ? 1 : 0,
+            scale: loaded ? 1 : 1.04,
           }}
+          transition={{
+            duration: 0.25,
+            ease: "easeOut",
+          }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
         />
-      ) : null}
+      ) : (
+        <></>
+      )}
 
       <span
         className="home-tile__cover"

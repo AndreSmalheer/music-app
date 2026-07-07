@@ -4,6 +4,8 @@ import { Search as SearchIcon } from "lucide-react";
 import "./Search.css";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import EmptyState from "../../components/EmptyState/EmptyState";
+import { motion, AnimatePresence } from "framer-motion";
+import useDelayedLoading from "../../hooks/useDelayedLoading";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
 import {
@@ -15,7 +17,7 @@ import {
 import SongItem from "../../components/items/SongItem";
 import ArtistItem from "../../components/items/ArtistItems";
 
-const TAGS = ["All", "Songs", "Artists", "Playlists"];
+const TAGS = ["All", "Songs", "Artists"];
 const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
 
 // Genre-tegels: klikken vult de zoekterm met de genrenaam; de pagina zoekt
@@ -36,10 +38,12 @@ function Search() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState(emptyResults);
   const [isLoading, setIsLoading] = useState(false);
+  const showLoading = useDelayedLoading(isLoading, 150);
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
   const tapFeedback = { scale: 0.98 };
+  const showTopResult = activeTag === "All";
 
   useEffect(() => {
     const q = query.trim();
@@ -120,7 +124,11 @@ function Search() {
       <h1 className="search-title">Zoeken</h1>
 
       <div className="search-field">
-        <SearchIcon className="search-field__icon" size={21} strokeWidth={2.4} />
+        <SearchIcon
+          className="search-field__icon"
+          size={21}
+          strokeWidth={2.4}
+        />
         <input
           className="search-container"
           placeholder="Artiesten, nummers of afspeellijsten"
@@ -161,72 +169,121 @@ function Search() {
             ))}
           </div>
 
-          {isLoading ? (
-            <div className="search-placeholder">
-              <h1>Searching...</h1>
-            </div>
-          ) : searchResults.topResults.length === 0 &&
-            searchResults.songs.length === 0 &&
-            searchResults.artists.length === 0 &&
-            searchResults.youtube.length === 0 ? (
-            <div className="search-placeholder">
-              <h1>No results found</h1>
-            </div>
-          ) : (
-            <>
-              <div className="top-result result-section">
-                <h3>Top Result</h3>
+          <AnimatePresence mode="wait">
+            {showLoading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="search-placeholder"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    border: "4px solid rgba(255, 255, 255, 0.1)",
+                    borderTop: "4px solid var(--accent, #1db954)",
+                    borderRadius: "50%",
+                    margin: "0 auto 20px",
+                  }}
+                />
+                <h1>Searching...</h1>
+              </motion.div>
+            ) : searchResults.topResults.length === 0 &&
+              searchResults.songs.length === 0 &&
+              searchResults.artists.length === 0 &&
+              searchResults.youtube.length === 0 ? (
+              isLoading ? (
+                <motion.div
+                  key="delay-placeholder"
+                  initial={{ opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{ minHeight: "200px" }}
+                />
+              ) : (
+                <motion.div
+                  key="no-results"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="search-placeholder"
+                >
+                  <h1>No results found</h1>
+                </motion.div>
+              )
+            ) : (
+              <motion.div
+                key={activeTag}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 35,
+                }}
+              >
+                {showTopResult && (
+                  <div className="top-result result-section">
+                    <h3>Top Result</h3>
 
-                <div className="result-container">
-                  {searchResults.topResults.map((song) => (
-                    <SongItem
-                      key={song.id}
-                      song={song}
-                      handlePlaySong={handlePlaySong}
-                      showOptions={showOptions}
-                      variant="card"
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {showSongs && (
-                <div className="result-section result-songs">
-                  <h3>Songs</h3>
-
-                  <div className="songs-container">
-                    {searchResults.songs.map((song) => (
-                      <SongItem
-                        key={song.id}
-                        song={song}
-                        handlePlaySong={handlePlaySong}
-                        showOptions={showOptions}
-                        variant="search"
-                      />
-                    ))}
+                    <div className="result-container">
+                      {searchResults.topResults.map((song) => (
+                        <SongItem
+                          key={song.id}
+                          song={song}
+                          handlePlaySong={handlePlaySong}
+                          showOptions={showOptions}
+                          variant="card"
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {showArtists && (
-                <div className="result-section result-artist">
-                  <h3 className="result-section-title">Artist</h3>
+                {showSongs && (
+                  <div className="result-section result-songs">
+                    <h3>Songs</h3>
 
-                  <div className="artists-container-result">
-                    {searchResults.artists.map((artist) => (
-                      <ArtistItem
-                        key={artist.id}
-                        artist={artist}
-                        navigate={() => handleOpenYoutubeArtist(artist)}
-                        showOptions={showOptions}
-                        variant="artist"
-                      />
-                    ))}
+                    <div className="songs-container">
+                      {searchResults.songs.map((song) => (
+                        <SongItem
+                          key={song.id}
+                          song={song}
+                          handlePlaySong={handlePlaySong}
+                          showOptions={showOptions}
+                          variant="search"
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+
+                {showArtists && (
+                  <div className="result-section result-artist">
+                    <h3 className="result-section-title">Artist</h3>
+
+                    <div className="artists-container-result">
+                      {searchResults.artists.map((artist) => (
+                        <ArtistItem
+                          key={artist.id}
+                          artist={artist}
+                          navigate={() => handleOpenYoutubeArtist(artist)}
+                          showOptions={showOptions}
+                          variant="artist"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>

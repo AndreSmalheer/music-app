@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useContext, useCallback } from "react";
+import useDelayedLoading from "../../hooks/useDelayedLoading";
 import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Music, ListMusic, DownloadCloud } from "lucide-react";
 import Skeleton from "../../components/Skeleton/Skeleton";
@@ -32,6 +33,7 @@ function Library() {
   const { showOptions } = useModal();
 
   const [isLoading, setIsLoading] = useState(true);
+  const showLoading = useDelayedLoading(isLoading, 150);
   const [activeTab, setActiveTab] = useState("playlists");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
@@ -171,6 +173,9 @@ function Library() {
 
   const renderList = () => {
     if (isLoading) {
+      if (!showLoading) {
+        return <div className="library-list" style={{ minHeight: "200px" }} />;
+      }
       return (
         <div className="library-list">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -329,7 +334,20 @@ function Library() {
         ))}
       </div>
 
-      {renderList()}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={isLoading ? (showLoading ? "loading" : "delay") : activeTab}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{
+            duration: 0.2,
+            ease: "easeOut",
+          }}
+        >
+          {renderList()}
+        </motion.div>
+      </AnimatePresence>
 
       <OptionsMenu
         isOpen={sheetOpen}

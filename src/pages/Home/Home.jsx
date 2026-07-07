@@ -4,7 +4,8 @@ import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import RecentlyPlayed from "../../components/RecentlyPlayed/RecentlyPlayed";
 import Skeleton from "../../components/Skeleton/Skeleton";
 import useLongPress from "../../hooks/useLongPress";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import useDelayedLoading from "../../hooks/useDelayedLoading";
 import {
   ArrowRight,
   Upload,
@@ -240,8 +241,8 @@ function Home() {
         prev.map((s) =>
           s.youtubeId === youtubeId
             ? { ...localSong, youtubeId: undefined }
-            : s
-        )
+            : s,
+        ),
       );
     });
     return unsubscribe;
@@ -288,34 +289,48 @@ function Home() {
       : "Speciaal voor jou";
 
   return (
-    <div className="home-page">
-      <div className="home-topbar">
-        <h1 className="home-greeting">Goedemiddag</h1>
-        <div className="home-topbar__actions">
-          <button
-            className="home-icon-btn"
-            style={{ position: "relative" }}
-            aria-label="Downloads"
-            onClick={() => navigate("/downloads")}
-          >
-            <DownloadCloud
-              size={24}
-              strokeWidth={1.9}
-              className={hasActiveDownloads ? "download-icon-pulse" : ""}
-            />
-            {hasActiveDownloads && <span className="download-badge-dot" />}
-          </button>
-          {/* <button
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 12,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.35,
+        ease: "easeOut",
+      }}
+    >
+      <div className="home-page">
+        <div className="home-topbar">
+          <h1 className="home-greeting">Goedemiddag</h1>
+          <div className="home-topbar__actions">
+            <button
+              className="home-icon-btn"
+              style={{ position: "relative" }}
+              aria-label="Downloads"
+              onClick={() => navigate("/downloads")}
+            >
+              <DownloadCloud
+                size={24}
+                strokeWidth={1.9}
+                className={hasActiveDownloads ? "download-icon-pulse" : ""}
+              />
+              {hasActiveDownloads && <span className="download-badge-dot" />}
+            </button>
+            {/* <button
             className="home-icon-btn"
             aria-label="Settings"
             onClick={() => navigate("/settings")}
           >
             <Settings size={24} strokeWidth={1.9} />
           </button> */}
+          </div>
         </div>
-      </div>
 
-      {/* <div className="home-tiles">
+        {/* <div className="home-tiles">
         {MOOD_TILES.map((tile, i) => (
           <HomeTile
             key={tile.name}
@@ -328,36 +343,57 @@ function Home() {
         ))}
       </div> */}
 
-      <RecentlyPlayed InculdeYt={true} fallbackTracks={filler} />
+        <RecentlyPlayed InculdeYt={true} fallbackTracks={filler} />
 
-      <section className="home-carousel">
-        <h2 className="home-carousel-title">{specialTitle}</h2>
         <section className="home-carousel">
-          <div className="home-carousel__row">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="home-card">
-                  <Skeleton width="148px" height="148px" borderRadius="6px" />
-                  <Skeleton height="1rem" style={{ marginTop: "9px" }} />
-                </div>
-              ))
-            ) : displayRecommendations.length > 0 ? (
-              displayRecommendations.map((item) => (
-                <HomeCard
-                  key={item.key}
-                  item={item}
-                  tapFeedback={tapFeedback}
-                  handleSongClick={handleSongClick}
-                />
-              ))
-            ) : (
-                <div></div>
-            )}
-          </div>
+          <h2 className="home-carousel-title">{specialTitle}</h2>
+          <section className="home-carousel">
+            <div className="home-carousel__row">
+              <AnimatePresence mode="wait">
+                {!isLoading && (
+                  <motion.div
+                    key="home-content"
+                    initial={{
+                      opacity: 0,
+                      y: 18,
+                      filter: "blur(6px)",
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      filter: "blur(0px)",
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: -10,
+                    }}
+                    transition={{
+                      opacity: { duration: 0.28 },
+                      y: {
+                        type: "spring",
+                        stiffness: 520,
+                        damping: 38,
+                      },
+                      filter: { duration: 0.22 },
+                    }}
+                    style={{ display: "flex", gap: "15px" }}
+                  >
+                    {displayRecommendations.map((item) => (
+                      <HomeCard
+                        key={item.key}
+                        item={item}
+                        tapFeedback={tapFeedback}
+                        handleSongClick={handleSongClick}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </section>
         </section>
-      </section>
 
-      {/* <section className="home-carousel">
+        {/* <section className="home-carousel">
         <h2 className="home-carousel-title">Skeleton Test</h2>
 
         <section className="home-carousel">
@@ -371,7 +407,8 @@ function Home() {
           </div>
         </section>
       </section> */}
-    </div>
+      </div>
+    </motion.div>
   );
 }
 
