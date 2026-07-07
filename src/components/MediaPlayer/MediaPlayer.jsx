@@ -32,6 +32,7 @@ function MediaPlayer({ children }) {
   const [repeatMode, setRepeatMode] = useState("off");
   const [shuffle, setShuffle] = useState(false);
   const [originalQueue, setOriginalQueue] = useState(null);
+  const [ytLoading, setYtLoading] = useState(false);
 
   const toggleRepeat = () =>
     setRepeatMode((prev) =>
@@ -123,6 +124,8 @@ function MediaPlayer({ children }) {
     trackId = null,
   ) => {
     if (!audioPlayerRef.current) return;
+
+    setYtLoading(!!youtubeId);
 
     const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
     const resolvedTrackId =
@@ -267,6 +270,7 @@ function MediaPlayer({ children }) {
       currentTrack?.title,
     );
     setIsPlaying(false);
+    setYtLoading(false);
   };
 
   const reorderQueue = (newQueue) => {
@@ -330,6 +334,7 @@ function MediaPlayer({ children }) {
     toggleShuffle,
     playSong,
     reorderQueue,
+    ytLoading,
   };
 
   return (
@@ -340,6 +345,9 @@ function MediaPlayer({ children }) {
         onLoadedMetadata={onLoadedMetadata}
         onEnded={handleEnded}
         onError={handleAudioError}
+        onPlaying={() => setYtLoading(false)}
+        onCanPlay={() => setYtLoading(false)}
+        onPause={() => setYtLoading(false)}
       />
       {children}
     </PlayerContext.Provider>
