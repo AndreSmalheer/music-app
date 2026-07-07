@@ -131,16 +131,25 @@ function RecentlyPlayed({
               const list = tracks.length > 0 ? tracks : fallbackTracks;
               return list.length > 0 ? (
                 <>
-                  {list.slice(0, 6).map((track) => (
-                    <SongItem
+                  {list.slice(0, 6).map((track, index) => (
+                    <motion.div
                       key={track.id}
-                      song={track}
-                      handlePlaySong={handleTrackClick}
-                      showOptions={showOptions}
-                      variant="tile"
-                    />
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        ease: "easeOut",
+                        delay: index * 0.08,
+                      }}
+                    >
+                      <SongItem
+                        song={track}
+                        handlePlaySong={handleTrackClick}
+                        showOptions={showOptions}
+                        variant="tile"
+                      />
+                    </motion.div>
                   ))}
-
                   <div
                     className="home-tile-see-all-tile"
                     onClick={() => navigate(`/see-all?includeYt=${InculdeYt}`)}

@@ -347,44 +347,74 @@ function Home() {
 
         <section className="home-carousel">
           <h2 className="home-carousel-title">{specialTitle}</h2>
+
           <section className="home-carousel">
             <div className="home-carousel__row">
               <AnimatePresence mode="wait">
                 {!isLoading && (
                   <motion.div
                     key="home-content"
-                    initial={{
-                      opacity: 0,
-                      y: 18,
-                      filter: "blur(6px)",
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      filter: "blur(0px)",
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: -10,
-                    }}
-                    transition={{
-                      opacity: { duration: 0.28 },
-                      y: {
-                        type: "spring",
-                        stiffness: 520,
-                        damping: 38,
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
+                    variants={{
+                      hidden: {},
+                      show: {
+                        transition: {
+                          staggerChildren: 0.08,
+                        },
                       },
-                      filter: { duration: 0.22 },
                     }}
                     style={{ display: "flex", gap: "15px" }}
                   >
                     {displayRecommendations.map((item) => (
-                      <HomeCard
-                        key={item.key}
-                        item={item}
-                        tapFeedback={tapFeedback}
-                        handleSongClick={handleSongClick}
-                      />
+                      <motion.div
+                        key="home-content"
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        variants={{
+                          hidden: {
+                            opacity: 0,
+                          },
+                          visible: {
+                            opacity: 1,
+                            transition: {
+                              staggerChildren: 0.1,
+                              delayChildren: 0.1,
+                            },
+                          },
+                        }}
+                        style={{ display: "flex", gap: "15px" }}
+                      >
+                        {displayRecommendations.map((item) => (
+                          <motion.div
+                            key={item.key}
+                            variants={{
+                              hidden: {
+                                opacity: 0,
+                                y: 18,
+                                filter: "blur(6px)",
+                              },
+                              visible: {
+                                opacity: 1,
+                                y: 0,
+                                filter: "blur(0px)",
+                                transition: {
+                                  duration: 0.3,
+                                  ease: "easeOut",
+                                },
+                              },
+                            }}
+                          >
+                            <HomeCard
+                              item={item}
+                              tapFeedback={tapFeedback}
+                              handleSongClick={handleSongClick}
+                            />
+                          </motion.div>
+                        ))}
+                      </motion.div>
                     ))}
                   </motion.div>
                 )}
