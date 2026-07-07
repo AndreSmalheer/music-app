@@ -1,5 +1,4 @@
 import { config } from "dotenv";
-import mongoose from "mongoose";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,17 +6,12 @@ import Artist from "../models/Artist.js";
 import Playlist from "../models/Playlist.js";
 import RecentlyPlayed from "../models/RecentlyPlayed.js";
 import Song from "../models/Song.js";
+import { connectDB, disconnectDB } from "../config/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, "..", ".env") });
 
-const uri = process.env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error("MONGODB_URI ontbreekt in backend/.env");
-}
-
-await mongoose.connect(uri);
+await connectDB();
 
 const results = await Promise.all([
   Song.deleteMany({}),
@@ -39,4 +33,4 @@ console.log(
   ),
 );
 
-await mongoose.disconnect();
+await disconnectDB();

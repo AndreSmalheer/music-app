@@ -1,15 +1,9 @@
-// Seed-script: vult MongoDB met wat testdata zodat de UI niet leeg is.
-// Kopieert ook de test-assets (mp3 + covers) naar backend/uploads/ zodat de
-// backend ze echt serveert en de songs afspeelbaar zijn.
-//
-// Gebruik:  cd backend && node scripts/seed.js
 import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { connectDB } from "../config/db.js";
-import mongoose from "mongoose";
+import { connectDB, disconnectDB } from "../config/db.js";
 import Song from "../models/Song.js";
 import Artist from "../models/Artist.js";
 import Playlist from "../models/Playlist.js";
@@ -101,7 +95,7 @@ async function seed() {
   console.log(`   ${await Playlist.countDocuments()} playlists`);
   console.log(`   ${await RecentlyPlayed.countDocuments()} recently played`);
 
-  await mongoose.disconnect();
+  await disconnectDB();
 }
 
 seed().catch((err) => {
