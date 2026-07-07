@@ -136,6 +136,49 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
     );
   }
 
+  if (variant === "tile") {
+    const cover = song.cover || song.img;
+
+    return (
+      <motion.div
+        className="home-tile"
+        {...longPressProps}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => handlePlaySong(song)}
+      >
+        {cover ? (
+          <motion.img
+            className="home-tile__cover"
+            src={cover}
+            alt={song.title}
+            layoutId={`cover-${song.id}`}
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+              e.currentTarget.nextElementSibling?.style.setProperty(
+                "display",
+                "block",
+              );
+            }}
+          />
+        ) : null}
+
+        <div
+          className="home-tile__cover home-tile__fallback"
+          style={{
+            background: song.gradient || gradientFor(song.title || song.id),
+            display: cover ? "none" : "block",
+          }}
+        />
+
+        <div className="home-tile__content">
+          <p className="home-tile__title">{song.title}</p>
+
+          {/* {song.artist && <p className="home-tile__artist">{song.artist}</p>} */}
+        </div>
+      </motion.div>
+    );
+  }
+
   // DEFAULT LIST STYLE
 
   return (

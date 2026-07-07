@@ -87,7 +87,7 @@ function RecentlyPlayed({
         YtSearchStyling ? "yt-search-styling" : ""
       }`}
     >
-      <div className="recently-played__header">
+      {/* <div className="recently-played__header">
         <h2 className="recently-played__title">Onlangs afgespeeld</h2>
 
         <button
@@ -97,38 +97,42 @@ function RecentlyPlayed({
         >
           <ArrowBtn />
         </button>
-      </div>
+      </div> */}
 
-      <div className="recently-played__list">
+      <div className="recently-played__list home-tiles">
         {(() => {
-          // Echte recent-data heeft voorrang; is die er (nog) niet, dan tonen we
-          // de meegegeven placeholder-nummers zodat de rij niet leeg is.
           const list = tracks.length > 0 ? tracks : fallbackTracks;
 
           if (isLoading) {
             return Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="track-card">
+              <div key={i} className="home-tile">
                 <Skeleton height="140px" borderRadius="12px" />
-
                 <Skeleton height="1rem" style={{ marginTop: "10px" }} />
               </div>
             ));
           }
 
           return list.length > 0 ? (
-            list
-              .slice(0, 8)
-              .map((track) => (
+            <>
+              {list.slice(0, 6).map((track) => (
                 <SongItem
                   key={track.id}
                   song={track}
                   handlePlaySong={handleTrackClick}
                   showOptions={showOptions}
-                  variant="card"
+                  variant="tile"
                 />
-              ))
+              ))}
+
+              <div
+                className="home-tile-see-all-tile"
+                onClick={() => navigate(`/see-all?includeYt=${InculdeYt}`)}
+              >
+                <h3>See All</h3>
+              </div>
+            </>
           ) : (
-            <div className="empty-track-card">
+            <div className="empty-track-card home-tile">
               <div className="empty-track-cover" />
             </div>
           );

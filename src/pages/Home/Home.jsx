@@ -315,7 +315,7 @@ function Home() {
         </div>
       </div>
 
-      <div className="home-tiles">
+      {/* <div className="home-tiles">
         {MOOD_TILES.map((tile, i) => (
           <HomeTile
             key={tile.name}
@@ -326,7 +326,7 @@ function Home() {
             handleMoodTile={handleMoodTile}
           />
         ))}
-      </div>
+      </div> */}
 
       <RecentlyPlayed InculdeYt={true} fallbackTracks={filler} />
 
@@ -351,11 +351,7 @@ function Home() {
                 />
               ))
             ) : (
-              <div className="home-card">
-                <div className="home-card__cover home-card__fallback">
-                  <Music size={34} strokeWidth={1.8} />
-                </div>
-              </div>
+                <div></div>
             )}
           </div>
         </section>
