@@ -182,7 +182,9 @@ function LibraryRow({
 
         <div className="library-row__info">
           <p className="library-row__title">{item.name}</p>
-          <p className="library-row__subtitle">Artiest</p>
+          <p className="library-row__subtitle">
+            {item.isYoutubeArtist ? "YouTube artiest" : "Artiest"}
+          </p>
         </div>
       </motion.button>
     );

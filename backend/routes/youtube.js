@@ -89,7 +89,7 @@ async function searchViaApi(q, pageToken) {
 }
 
 // --- Zoeken via yt-dlp (geen quota; alleen video's, geen kanalen) ---------
-async function searchViaYtdlp(q, max = 15) {
+async function searchViaYtdlp(q, max = 30) {
   const info = await getYoutubedl()(`ytsearch${max}:${q}`, {
     dumpSingleJson: true,
     flatPlaylist: true,

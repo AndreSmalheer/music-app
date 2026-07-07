@@ -345,6 +345,14 @@ router.post("/youtube", async (req, res) => {
       });
     }
 
+    // Sync the YouTube artist so it shows up in the library
+    if (song.artist && song.artist !== "Unknown") {
+      await syncArtist(song.artist, song._id, {
+        isYoutubeArtist: true,
+        thumbnail: song.thumbnail,
+      });
+    }
+
     res.json({
       id: song._id,
       title: song.title,
@@ -359,5 +367,6 @@ router.post("/youtube", async (req, res) => {
     res.status(500).json({ error: "Failed to create YouTube song" });
   }
 });
+
 
 export default router;

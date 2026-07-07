@@ -316,7 +316,7 @@ export function deletePlaylist(id) {
 // ---- Artists ------------------------------------------------------------
 
 export async function getArtists() {
-  const data = await getJSON("/api/artists");
+  const data = await getJSON("/api/artists?source=all");
   return data.map(toUiArtist);
 }
 

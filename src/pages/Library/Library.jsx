@@ -98,6 +98,25 @@ function Library() {
     };
   }, []);
 
+  // Re-fetch artists when the artists tab is opened so that
+  // YouTube artists (created by playing YT songs) show up without a refresh.
+  useEffect(() => {
+    if (activeTab !== "artists") return;
+    let active = true;
+    (async () => {
+      try {
+        const ar = await getArtists();
+        if (active) setArtists(ar);
+      } catch (err) {
+        console.error("Artiesten herladen mislukt:", err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [activeTab]);
+
+
   // When a YouTube song is replaced by a local download, update UI state instantly
   useEffect(() => {
     const unsubscribe = subscribeReplaced("*", ({ youtubeId, localSong }) => {
@@ -116,37 +135,16 @@ function Library() {
         });
       }
 
-      // Update artists: remove the YouTube artist variant if empty,
-      // and add the song to the matching local artist
-      if (localSong?.artist) {
-        setArtists((prev) => {
-          return prev
-            .map((art) => {
-              if (art.name === localSong.artist) {
-                const hasSong = art.songs?.some(
-                  (s) => (typeof s === "object" ? s.id : s) === localSong.id,
-                );
-                return hasSong
-                  ? art
-                  : { ...art, songs: [...(art.songs || []), localSong] };
-              }
-              // Remove the replaced song ID from other artists' lists
-              return {
-                ...art,
-                songs: (art.songs || []).filter(
-                  (s) =>
-                    (typeof s === "object" ? s.sourceYoutubeId : null) !==
-                    youtubeId,
-                ),
-              };
-            })
-            .filter((art) => (art.songs?.length ?? 0) > 0);
-        });
-      }
+      // Re-fetch artists from backend so both the YouTube artist removal
+      // and the local artist addition are reflected accurately.
+      getArtists()
+        .then((ar) => setArtists(ar))
+        .catch(() => {});
     });
 
     return unsubscribe;
   }, [subscribeReplaced]);
+
 
   const handleDeleteSong = (song) => {
     setSongToDelete(song);
