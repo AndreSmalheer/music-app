@@ -10,7 +10,6 @@ import {
   Reorder,
   useDragControls,
 } from "framer-motion";
-import { useRef } from "react";
 import { useDownload } from "../../context/DownloadContext";
 import {
   Download,
@@ -97,74 +96,21 @@ function NowPlaying() {
     shuffle,
     toggleRepeat,
     toggleShuffle,
+    ytLoading,
   } = useContext(PlayerContext);
 
   const [favroute, setFavroute] = useState(false);
   const { showOptions } = useModal();
   const navigate = useNavigate();
   const [queueOpen, setQueueOpen] = useState(false);
-  const [ytLoading, setYtLoading] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
   const { downloads, startDownload } = useDownload();
   const isCurrentlyDownloading = downloads.some(
     (dl) =>
       dl.url.includes(currentTrack?.youtubeId) && dl.status === "downloading",
   );
-  const loadedTrackRef = useRef(null);
   const modalControls = useDragControls();
   const [downloadOpen, setDownloadOpen] = useState(false);
-
-  useEffect(() => {
-    const audio = audioPlayerRef.current;
-
-    if (!currentTrack?.youtubeId || !audio) {
-      setYtLoading(false);
-      loadedTrackRef.current = null;
-      return;
-    }
-
-    const handleLoadStart = () => {
-      setYtLoading(true);
-    };
-
-    const handlePlaying = () => {
-      setYtLoading(false);
-    };
-
-    const handleCanPlay = () => {
-      setYtLoading(false);
-    };
-
-    const handlePause = () => {
-      setYtLoading(false);
-    };
-
-    const handleError = () => {
-      setYtLoading(false);
-    };
-
-    // If the same track is already loaded, don't show loading again
-    if (loadedTrackRef.current !== currentTrack.youtubeId) {
-      loadedTrackRef.current = currentTrack.youtubeId;
-      setYtLoading(false);
-    } else {
-      setYtLoading(false);
-    }
-
-    audio.addEventListener("loadstart", handleLoadStart);
-    audio.addEventListener("playing", handlePlaying);
-    audio.addEventListener("canplay", handleCanPlay);
-    audio.addEventListener("pause", handlePause);
-    audio.addEventListener("error", handleError);
-
-    return () => {
-      audio.removeEventListener("loadstart", handleLoadStart);
-      audio.removeEventListener("playing", handlePlaying);
-      audio.removeEventListener("canplay", handleCanPlay);
-      audio.removeEventListener("pause", handlePause);
-      audio.removeEventListener("error", handleError);
-    };
-  }, [currentTrack?.youtubeId, audioPlayerRef]);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("draggedIndex", index);
