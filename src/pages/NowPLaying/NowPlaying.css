@@ -14,7 +14,10 @@
   overflow: hidden;
   z-index: 1500;
   border-radius: 12px;
-  padding-top: calc(env(safe-area-inset-top) + 16px);
+}
+
+.capacitor .now-playing-page {
+  padding-top: calc(env(safe-area-inset-top) + 32px);
 }
 
 /* ---- Top bar ---- */
