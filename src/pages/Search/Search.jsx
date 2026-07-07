@@ -33,6 +33,33 @@ const GENRES = [
   { name: "Nederpop", color: "#c0398b" },
 ];
 
+const container = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const item = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+    scale: 0.98,
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 550,
+      damping: 36,
+    },
+  },
+};
+
 function Search() {
   const [activeTag, setActiveTag] = useState("All");
   const [query, setQuery] = useState("");
@@ -138,23 +165,33 @@ function Search() {
       </div>
 
       {!query.trim() ? (
-        <div className="genre-section">
-          <h2 className="genre-section__title">Bladeren door alles</h2>
+        <motion.div
+          className="genre-section"
+          initial="hidden"
+          animate="show"
+          variants={container}
+        >
+          <motion.h2 className="genre-section__title" variants={item}>
+            Bladeren door alles
+          </motion.h2>
 
-          <div className="genre-grid">
+          <motion.div className="genre-grid" variants={container}>
             {GENRES.map((genre) => (
-              <button
+              <motion.button
                 key={genre.name}
+                variants={item}
+                whileTap={{ scale: 0.98 }}
                 className="genre-tile"
                 style={{ background: genre.color }}
                 onClick={() => setQuery(genre.name)}
               >
                 <span className="genre-tile__name">{genre.name}</span>
+
                 <div className="genre-tile__deco" />
-              </button>
+              </motion.button>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ) : (
         <>
           <div className="tags-container">
@@ -219,17 +256,17 @@ function Search() {
             ) : (
               <motion.div
                 key={activeTag}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 500,
-                  damping: 35,
-                }}
+                variants={container}
+                initial="hidden"
+                animate="show"
+                exit="hidden"
               >
+                {" "}
                 {showTopResult && (
-                  <div className="top-result result-section">
+                  <motion.div
+                    variants={item}
+                    className="top-result result-section"
+                  >
                     <h3>Top Result</h3>
 
                     <div className="result-container">
@@ -243,11 +280,13 @@ function Search() {
                         />
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
-
                 {showSongs && (
-                  <div className="result-section result-songs">
+                  <motion.div
+                    variants={item}
+                    className="result-section result-songs"
+                  >
                     <h3>Songs</h3>
 
                     <div className="songs-container">
@@ -261,11 +300,13 @@ function Search() {
                         />
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
-
                 {showArtists && (
-                  <div className="result-section result-artist">
+                  <motion.div
+                    variants={item}
+                    className="result-section result-artist"
+                  >
                     <h3 className="result-section-title">Artist</h3>
 
                     <div className="artists-container-result">
@@ -279,7 +320,7 @@ function Search() {
                         />
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </motion.div>
             )}

@@ -27,6 +27,34 @@ const TABS = [
   { key: "artists", label: "Artiesten" },
 ];
 
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.04,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const rowVariants = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+    scale: 0.98,
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 550,
+      damping: 36,
+    },
+  },
+};
+
 function Library() {
   const navigate = useNavigate();
   const { playSong } = useContext(PlayerContext);
@@ -177,7 +205,12 @@ function Library() {
         return <div className="library-list" style={{ minHeight: "200px" }} />;
       }
       return (
-        <div className="library-list">
+        <motion.div
+          className="library-list"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
           {Array.from({ length: 6 }).map((_, i) => (
             <div className="library-row" key={i}>
               <Skeleton width="58px" height="58px" borderRadius="6px" />
@@ -187,7 +220,7 @@ function Library() {
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       );
     }
 
@@ -201,17 +234,23 @@ function Library() {
         );
       }
       return (
-        <div className="library-list">
+        <motion.div
+          className="library-list"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
           {playlists.map((item) => (
-            <LibraryRow
-              key={item.id}
-              item={item}
-              type="playlist"
-              navigate={navigate}
-              showOptions={showOptions}
-            />
+            <motion.div key={item.id} variants={rowVariants}>
+              <LibraryRow
+                item={item}
+                type="playlist"
+                navigate={navigate}
+                showOptions={showOptions}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       );
     }
 
@@ -225,19 +264,25 @@ function Library() {
         );
       }
       return (
-        <div className="library-list">
+        <motion.div
+          className="library-list"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
           {songs.map((song) => (
-            <LibraryRow
-              key={song.id}
-              item={song}
-              type="song"
-              navigate={navigate}
-              playSongList={(song) => playSongList(song, songs)}
-              showOptions={showOptions}
-              onDelete={handleDeleteSong}
-            />
-          ))}
-        </div>
+            <motion.div key={song.id} variants={rowVariants}>
+              <LibraryRow
+                item={song}
+                type="song"
+                navigate={navigate}
+                playSongList={(song) => playSongList(song, songs)}
+                showOptions={showOptions}
+                onDelete={handleDeleteSong}
+              />
+            </motion.div>
+          ))}{" "}
+        </motion.div>
       );
     }
 
@@ -251,18 +296,24 @@ function Library() {
         );
       }
       return (
-        <div className="library-list">
+        <motion.div
+          className="library-list"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
           {youtubeSongs.map((song) => (
-            <LibraryRow
-              key={song.id}
-              item={song}
-              type="youtube"
-              navigate={navigate}
-              playSongList={(song) => playSongList(song, youtubeSongs)}
-              showOptions={showOptions}
-            />
-          ))}
-        </div>
+            <motion.div key={song.id} variants={rowVariants}>
+              <LibraryRow
+                item={song}
+                type="youtube"
+                navigate={navigate}
+                playSongList={(song) => playSongList(song, youtubeSongs)}
+                showOptions={showOptions}
+              />
+            </motion.div>
+          ))}{" "}
+        </motion.div>
       );
     }
 
@@ -276,17 +327,23 @@ function Library() {
       );
     }
     return (
-      <div className="library-list">
+      <motion.div
+        className="library-list"
+        variants={listVariants}
+        initial="hidden"
+        animate="show"
+      >
         {artists.map((artist) => (
-          <LibraryRow
-            key={artist.id}
-            item={artist}
-            type="artist"
-            navigate={navigate}
-            showOptions={showOptions}
-          />
-        ))}
-      </div>
+          <motion.div key={artist.id} variants={rowVariants}>
+            <LibraryRow
+              item={artist}
+              type="artist"
+              navigate={navigate}
+              showOptions={showOptions}
+            />
+          </motion.div>
+        ))}{" "}
+      </motion.div>
     );
   };
 
@@ -337,11 +394,11 @@ function Library() {
       <AnimatePresence mode="wait">
         <motion.div
           key={isLoading ? (showLoading ? "loading" : "delay") : activeTab}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{
-            duration: 0.2,
+            duration: 0.08,
             ease: "easeOut",
           }}
         >
