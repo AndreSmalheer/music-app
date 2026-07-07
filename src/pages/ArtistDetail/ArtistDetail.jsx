@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import useLongPress from "../../hooks/useLongPress";
 import { useModal } from "../../context/ModalContext";
@@ -180,47 +180,79 @@ function ArtistDetail() {
   return (
     <div className="artist-detail-page">
       <div className="artist-hero">
-        {isLoading ? (
-          <div className="artist-hero-img artist-hero-skeleton" />
-        ) : (
-          <img
+        {artist && (
+          <motion.img
             src={artist?.img || "/covers/test-cover.jpg"}
             alt="Artist Profile"
             className="artist-hero-img"
+            initial={{
+              opacity: 0,
+              scale: 1.04,
+              filter: "blur(8px)",
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              filter: "blur(0px)",
+            }}
+            transition={{
+              duration: 0.6,
+              ease: "easeOut",
+            }}
           />
         )}
+
         <div className="artist-hero-scrim" />
 
-        {/* <button
-          type="button"
-          className="artist-back"
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-        >
-          <ChevronLeft size={26} />
-        </button> */}
-
         <div className="artist-hero-overlay">
-          {isLoading ? (
-            <>
-              <Skeleton width="60%" height="2.5rem" />
-              <Skeleton
-                width="40%"
-                height="1rem"
-                style={{ marginTop: "0.5rem" }}
-              />
-            </>
-          ) : (
-            <>
-              <h1 className="artist-hero-name">{artist?.name || "Artist"}</h1>
-              <p className="artist-hero-listeners">1,234,567 maandelijkse luisteraars</p>
-            </>
+          {artist && (
+            <motion.div
+              key={artist.id || artist.name}
+              initial={{
+                opacity: 0,
+                y: 20,
+                filter: "blur(6px)",
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+              }}
+              transition={{
+                duration: 0.45,
+                ease: "easeOut",
+                delay: 0.15,
+              }}
+            >
+              <h1 className="artist-hero-name">{artist.name || "Artist"}</h1>
+
+              <p className="artist-hero-listeners">
+                1,234,567 maandelijkse luisteraars
+              </p>
+            </motion.div>
           )}
         </div>
       </div>
 
       <div className="artist-content">
-        <div className="artist-main-actions">
+        <motion.div
+          className="artist-main-actions"
+          initial={{
+            opacity: 0,
+            y: 25,
+            filter: "blur(6px)",
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+          }}
+          transition={{
+            duration: 0.45,
+            ease: "easeOut",
+            delay: 0.35,
+          }}
+        >
           <motion.button
             type="button"
             className="btn-artist-shuffle"
@@ -239,37 +271,46 @@ function ArtistDetail() {
           >
             <Play size={26} fill="currentColor" stroke="none" />
           </motion.button>
-        </div>
+        </motion.div>
 
         <section className="artist-section">
           <h2 className="artist-section-title">Nummers</h2>
+
           <div className="top-tracks-list">
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="artist-song-row"
-                    style={{ gap: "14px" }}
-                  >
-                    <Skeleton width="48px" height="48px" borderRadius="6px" />
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                      }}
-                    >
-                      <Skeleton height="16px" width="70%" />
-                      <Skeleton height="13px" width="40%" />
-                    </div>
-                    <Skeleton width="30px" height="13px" />
-                  </div>
-                ))
-              : topTracks.map((track, index) => (
+            {topTracks.length > 0 && (
+              <motion.div
+                key={topTracks.length}
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: {},
+                  show: {
+                    transition: {
+                      staggerChildren: 0.08,
+                    },
+                  },
+                }}
+              >
+                {topTracks.map((track) => (
                   <motion.div
                     key={track.id}
                     className="artist-song-row"
+                    variants={{
+                      hidden: {
+                        opacity: 0,
+                        y: 18,
+                        filter: "blur(6px)",
+                      },
+                      show: {
+                        opacity: 1,
+                        y: 0,
+                        filter: "blur(0px)",
+                        transition: {
+                          duration: 0.3,
+                          ease: "easeOut",
+                        },
+                      },
+                    }}
                     {...longPressProps}
                     whileTap={tapFeedback}
                     onClick={() => handlePlaySong(track)}
@@ -282,16 +323,21 @@ function ArtistDetail() {
                           : undefined
                       }
                     />
+
                     <div className="artist-song-info">
                       <p className="artist-song-title">{track.title}</p>
                       <p className="artist-song-artist">{track.artist}</p>
                     </div>
+
                     <span className="artist-song-duration">
                       {track.durationLabel}
                     </span>
                   </motion.div>
                 ))}
+              </motion.div>
+            )}
           </div>
+
           {artist?.isYoutubeArtist && nextPageToken && (
             <button
               className="artist-show-more-btn"
