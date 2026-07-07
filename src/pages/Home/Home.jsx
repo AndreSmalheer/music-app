@@ -305,13 +305,13 @@ function Home() {
             />
             {hasActiveDownloads && <span className="download-badge-dot" />}
           </button>
-          <button
+          {/* <button
             className="home-icon-btn"
             aria-label="Settings"
             onClick={() => navigate("/settings")}
           >
             <Settings size={24} strokeWidth={1.9} />
-          </button>
+          </button> */}
         </div>
       </div>
 
