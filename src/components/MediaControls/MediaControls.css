@@ -116,3 +116,35 @@
   background: #fff;
   border-radius: 2px;
 }
+
+/* ---- Loading state ---- */
+@keyframes media-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes media-shimmer {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.media-loading-spinner {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: media-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+.media-controls--loading .media-song-title,
+.media-controls--loading .media-artist-name {
+  animation: media-shimmer 1.4s ease-in-out infinite;
+}
+
+.media-controls--loading .media-progress-fill {
+  animation: media-shimmer 1.4s ease-in-out infinite;
+}
+

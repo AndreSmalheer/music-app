@@ -18,6 +18,7 @@ function Footer() {
     handlePause,
     handleNext,
     handlePrevious,
+    ytLoading,
   } = useContext(PlayerContext);
 
   const isNowPlayingPage = location.pathname === "/now-playing";
@@ -36,6 +37,7 @@ function Footer() {
           onNext={handleNext}
           onPrevious={handlePrevious}
           isPlaying={isPlaying}
+          isLoading={ytLoading}
           currentTrack={currentTrack}
           currentTime={currentTime}
           duration={duration}

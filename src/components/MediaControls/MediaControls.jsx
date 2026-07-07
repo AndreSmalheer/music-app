@@ -16,6 +16,7 @@ function MediaControls({
   onNext,
   onPrevious,
   isPlaying,
+  isLoading,
   currentTrack,
   currentTime,
   duration,
@@ -23,7 +24,7 @@ function MediaControls({
   return (
     <NavLink to="/now-playing" className="media-controls-link">
       <motion.div
-        className="media-controls"
+        className={`media-controls${isLoading ? " media-controls--loading" : ""}`}
         layoutId="player-container"
         layout
         transition={LAYOUT_TRANSITION}
@@ -71,15 +72,18 @@ function MediaControls({
             e.preventDefault();
             e.stopPropagation();
 
+            if (isLoading) return;
             if (isPlaying) {
               onPause();
             } else {
               onPlay();
             }
           }}
-          aria-label={isPlaying ? "Pause" : "Play"}
+          aria-label={isLoading ? "Loading" : isPlaying ? "Pause" : "Play"}
         >
-          {isPlaying ? (
+          {isLoading ? (
+            <span className="media-loading-spinner" />
+          ) : isPlaying ? (
             <Pause size={22} fill="currentColor" strokeWidth={1.5} />
           ) : (
             <Play size={22} fill="currentColor" strokeWidth={1.5} />
