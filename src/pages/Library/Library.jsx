@@ -21,10 +21,10 @@ import { useDownload } from "../../context/DownloadContext";
 import OptionsMenu from "../../components/OptionsMenu/OptionsMenu";
 
 const TABS = [
-  { key: "playlists", label: "Afspeellijsten" },
-  { key: "uploads", label: "Uploads" },
   { key: "youtube", label: "YouTube" },
   { key: "artists", label: "Artiesten" },
+  { key: "uploads", label: "Uploads" },
+  { key: "playlists", label: "Afspeellijsten" },
 ];
 
 const listVariants = {
@@ -62,7 +62,7 @@ function Library() {
 
   const [isLoading, setIsLoading] = useState(true);
   const showLoading = useDelayedLoading(isLoading, 150);
-  const [activeTab, setActiveTab] = useState("playlists");
+  const [activeTab, setActiveTab] = useState("youtube");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
   const { hasActiveDownloads, subscribeReplaced } = useDownload();
@@ -116,7 +116,6 @@ function Library() {
     };
   }, [activeTab]);
 
-
   // When a YouTube song is replaced by a local download, update UI state instantly
   useEffect(() => {
     const unsubscribe = subscribeReplaced("*", ({ youtubeId, localSong }) => {
@@ -144,7 +143,6 @@ function Library() {
 
     return unsubscribe;
   }, [subscribeReplaced]);
-
 
   const handleDeleteSong = (song) => {
     setSongToDelete(song);
