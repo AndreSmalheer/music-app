@@ -43,6 +43,21 @@ import DownloadModal from "../../components/DownloadModal/DownloadModal";
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
 
+const LAYOUT_TRANSITION = {
+  type: "spring",
+  stiffness: 380,
+  damping: 35,
+};
+
+// Fade-in for UI elements that don't exist in mini-player
+const NP_FADE_IN = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.18, ease: "easeOut", delay: 0.08 },
+};
+
+
 function QueueItem({ track, index, currentIndex }) {
   const controls = useDragControls();
 
@@ -249,8 +264,14 @@ function NowPlaying() {
 
   return (
     <>
-      <div className="now-playing-page">
-        <div className="np-topbar">
+      <motion.div
+        className="now-playing-page"
+        layoutId="player-container"
+        layout
+        transition={LAYOUT_TRANSITION}
+      >
+        {/* Top bar – fades in; no counterpart in mini-player */}
+        <motion.div className="np-topbar" {...NP_FADE_IN}>
           <button
             type="button"
             className="np-top-btn"
@@ -273,7 +294,7 @@ function NowPlaying() {
           >
             <MoreVertical size={24} strokeWidth={2} />
           </button>
-        </div>
+        </motion.div>
 
         {ytLoading ? (
           <div className="now-playing-loading">
@@ -302,22 +323,40 @@ function NowPlaying() {
           </div>
         ) : (
           <>
+            {/* Album art – shared layout with mini-player */}
             <div className="np-cover-wrap">
-              <img
-                className="album-cover"
-                src={currentTrack.coverSrc}
-                alt="Album Cover"
-              />
+              <motion.div
+                className="np-album-art-container"
+                layoutId="player-album-cover-wrap"
+                layout
+                transition={LAYOUT_TRANSITION}
+              >
+                <motion.img
+                  className="album-cover"
+                  src={currentTrack.coverSrc}
+                  alt="Album Cover"
+                  layoutId="player-album-art"
+                  layout
+                  transition={LAYOUT_TRANSITION}
+                />
+              </motion.div>
             </div>
 
             <div className="np-bottom">
+              {/* Song info – shared layout with mini-player */}
               <div className="now-playing-info">
-                <div className="now-playing-text">
+                <motion.div
+                  className="now-playing-text"
+                  layoutId="player-text-info"
+                  layout
+                  transition={LAYOUT_TRANSITION}
+                >
                   <h1 className="now-playing-title">{currentTrack.title}</h1>
                   <h2 className="now-playing-artist">{currentTrack.artist}</h2>
-                </div>
+                </motion.div>
 
-                <div className="now-playing-actions">
+                {/* Action buttons fade in; no counterpart in mini-player */}
+                <motion.div className="now-playing-actions" {...NP_FADE_IN}>
                   {/* {isYoutube ? (
                     <MotionButton
                       className="download-btn"
@@ -360,10 +399,16 @@ function NowPlaying() {
                       fill={favroute ? "currentColor" : "none"}
                     />
                   </button>
-                </div>
+                </motion.div>
               </div>
 
-              <div className="progress-bar">
+              {/* Progress bar – shared layout with mini-player */}
+              <motion.div
+                className="progress-bar"
+                layoutId="player-progress"
+                layout
+                transition={LAYOUT_TRANSITION}
+              >
                 <Slider
                   value={currentTime}
                   max={safeDuration || 1}
@@ -386,10 +431,11 @@ function NowPlaying() {
                       : "Live"}
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
+              {/* Play button – shared layout with mini-player; controls section fades in */}
               <div className="player-controls">
-                <div className="control-group control-group--main">
+                <motion.div className="control-group control-group--main" {...NP_FADE_IN}>
                   <button
                     className={`control control--shuffle media-control-button ${
                       shuffle ? "active" : ""
@@ -416,8 +462,11 @@ function NowPlaying() {
                     <SkipBack size={30} strokeWidth={1.5} fill="currentColor" />
                   </button>
 
-                  <button
+                  <motion.button
                     className="control control--play-pause media-control-button"
+                    layoutId="player-play-btn"
+                    layout
+                    transition={LAYOUT_TRANSITION}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -434,7 +483,7 @@ function NowPlaying() {
                     ) : (
                       <Play size={30} strokeWidth={1.5} fill="currentColor" />
                     )}
-                  </button>
+                  </motion.button>
 
                   <button
                     className="control control--next media-control-button"
@@ -465,10 +514,10 @@ function NowPlaying() {
                       <Repeat size={24} strokeWidth={2} />
                     )}
                   </button>
-                </div>
+                </motion.div>
               </div>
 
-              <div className="audio-volume">
+              <motion.div className="audio-volume" {...NP_FADE_IN}>
                 <div className="volume-icon volume-icon--down">
                   <Volume1 size={20} strokeWidth={2} />
                 </div>
@@ -482,9 +531,9 @@ function NowPlaying() {
                 <div className="volume-icon volume-icon--up">
                   <Volume2 size={20} strokeWidth={2} />
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="player-utilities">
+              <motion.div className="player-utilities" {...NP_FADE_IN}>
                 <button
                   className="airplay-btn utiletie-btn"
                   aria-label="Airplay"
@@ -503,11 +552,11 @@ function NowPlaying() {
                 >
                   <ListMusic size={22} strokeWidth={1.8} />
                 </button>
-              </div>
+              </motion.div>
             </div>
           </>
         )}
-      </div>
+      </motion.div>
 
       <AnimatePresence>
         {queueOpen && (

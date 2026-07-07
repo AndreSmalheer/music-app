@@ -1,7 +1,13 @@
 import "./MediaControls.css";
 import { NavLink } from "react-router-dom";
-import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
-import Slider from "../Slider/Slider";
+import { Play, Pause } from "lucide-react";
+import { motion } from "framer-motion";
+
+const LAYOUT_TRANSITION = {
+  type: "spring",
+  stiffness: 380,
+  damping: 35,
+};
 
 function MediaControls({
   audioPlayerRef,
@@ -16,9 +22,25 @@ function MediaControls({
 }) {
   return (
     <NavLink to="/now-playing" className="media-controls-link">
-      <div className="media-controls">
-        <div className="media-cover-image">
-          <img src={currentTrack?.coverSrc} alt="" />
+      <motion.div
+        className="media-controls"
+        layoutId="player-container"
+        layout
+        transition={LAYOUT_TRANSITION}
+      >
+        <motion.div
+          className="media-cover-image"
+          layoutId="player-album-cover-wrap"
+          layout
+          transition={LAYOUT_TRANSITION}
+        >
+          <motion.img
+            src={currentTrack?.coverSrc}
+            alt=""
+            layoutId="player-album-art"
+            layout
+            transition={LAYOUT_TRANSITION}
+          />
           {isPlaying && (
             <div className="media-eq-overlay">
               <span className="media-eq-bar" />
@@ -26,17 +48,25 @@ function MediaControls({
               <span className="media-eq-bar media-eq-bar--3" />
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <div className="media-text">
+        <motion.div
+          className="media-text"
+          layoutId="player-text-info"
+          layout
+          transition={LAYOUT_TRANSITION}
+        >
           <p className="media-song-title">
             {currentTrack?.title || "No track"}
           </p>
           <p className="media-artist-name">{currentTrack?.artist || ""}</p>
-        </div>
+        </motion.div>
 
-        <button
+        <motion.button
           className="media-play-button"
+          layoutId="player-play-btn"
+          layout
+          transition={LAYOUT_TRANSITION}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -54,10 +84,13 @@ function MediaControls({
           ) : (
             <Play size={22} fill="currentColor" strokeWidth={1.5} />
           )}
-        </button>
+        </motion.button>
 
-        <div
+        <motion.div
           className="media-progress"
+          layoutId="player-progress"
+          layout
+          transition={LAYOUT_TRANSITION}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -76,8 +109,8 @@ function MediaControls({
               width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
             }}
           />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </NavLink>
   );
 }

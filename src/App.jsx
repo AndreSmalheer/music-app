@@ -1,7 +1,7 @@
 import "./App.css";
 import { useRef, useEffect, useContext } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import Footer from "./components/Footer/Footer";
 import Header from "./components/Header/Header";
@@ -37,13 +37,12 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 function PageWrapper({ children }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
+      exit={{ opacity: 0, y: -8 }}
       transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
+        duration: 0.18,
+        ease: "easeOut",
       }}
       style={{ height: "100%" }}
     >
@@ -74,11 +73,12 @@ function AppContent() {
   const hasActiveTrack = !!currentTrack && !isNowPlayingPage;
 
   return (
+    <LayoutGroup>
     <div className={`App ${hasActiveTrack ? "has-player" : ""}`}>
       {!isOnboarding && <Header />}
 
       <div className="page">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <Routes location={location} key={location.pathname}>
             <Route
               path="/"
@@ -98,11 +98,7 @@ function AppContent() {
             />
             <Route
               path="/now-playing"
-              element={
-                <PageWrapper>
-                  <NowPlaying />
-                </PageWrapper>
-              }
+              element={<NowPlaying />}
             />
 
             <Route
@@ -239,6 +235,7 @@ function AppContent() {
         )}
       </AnimatePresence>
     </div>
+    </LayoutGroup>
   );
 }
 
