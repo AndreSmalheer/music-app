@@ -272,7 +272,7 @@ function Search() {
                     <div className="result-container">
                       {searchResults.topResults.map((song) => (
                         <SongItem
-                          key={song.id}
+                          key={`top-${song.youtubeId}`}
                           song={song}
                           handlePlaySong={handlePlaySong}
                           showOptions={showOptions}
@@ -292,7 +292,7 @@ function Search() {
                     <div className="songs-container">
                       {searchResults.songs.map((song) => (
                         <SongItem
-                          key={song.id}
+                          key={song.youtubeId}
                           song={song}
                           handlePlaySong={handlePlaySong}
                           showOptions={showOptions}
@@ -312,7 +312,7 @@ function Search() {
                     <div className="artists-container-result">
                       {searchResults.artists.map((artist) => (
                         <ArtistItem
-                          key={artist.id}
+                          key={artist.youtubeChannelId}
                           artist={artist}
                           navigate={() => handleOpenYoutubeArtist(artist)}
                           showOptions={showOptions}

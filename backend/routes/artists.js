@@ -41,9 +41,9 @@ router.post("/youtube", async (req, res, next) => {
       { name, isYoutubeArtist: true },
       update,
       { upsert: true, new: true, setDefaultsOnInsert: true },
-    ).populate("songs");
+    );
 
-    res.status(201).json(artist);
+    res.status(201).json(await artist);
   } catch (err) {
     next(err);
   }
@@ -53,7 +53,8 @@ router.post("/youtube", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const artist = await Artist.findById(req.params.id).populate("songs");
-    if (!artist) return res.status(404).json({ error: "Artiest niet gevonden" });
+    if (!artist)
+      return res.status(404).json({ error: "Artiest niet gevonden" });
     res.json(artist);
   } catch (err) {
     next(err);

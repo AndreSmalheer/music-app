@@ -17,29 +17,6 @@ function getYoutubedl() {
   return _youtubedl;
 }
 
-async function searchViaInvidious(INVIDIOUS_URL, query, page = 1) {
-  const url =
-    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
-    `&type=video&page=${page}`;
-
-  const res = await fetch(url);
-
-  if (!res.ok) throw new Error("Invidious search failed");
-
-  const data = await res.json();
-
-  return {
-    results: data.map((video) => ({
-      youtubeId: video.videoId,
-      title: video.title,
-      artist: video.author,
-      thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
-      type: "youtube",
-    })),
-    nextPageToken: page + 1,
-  };
-}
-
 // Korte cache voor zoekresultaten (key -> { results, nextPageToken, expires }).
 // Voorkomt dat dezelfde zoekopdracht yt-dlp/de API onnodig opnieuw aanroept
 // (Home vuurt bv. bij elke load een zoekopdracht af).
@@ -108,6 +85,54 @@ async function searchViaApi(q, pageToken) {
   return {
     results: [...channelResults, ...videoResults],
     nextPageToken: data.nextPageToken || null,
+  };
+}
+
+async function searchViaInvidious(INVIDIOUS_URL, query, page = 1) {
+  const videosUrl =
+    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
+    `&type=video&page=${page}`;
+
+  const channelsUrl =
+    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
+    `&type=channel`;
+
+  const [channelsRes, videosRes] = await Promise.all([
+    page === 1 ? fetch(channelsUrl) : Promise.resolve(null),
+    fetch(videosUrl),
+  ]);
+
+  if ((channelsRes && !channelsRes.ok) || !videosRes.ok) {
+    throw new Error("Invidious search failed");
+  }
+
+  const [channelsData, videosData] = await Promise.all([
+    channelsRes ? channelsRes.json() : Promise.resolve([]),
+    videosRes.json(),
+  ]);
+
+  const channelResults = (channelsData || []).map((channel) => ({
+    youtubeChannelId: channel.authorId,
+    title: channel.author,
+    artist: channel.author,
+    thumbnail:
+      channel.authorThumbnails?.find((t) => t.width >= 100)?.url ||
+      channel.authorThumbnails?.[channel.authorThumbnails.length - 1]?.url ||
+      null,
+    type: "youtube-artist",
+  }));
+
+  const videoResults = (videosData || []).map((video) => ({
+    youtubeId: video.videoId,
+    title: video.title,
+    artist: video.author,
+    thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
+    type: "youtube",
+  }));
+
+  return {
+    results: [...channelResults, ...videoResults],
+    nextPageToken: page + 1,
   };
 }
 
