@@ -17,6 +17,29 @@ function getYoutubedl() {
   return _youtubedl;
 }
 
+async function searchViaInvidious(INVIDIOUS_URL, query, page = 1) {
+  const url =
+    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
+    `&type=video&page=${page}`;
+
+  const res = await fetch(url);
+
+  if (!res.ok) throw new Error("Invidious search failed");
+
+  const data = await res.json();
+
+  return {
+    results: data.map((video) => ({
+      youtubeId: video.videoId,
+      title: video.title,
+      artist: video.author,
+      thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
+      type: "youtube",
+    })),
+    nextPageToken: page + 1,
+  };
+}
+
 // Korte cache voor zoekresultaten (key -> { results, nextPageToken, expires }).
 // Voorkomt dat dezelfde zoekopdracht yt-dlp/de API onnodig opnieuw aanroept
 // (Home vuurt bv. bij elke load een zoekopdracht af).
@@ -135,6 +158,38 @@ async function videoViaYtdlp(videoId) {
   };
 }
 
+async function videoViaInvidious(videoId) {
+  const res = await fetch(
+    `${process.env.INVIDIOUS_URL}/api/v1/videos/${videoId}`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Invidious returned ${res.status}`);
+  }
+
+  const info = await res.json();
+
+  return {
+    results: [
+      {
+        youtubeId: info.videoId || videoId,
+        title: info.title || "Onbekend",
+        artist: info.author || "",
+        thumbnail:
+          info.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
+          thumbForVideo(videoId),
+        type: "youtube",
+      },
+    ],
+    nextPageToken: null,
+  };
+}
+
 // GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's. Probeert eerst de
 // Data API (geeft ook kanalen/artiesten); valt bij elke fout — vooral als de
 // dag-quota op is — automatisch terug op yt-dlp, dat geen quota kent.
@@ -143,6 +198,7 @@ router.get("/search", async (req, res, next) => {
     const q = (req.query.q || "").trim();
     const pageToken = (req.query.pageToken || "").trim();
     const paged = req.query.paged === "true";
+    const page = Number(req.query.pageToken || 1);
 
     const reply = (payload) => res.json(paged ? payload : payload.results);
 
@@ -158,14 +214,16 @@ router.get("/search", async (req, res, next) => {
 
     let payload;
     if (urlMatch) {
-      payload = await videoViaYtdlp(urlMatch[1]);
+      payload = await videoViaInvidious(urlMatch[1]);
     } else {
       // Probeer de Data API; bij falen (bv. quota) terugvallen op yt-dlp.
-      payload = await searchViaApi(q, pageToken).catch((err) => {
-        console.warn(
-          "Data API zoeken faalde, val terug op yt-dlp:",
-          err.message,
-        );
+      payload = await searchViaInvidious(
+        process.env.INVIDIOUS_URL,
+        q,
+        page,
+      ).catch((err) => {
+        console.error(err);
+        console.error(err.cause);
         return searchViaYtdlp(q);
       });
     }
