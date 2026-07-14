@@ -57,7 +57,6 @@ const NP_FADE_IN = {
   transition: { duration: 0.18, ease: "easeOut", delay: 0.08 },
 };
 
-
 function QueueItem({ track, index, currentIndex }) {
   const controls = useDragControls();
 
@@ -240,7 +239,12 @@ function NowPlaying() {
   if (!currentTrack) {
     return (
       <div className="now-playing-page">
-        <h1 className="now-playing-title">No song selected</h1>
+        <div className="now-playing-error">
+          <h1 className="now-playing-title">No song selected</h1>
+           <button className="back-button" onClick={() => navigate("/")}>
+             Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -436,7 +440,10 @@ function NowPlaying() {
 
               {/* Play button – shared layout with mini-player; controls section fades in */}
               <div className="player-controls">
-                <motion.div className="control-group control-group--main" {...NP_FADE_IN}>
+                <motion.div
+                  className="control-group control-group--main"
+                  {...NP_FADE_IN}
+                >
                   <button
                     className={`control control--shuffle media-control-button ${
                       shuffle ? "active" : ""
