@@ -220,6 +220,26 @@ function NowPlaying() {
     showOptions(menuOptions, handleMenuOption);
   };
 
+  // Deelt het huidige nummer via het native deel-menu (iOS/Android). Bij een
+  // YouTube-track delen we de YouTube-link, anders titel + artiest. Valt op
+  // desktop/zonder Web Share terug op kopiëren naar het klembord.
+  const handleShare = async () => {
+    if (!currentTrack) return;
+    const text = `${currentTrack.title} — ${currentTrack.artist}`;
+    const url = currentTrack.youtubeId
+      ? `https://youtu.be/${currentTrack.youtubeId}`
+      : undefined;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: currentTrack.title, text, url });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url ? `${text}\n${url}` : text);
+      }
+    } catch {
+      // Gebruiker annuleerde het deel-menu of het is niet beschikbaar — negeren.
+    }
+  };
+
   const isActive = repeatMode !== "off";
 
   if (!currentTrack) {
@@ -492,7 +512,11 @@ function NowPlaying() {
                   <Airplay size={22} strokeWidth={1.8} />
                 </button>
 
-                <button className="share-btn utiletie-btn" aria-label="Share">
+                <button
+                  className="share-btn utiletie-btn"
+                  onClick={handleShare}
+                  aria-label="Share"
+                >
                   <Share2 size={22} strokeWidth={1.8} />
                 </button>
 
