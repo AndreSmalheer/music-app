@@ -47,6 +47,8 @@
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
+  /* Geen grijze tik-flits op iOS: geeft een strakke, native/Spotify-achtige tik. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body,
@@ -58,6 +60,18 @@ html {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-primary);
+  /* App voelt als een echte app: geen tekstselectie bij long-press (die is voor
+     het context-menu) en geen dubbeltik-zoom. */
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Invoervelden mogen wél selecteerbaar blijven (zoeken, playlist-naam, enz.). */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 ::-webkit-scrollbar {

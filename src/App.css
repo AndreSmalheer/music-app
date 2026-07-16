@@ -12,6 +12,9 @@
   width: 100vw;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Voorkomt dat scrollen "doorlekt" naar de webview eronder (rubberband):
+     voelt strakker en meer als een native app. */
+  overscroll-behavior-y: contain;
 }
 
 .App.has-player .home-page,
