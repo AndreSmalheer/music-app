@@ -8,7 +8,9 @@ const router = Router();
 // GET /api/search?q= — zoekt in songs, artists en playlists
 router.get("/", async (req, res, next) => {
   try {
-    const q = (req.query.q || "").trim();
+    // Lengte begrenzen: langere termen zijn zinloos en zouden alleen een dure
+    // regex-query opleveren.
+    const q = String(req.query.q || "").trim().slice(0, 100);
     if (!q) return res.json({ songs: [], artists: [], playlists: [] });
 
     // case-insensitive deelmatch

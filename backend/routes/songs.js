@@ -12,6 +12,11 @@ import Playlist from "../models/Playlist.js";
 import RecentlyPlayed from "../models/RecentlyPlayed.js";
 import upload from "../middleware/upload.js";
 import { resolveAudio } from "./youtube.js";
+import {
+  validateObjectIdParam,
+  heavyLimiter,
+  isValidVideoId,
+} from "../middleware/security.js";
 
 // Zoekt artiest op naam + bron op, maakt hem aan als hij niet bestaat, en voegt songId toe.
 async function syncArtist(
@@ -68,7 +73,7 @@ router.get("/", async (req, res, next) => {
 });
 
 // GET /api/songs/:id — één song
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
     const song = await Song.findById(req.params.id);
     if (!song) return res.status(404).json({ error: "Song niet gevonden" });
@@ -82,6 +87,7 @@ router.get("/:id", async (req, res, next) => {
 // form-data velden: audio (file), cover (file, optioneel), title, artist, album
 router.post(
   "/upload",
+  heavyLimiter,
   upload.fields([
     { name: "audio", maxCount: 1 },
     { name: "cover", maxCount: 1 },
@@ -118,7 +124,7 @@ router.post(
 // POST /api/songs/download — YouTube-URL → MP3
 // TODO: implementeer de daadwerkelijke download (bijv. yt-dlp + ffmpeg).
 // Voor nu slaat dit alleen de metadata op zodat de frontend al gekoppeld kan worden.
-router.post("/download", async (req, res, next) => {
+router.post("/download", heavyLimiter, async (req, res, next) => {
   try {
     const { url, title, artist, thumbnail } = req.body;
     if (!url)
@@ -167,7 +173,7 @@ router.post("/download", async (req, res, next) => {
 });
 
 // POST /api/songs/download-local — YouTube-URL → lokaal bestand + Song in library
-router.post("/download-local", async (req, res, next) => {
+router.post("/download-local", heavyLimiter, async (req, res, next) => {
   try {
     const { url, title, artist, thumbnail } = req.body;
     if (!url)
@@ -206,7 +212,10 @@ router.post("/download-local", async (req, res, next) => {
     }
 
     const { ext, duration } = await resolveAudio(youtubeId);
-    const fileName = `${youtubeId}.${ext || "m4a"}`;
+    // Extensie saneren: alleen simpele alfanumerieke ext toestaan (geen
+    // path-traversal/rare tekens in de bestandsnaam op schijf).
+    const safeExt = /^[a-z0-9]{1,5}$/i.test(ext || "") ? ext : "m4a";
+    const fileName = `${youtubeId}.${safeExt}`;
     const absoluteFilePath = path.join(publicMusicDir, fileName);
     const relativeFilePath = `/music/downloads/${fileName}`;
 
@@ -282,7 +291,7 @@ router.post("/download-local", async (req, res, next) => {
 });
 
 // DELETE /api/songs/:id — song + bijbehorend bestand verwijderen
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
     const song = await Song.findByIdAndDelete(req.params.id);
     if (!song) return res.status(404).json({ error: "Song niet gevonden" });
@@ -324,23 +333,23 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-router.post("/youtube", async (req, res) => {
-  const { youtubeId, title, artist, thumbnail, duration = 0 } = req.body;
-
-  if (!youtubeId) {
-    return res.status(400).json({ error: "Missing youtubeId" });
-  }
-
+router.post("/youtube", heavyLimiter, async (req, res, next) => {
   try {
+    const { youtubeId, title, artist, thumbnail, duration = 0 } = req.body;
+
+    if (!isValidVideoId(youtubeId)) {
+      return res.status(400).json({ error: "Ongeldige of ontbrekende youtubeId" });
+    }
+
     let song = await Song.findOne({ youtubeId });
 
     if (!song) {
       song = await Song.create({
-        title,
-        artist,
+        title: title || "Unknown",
+        artist: artist || "Unknown",
         youtubeId,
         thumbnail,
-        duration,
+        duration: normalizeDuration(duration),
         type: "youtube",
       });
     }
@@ -355,8 +364,7 @@ router.post("/youtube", async (req, res) => {
       type: song.type,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create YouTube song" });
+    next(err);
   }
 });
 

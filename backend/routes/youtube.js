@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { create } from "youtube-dl-exec";
 import { Readable } from "node:stream";
+import { isValidVideoId } from "../middleware/security.js";
 
 const router = Router();
 
@@ -22,6 +23,20 @@ function getYoutubedl() {
 // (Home vuurt bv. bij elke load een zoekopdracht af).
 const searchCache = new Map();
 const SEARCH_TTL = 10 * 60 * 1000;
+
+// Maximale zoekterm-lengte: langere queries zijn zinloos en zouden alleen de
+// cache/upstream onnodig belasten.
+const MAX_QUERY_LEN = 200;
+
+// Houd een Map onder een maximum aantal entries (Maps bewaren insert-volgorde,
+// dus de oudste key eruit gooien). Voorkomt onbegrensde geheugen-groei (DoS)
+// bij veel unieke zoektermen/video's.
+function capCache(cache, maxSize) {
+  while (cache.size > maxSize) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+}
 
 // Standaard YouTube-thumbnail uit een videoId — werkt altijd, ook als de bron
 // (flat playlist van yt-dlp) zelf geen thumbnail-URL meegeeft.
@@ -140,8 +155,8 @@ async function videoViaYtdlp(videoId) {
 // dag-quota op is — automatisch terug op yt-dlp, dat geen quota kent.
 router.get("/search", async (req, res, next) => {
   try {
-    const q = (req.query.q || "").trim();
-    const pageToken = (req.query.pageToken || "").trim();
+    const q = String(req.query.q || "").trim().slice(0, MAX_QUERY_LEN);
+    const pageToken = String(req.query.pageToken || "").trim().slice(0, 100);
     const paged = req.query.paged === "true";
 
     const reply = (payload) => res.json(paged ? payload : payload.results);
@@ -171,6 +186,7 @@ router.get("/search", async (req, res, next) => {
     }
 
     searchCache.set(cacheKey, { payload, expires: Date.now() + SEARCH_TTL });
+    capCache(searchCache, 500);
     reply(payload);
   } catch (err) {
     next(err);
@@ -234,6 +250,7 @@ export async function resolveAudio(videoId) {
     expires,
   };
   formatCache.set(videoId, resolved);
+  capCache(formatCache, 500);
   return resolved;
 }
 
@@ -256,7 +273,8 @@ async function fetchUpstream(videoId, rangeHeader, allowRetry = true) {
 // zodat skip/auto-advance direct speelt i.p.v. ~4s op yt-dlp te wachten.
 router.get("/prefetch/:videoId", async (req, res) => {
   const { videoId } = req.params;
-  if (!videoId) return res.status(400).json({ error: "Geen videoId" });
+  if (!isValidVideoId(videoId))
+    return res.status(400).json({ error: "Ongeldige videoId" });
   try {
     await resolveAudio(videoId);
     res.status(204).end();
@@ -271,7 +289,8 @@ router.get("/prefetch/:videoId", async (req, res) => {
 router.get("/stream/:videoId", async (req, res, next) => {
   try {
     const { videoId } = req.params;
-    if (!videoId) return res.status(400).json({ error: "Geen videoId" });
+    if (!isValidVideoId(videoId))
+      return res.status(400).json({ error: "Ongeldige videoId" });
 
     const { audio, upstream } = await fetchUpstream(videoId, req.headers.range);
 

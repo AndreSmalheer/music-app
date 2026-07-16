@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Artist from "../models/Artist.js";
+import { validateObjectIdParam } from "../middleware/security.js";
 
 const router = Router();
 
@@ -25,7 +26,8 @@ router.get("/", async (req, res, next) => {
 router.post("/youtube", async (req, res, next) => {
   try {
     const { name, thumbnail, youtubeChannelId } = req.body;
-    if (!name) return res.status(400).json({ error: "Naam is verplicht" });
+    if (!name || typeof name !== "string" || !name.trim())
+      return res.status(400).json({ error: "Naam is verplicht" });
 
     const update = {
       $setOnInsert: { name, isYoutubeArtist: true },
@@ -50,7 +52,7 @@ router.post("/youtube", async (req, res, next) => {
 });
 
 // GET /api/artists/:id - een artiest incl. songs
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
     const artist = await Artist.findById(req.params.id).populate("songs");
     if (!artist) return res.status(404).json({ error: "Artiest niet gevonden" });

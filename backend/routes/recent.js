@@ -1,5 +1,6 @@
 import { Router } from "express";
 import RecentlyPlayed from "../models/RecentlyPlayed.js";
+import { isValidObjectId } from "../middleware/security.js";
 
 const router = Router();
 
@@ -20,7 +21,8 @@ router.get("/", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   try {
     const { song } = req.body;
-    if (!song) return res.status(400).json({ error: "song (id) is verplicht" });
+    if (!isValidObjectId(song))
+      return res.status(400).json({ error: "Geldige song (id) is verplicht" });
 
     const now = new Date();
     const entry = await RecentlyPlayed.findOneAndUpdate(

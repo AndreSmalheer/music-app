@@ -1,25 +1,21 @@
 import { Router } from "express";
 import Playlist from "../models/Playlist.js";
-import multer from "multer";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { imageUpload } from "../middleware/upload.js";
+import { validateObjectIdParam } from "../middleware/security.js";
 
 const router = Router();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Alleen deze velden mogen via de API op een playlist gezet worden.
+// Voorkomt mass-assignment (client die extra/onbedoelde velden meestuurt).
+const ALLOWED_FIELDS = ["name", "description", "thumbnail", "songs"];
 
-// multer storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
+function pickAllowed(body = {}) {
+  const out = {};
+  for (const key of ALLOWED_FIELDS) {
+    if (body[key] !== undefined) out[key] = body[key];
+  }
+  return out;
+}
 
 // GET all playlists
 router.get("/", async (req, res, next) => {
@@ -32,7 +28,7 @@ router.get("/", async (req, res, next) => {
 });
 
 // GET single playlist
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
     const playlist = await Playlist.findById(req.params.id).populate("songs");
     if (!playlist)
@@ -45,34 +41,45 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // CREATE playlist
-router.post("/", upload.single("thumbnail"), async (req, res, next) => {
+router.post("/", imageUpload.single("thumbnail"), async (req, res, next) => {
   try {
     const { name, description, songs } = req.body;
 
-    if (!name) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ error: "Naam is verplicht" });
     }
 
+    // songs kan als JSON-string binnenkomen (multipart form). Veilig parsen.
+    let songIds = [];
+    if (songs) {
+      try {
+        const parsed = typeof songs === "string" ? JSON.parse(songs) : songs;
+        if (Array.isArray(parsed)) songIds = parsed;
+      } catch {
+        return res.status(400).json({ error: "Ongeldige songs-lijst" });
+      }
+    }
+
     const playlist = await Playlist.create({
-      name,
-      description: description || "",
+      name: name.trim(),
+      description: typeof description === "string" ? description : "",
       thumbnail: req.file ? `/uploads/${req.file.filename}` : "",
-      songs: songs ? JSON.parse(songs) : [],
+      songs: songIds,
     });
 
     res.status(201).json(playlist);
   } catch (err) {
-    console.error("🔴 ERROR:", err);
     next(err);
   }
 });
 
 // UPDATE playlist
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
+    const updates = pickAllowed(req.body);
     const playlist = await Playlist.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { $set: updates },
       { new: true, runValidators: true },
     );
 
@@ -86,7 +93,7 @@ router.put("/:id", async (req, res, next) => {
 });
 
 // DELETE playlist
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", validateObjectIdParam(), async (req, res, next) => {
   try {
     const playlist = await Playlist.findByIdAndDelete(req.params.id);
 
