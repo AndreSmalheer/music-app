@@ -423,3 +423,16 @@ export async function searchYoutubePage(q, pageToken = "") {
 export function getYoutubeStreamUrl(videoId) {
   return `${BASE_URL}/api/youtube/stream/${videoId}`;
 }
+
+// Warmt op de backend alvast de audio-URL op (yt-dlp resolve, ~enkele seconden).
+// Best-effort en fire-and-forget: door dit vooraf te doen (bij press-in of voor
+// het volgende nummer in de wachtrij) start het afspelen daarna vrijwel direct
+// i.p.v. dat de gebruiker op de resolve moet wachten.
+const _prefetching = new Set();
+export function prefetchYoutube(videoId) {
+  if (!videoId || _prefetching.has(videoId)) return;
+  _prefetching.add(videoId);
+  fetch(`${BASE_URL}/api/youtube/prefetch/${videoId}`)
+    .catch(() => {})
+    .finally(() => _prefetching.delete(videoId));
+}

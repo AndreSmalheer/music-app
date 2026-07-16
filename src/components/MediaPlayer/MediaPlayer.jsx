@@ -1,5 +1,5 @@
 import { useRef, useState, createContext, useEffect } from "react";
-import { getYoutubeStreamUrl } from "../../services/api";
+import { getYoutubeStreamUrl, prefetchYoutube } from "../../services/api";
 
 export const PlayerContext = createContext();
 
@@ -290,6 +290,15 @@ function MediaPlayer({ children }) {
   const onLoadedMetadata = () => {
     setDuration(audioPlayerRef.current?.duration || 0);
   };
+
+  // Prefetch het volgende YouTube-nummer in de wachtrij zodra het huidige
+  // begint te spelen. Zo is de yt-dlp-resolve al gedaan wanneer je skipt of het
+  // nummer vanzelf doorloopt → geen ~4s wachttijd meer bij de volgende track.
+  useEffect(() => {
+    if (currentIndex < 0 || queue.length === 0) return;
+    const next = queue[currentIndex + 1];
+    if (next?.youtubeId) prefetchYoutube(next.youtubeId);
+  }, [currentIndex, queue]);
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;

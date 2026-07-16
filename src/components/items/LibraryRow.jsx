@@ -3,6 +3,7 @@ import {
   addSongToPlaylist,
   getPlaylists,
   deletePlaylist,
+  prefetchYoutube,
 } from "../../services/api";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -146,6 +147,7 @@ function LibraryRow({
           className="library-row"
           {...longPressProps}
           whileTap={{ scale: 0.98 }}
+          onPointerDown={() => item.youtubeId && prefetchYoutube(item.youtubeId)}
           onClick={() => playSongList(item)}
         >
           <img src={item.cover} className="library-row__cover" alt="" />

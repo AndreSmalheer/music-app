@@ -4,11 +4,18 @@ import {
   addSongToPlaylist,
   getPlaylists,
   removeSongFromPlaylist,
+  prefetchYoutube,
 } from "../../services/api";
 import { gradientFor } from "../../data/placeholderContent";
 
 function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
   const menuOptions = ["Play", "Add to Playlist"];
+
+  // Warm de YouTube-stream alvast op zodra de vinger neergaat (touchstart),
+  // nog vóór de tik loslaat. Geeft het afspelen een voorsprong = minder delay.
+  const handlePressIn = () => {
+    if (song?.youtubeId) prefetchYoutube(song.youtubeId);
+  };
 
   const showPlaylistOptions = async () => {
     try {
@@ -65,6 +72,7 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
         whileTap={{
           scale: 0.98,
         }}
+        onPointerDown={handlePressIn}
         onClick={() => handlePlaySong(song)}
       >
         {cover ? (
@@ -109,6 +117,7 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
         whileTap={{
           scale: 0.98,
         }}
+        onPointerDown={handlePressIn}
         onClick={() => handlePlaySong(song)}
       >
         <div className="album-cover-search-result">
@@ -145,6 +154,7 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
       whileTap={{
         scale: 0.98,
       }}
+      onPointerDown={handlePressIn}
       onClick={() => handlePlaySong(song)}
     >
       <div className="see-all-recent-song-album-cover">
