@@ -4,11 +4,13 @@
 
 :root {
   /* Achtergronden */
-  --bg-primary: #0c0c0e;
-  --bg-secondary: #1c1c1f;
-  --bg-elevated: #232327;
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-strong: rgba(255, 255, 255, 0.09);
+  --bg-primary: #242323;
+  --bg-secondary: #2a2a2a;
+  --bg-elevated: #2e2e2e;
+  --bg-footer: #323232;
+
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-strong: rgba(255, 255, 255, 0.1);
 
   /* Tekst */
   --text-primary: #ffffff;
