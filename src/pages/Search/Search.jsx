@@ -95,11 +95,12 @@ function Search() {
           youtube: songs,
         });
 
-        // Prefetch direct de top 4 nummers op de achtergrond voor instant afspelen
         const topIds = songs.slice(0, 4).map((s) => s.youtubeId).filter(Boolean);
         if (topIds.length > 0) {
-          console.log("[Search UI] 🚀 Triggering background audio prefetch for top search results:", topIds);
-          prefetchBatchYoutubeAudio(topIds).catch(() => {});
+          console.log("[Search UI] 🚀 Pre-warming top results before hiding loader:", topIds);
+          const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
+          await Promise.race([prefetchBatchYoutubeAudio(topIds), timeout]);
+          console.log("[Search UI] ✅ Pre-warm done — showing results now");
         }
       } catch (err) {
         console.error("YouTube zoeken mislukt:", err);
