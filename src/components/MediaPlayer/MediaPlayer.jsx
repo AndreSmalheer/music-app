@@ -1,5 +1,5 @@
 import { useRef, useState, createContext, useEffect } from "react";
-import { getYoutubeStreamUrl } from "../../services/api";
+import { getYoutubeStreamUrl, prefetchYoutubeAudio } from "../../services/api";
 
 export const PlayerContext = createContext();
 
@@ -196,6 +196,16 @@ function MediaPlayer({ children }) {
       setIsPlaying(false);
     }
   };
+
+  // Prefetch het volgende nummer in de wachtrij zodra de speler wisselt
+  useEffect(() => {
+    if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+      const nextTrack = queue[currentIndex + 1];
+      if (nextTrack?.youtubeId) {
+        prefetchYoutubeAudio(nextTrack.youtubeId);
+      }
+    }
+  }, [currentIndex, queue]);
 
   // Bepaalt welke index als volgende speelt; houdt rekening met shuffle en repeat.
   const getNextIndex = () => {

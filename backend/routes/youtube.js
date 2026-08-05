@@ -88,52 +88,110 @@ async function searchViaApi(q, pageToken) {
   };
 }
 
-async function searchViaInvidious(INVIDIOUS_URL, query, page = 1) {
-  const videosUrl =
-    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
-    `&type=video&page=${page}`;
+// --- Fast Piped & Invidious mirror pool helper ---------------------------
+const DEFAULT_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-  const channelsUrl =
-    `${INVIDIOUS_URL}/api/v1/search?q=${encodeURIComponent(query)}` +
-    `&type=channel`;
+const PIPED_INSTANCES = [
+  "https://pipedapi.kavin.rocks",
+  "https://api.piped.privacydev.net",
+  "https://pipedapi.mha.fi",
+  "https://piped-api.garudalinux.org",
+];
 
-  const [channelsRes, videosRes] = await Promise.all([
-    page === 1 ? fetch(channelsUrl) : Promise.resolve(null),
-    fetch(videosUrl),
-  ]);
-
-  if ((channelsRes && !channelsRes.ok) || !videosRes.ok) {
-    throw new Error("Invidious search failed");
+function getInvidiousInstances() {
+  const instances = [];
+  const envUrl = process.env.INVIDIOUS_URL?.trim();
+  if (envUrl) {
+    instances.push(envUrl);
+    if (envUrl.startsWith("https://") && /https:\/\/\d+\.\d+\.\d+\.\d+/.test(envUrl)) {
+      instances.push(envUrl.replace("https://", "http://"));
+    }
   }
 
-  const [channelsData, videosData] = await Promise.all([
-    channelsRes ? channelsRes.json() : Promise.resolve([]),
-    videosRes.json(),
-  ]);
+  const publicInstances = [
+    "https://inv.tux.pizza",
+    "https://invidious.drgns.space",
+    "https://invidious.nerdvpn.de",
+    "https://yewtu.be",
+    "https://invidious.privacydev.net",
+  ];
 
-  const channelResults = (channelsData || []).map((channel) => ({
-    youtubeChannelId: channel.authorId,
-    title: channel.author,
-    artist: channel.author,
-    thumbnail:
-      channel.authorThumbnails?.find((t) => t.width >= 100)?.url ||
-      channel.authorThumbnails?.[channel.authorThumbnails.length - 1]?.url ||
-      null,
-    type: "youtube-artist",
-  }));
+  for (const inst of publicInstances) {
+    if (!instances.includes(inst)) instances.push(inst);
+  }
+  return instances;
+}
 
-  const videoResults = (videosData || []).map((video) => ({
-    youtubeId: video.videoId,
-    title: video.title,
-    artist: video.author,
-    thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
-    type: "youtube",
-  }));
+async function searchSingleInvidious(baseUrl, query, page = 1) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-  return {
-    results: [...channelResults, ...videoResults],
-    nextPageToken: page + 1,
-  };
+  try {
+    const videosUrl =
+      `${baseUrl}/api/v1/search?q=${encodeURIComponent(query)}` +
+      `&type=video&page=${page}`;
+
+    const channelsUrl =
+      `${baseUrl}/api/v1/search?q=${encodeURIComponent(query)}` +
+      `&type=channel`;
+
+    const headers = { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" };
+
+    const [channelsRes, videosRes] = await Promise.all([
+      page === 1 ? fetch(channelsUrl, { headers, signal: controller.signal }) : Promise.resolve(null),
+      fetch(videosUrl, { headers, signal: controller.signal }),
+    ]);
+
+    clearTimeout(timeoutId);
+
+    if ((channelsRes && !channelsRes.ok) || !videosRes.ok) {
+      throw new Error(`Invidious search returned bad status from ${baseUrl}`);
+    }
+
+    const [channelsData, videosData] = await Promise.all([
+      channelsRes ? channelsRes.json() : Promise.resolve([]),
+      videosRes.json(),
+    ]);
+
+    const channelResults = (channelsData || []).map((channel) => ({
+      youtubeChannelId: channel.authorId,
+      title: channel.author,
+      artist: channel.author,
+      thumbnail:
+        channel.authorThumbnails?.find((t) => t.width >= 100)?.url ||
+        channel.authorThumbnails?.[channel.authorThumbnails.length - 1]?.url ||
+        null,
+      type: "youtube-artist",
+    }));
+
+    const videoResults = (videosData || []).map((video) => ({
+      youtubeId: video.videoId,
+      title: video.title,
+      artist: video.author,
+      thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
+      type: "youtube",
+    }));
+
+    return {
+      results: [...channelResults, ...videoResults],
+      nextPageToken: page + 1,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+async function searchViaInvidious(query, page = 1) {
+  const instances = getInvidiousInstances();
+  try {
+    return await Promise.any(
+      instances.map((url) => searchSingleInvidious(url, query, page))
+    );
+  } catch (err) {
+    throw new Error("All Invidious search mirrors failed");
+  }
 }
 
 // --- Zoeken via yt-dlp (geen quota; alleen video's, geen kanalen) ---------
@@ -184,40 +242,46 @@ async function videoViaYtdlp(videoId) {
 }
 
 async function videoViaInvidious(videoId) {
-  const res = await fetch(
-    `${process.env.INVIDIOUS_URL}/api/v1/videos/${videoId}`,
-    {
-      headers: {
-        Accept: "application/json",
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error(`Invidious returned ${res.status}`);
+  const instances = getInvidiousInstances();
+  try {
+    return await Promise.any(
+      instances.map(async (baseUrl) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        try {
+          const res = await fetch(`${baseUrl}/api/v1/videos/${videoId}`, {
+            headers: { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const info = await res.json();
+          return {
+            results: [
+              {
+                youtubeId: info.videoId || videoId,
+                title: info.title || "Onbekend",
+                artist: info.author || "",
+                thumbnail:
+                  info.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
+                  thumbForVideo(videoId),
+                type: "youtube",
+              },
+            ],
+            nextPageToken: null,
+          };
+        } catch (err) {
+          clearTimeout(timeoutId);
+          throw err;
+        }
+      })
+    );
+  } catch {
+    return videoViaYtdlp(videoId);
   }
-
-  const info = await res.json();
-
-  return {
-    results: [
-      {
-        youtubeId: info.videoId || videoId,
-        title: info.title || "Onbekend",
-        artist: info.author || "",
-        thumbnail:
-          info.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
-          thumbForVideo(videoId),
-        type: "youtube",
-      },
-    ],
-    nextPageToken: null,
-  };
 }
 
-// GET /api/youtube/search?q=  — zoekt YouTube muziekvideo's. Probeert eerst de
-// Data API (geeft ook kanalen/artiesten); valt bij elke fout — vooral als de
-// dag-quota op is — automatisch terug op yt-dlp, dat geen quota kent.
+// GET /api/youtube/search?q=
 router.get("/search", async (req, res, next) => {
   try {
     const q = (req.query.q || "").trim();
@@ -241,14 +305,10 @@ router.get("/search", async (req, res, next) => {
     if (urlMatch) {
       payload = await videoViaInvidious(urlMatch[1]);
     } else {
-      // Probeer de Data API; bij falen (bv. quota) terugvallen op yt-dlp.
       payload = await searchViaInvidious(
-        process.env.INVIDIOUS_URL,
         q,
         page,
       ).catch((err) => {
-        console.error(err);
-        console.error(err.cause);
         return searchViaYtdlp(q);
       });
     }
@@ -261,13 +321,6 @@ router.get("/search", async (req, res, next) => {
 });
 
 // ---- Audio-URL resolven + cachen --------------------------------------
-//
-// Voor een werkende tijdbalk/seeking moet de browser de totale lengte kennen
-// (Content-Length) én Range-requests kunnen doen. yt-dlp's eigen pipe-stream
-// geeft dat niet. Daarom vragen we yt-dlp alleen om de DIRECTE audio-URL van
-// de YouTube-CDN (googlevideo) — die ondersteunt Content-Length + Range — en
-// proxyen we die zelf, met de Range-header van de browser doorgegeven.
-
 const formatCache = new Map(); // videoId -> { url, mime, expires }
 
 function mimeForExt(ext) {
@@ -284,27 +337,234 @@ function normalizeDuration(duration) {
   return Math.round(value);
 }
 
-// Eén gedeelde resolve + cache voor de hele backend (stream én song-download
-// importeren dit). Zo draait yt-dlp maar één keer per video i.p.v. dubbel.
-export async function resolveAudio(videoId) {
-  const cached = formatCache.get(videoId);
-  if (cached && cached.expires > Date.now()) return cached;
+// Piped API stream extractor
+async function fetchAudioFromPipedInstance(baseUrl, videoId) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-  // m4a (aac) heeft de voorkeur: breed ondersteund (ook Safari/iOS) en seekbaar.
+  try {
+    const res = await fetch(`${baseUrl}/streams/${videoId}`, {
+      headers: { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`Piped status ${res.status}`);
+    const info = await res.json();
+    const audioStreams = info.audioStreams || [];
+    if (audioStreams.length === 0) throw new Error("No audioStreams in Piped");
+
+    const m4aStreams = audioStreams.filter(
+      (s) =>
+        s.format === "M4A" ||
+        s.mimeType?.includes("mp4") ||
+        s.mimeType?.includes("m4a")
+    );
+
+    const targetList = m4aStreams.length > 0 ? m4aStreams : audioStreams;
+    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+
+    const bestAudio = targetList[0];
+    if (!bestAudio || !bestAudio.url) throw new Error("No valid stream URL in Piped");
+
+    const ext = bestAudio.format?.toLowerCase() || (bestAudio.mimeType?.includes("webm") ? "webm" : "m4a");
+    const mime = bestAudio.mimeType ? bestAudio.mimeType.split(";")[0] : mimeForExt(ext);
+    const duration = normalizeDuration(info.duration);
+
+    let expires = Date.now() + 60 * 60 * 1000;
+    const m = /[?&]expire=(\d+)/.exec(bestAudio.url);
+    if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
+
+    return {
+      url: bestAudio.url,
+      ext,
+      mime,
+      duration,
+      expires,
+      source: `Piped (${baseUrl})`,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+// Invidious API stream extractor
+async function fetchAudioFromInvidiousInstance(baseUrl, videoId) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/videos/${videoId}`, {
+      headers: { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`Status ${res.status} from ${baseUrl}`);
+    const info = await res.json();
+    const formats = info.adaptiveFormats || [];
+    const audioFormats = formats.filter(
+      (f) =>
+        f.type?.includes("audio/") ||
+        f.mimeType?.includes("audio/") ||
+        f.container === "m4a" ||
+        f.container === "webm"
+    );
+
+    if (audioFormats.length === 0) throw new Error("No audio formats found");
+
+    const m4aFormats = audioFormats.filter(
+      (f) =>
+        f.container === "m4a" ||
+        f.type?.includes("mp4a") ||
+        f.type?.includes("audio/mp4")
+    );
+
+    const targetList = m4aFormats.length > 0 ? m4aFormats : audioFormats;
+    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+
+    const bestAudio = targetList[0];
+    if (!bestAudio || !bestAudio.url) throw new Error("No valid stream URL");
+
+    const ext =
+      bestAudio.container ||
+      (bestAudio.type?.includes("webm") ? "webm" : "m4a");
+    const mime = bestAudio.type ? bestAudio.type.split(";")[0] : mimeForExt(ext);
+    const duration = normalizeDuration(info.lengthSeconds || info.duration);
+
+    let expires = Date.now() + 60 * 60 * 1000;
+    const m = /[?&]expire=(\d+)/.exec(bestAudio.url);
+    if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
+
+    return {
+      url: bestAudio.url,
+      ext,
+      mime,
+      duration,
+      expires,
+      source: `Invidious (${baseUrl})`,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+// Direct InnerTube API extractors (ANDROID_VR / TVHTML5 return unencrypted direct stream URLs)
+async function fetchInnerTubeClient(clientName, clientVersion, videoId) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+  try {
+    const res = await fetch("https://www.youtube.com/youtubei/v1/player", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent":
+          clientName === "ANDROID_VR"
+            ? "com.google.android.apps.youtube.vr/1.59.19 (Linux; U; Android 12; en_US)"
+            : "Mozilla/5.0 (SmartTV; ; ; ; ) AppleWebKit/537.36 (KHTML, like Gecko) TVHTML5/7.20250101.12.00 Chrome/114.0.0.0 Safari/537.36",
+      },
+      body: JSON.stringify({
+        videoId: videoId,
+        context: {
+          client: {
+            clientName: clientName,
+            clientVersion: clientVersion,
+            hl: "en",
+            gl: "US",
+          },
+        },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`InnerTube (${clientName}) status ${res.status}`);
+    const data = await res.json();
+    const formats = data?.streamingData?.adaptiveFormats || [];
+    const audioFormats = formats.filter(
+      (f) => f.mimeType && f.mimeType.startsWith("audio/") && f.url
+    );
+
+    if (audioFormats.length === 0) throw new Error(`No direct audio URLs returned by InnerTube (${clientName})`);
+
+    const m4aFormats = audioFormats.filter(
+      (f) => f.mimeType.includes("mp4a") || f.mimeType.includes("audio/mp4")
+    );
+
+    const targetList = m4aFormats.length > 0 ? m4aFormats : audioFormats;
+    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+
+    const bestAudio = targetList[0];
+    const ext = bestAudio.mimeType.includes("webm") ? "webm" : "m4a";
+    const mime = bestAudio.mimeType.split(";")[0];
+    const duration = normalizeDuration(
+      (Number(bestAudio.approxDurationMs) || 0) / 1000
+    );
+
+    let expires = Date.now() + 60 * 60 * 1000;
+    const m = /[?&]expire=(\d+)/.exec(bestAudio.url);
+    if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
+
+    return {
+      url: bestAudio.url,
+      ext,
+      mime,
+      duration,
+      expires,
+      source: `YouTube Direct (${clientName})`,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+async function audioViaInnerTube(videoId) {
+  try {
+    return await Promise.any([
+      fetchInnerTubeClient("ANDROID_VR", "1.59.19", videoId),
+      fetchInnerTubeClient("TVHTML5", "7.20250101.12.00", videoId),
+    ]);
+  } catch (err) {
+    throw new Error("InnerTube direct clients failed");
+  }
+}
+
+async function audioViaFastPool(videoId) {
+  const directPromise = audioViaInnerTube(videoId);
+  const pipedPromises = PIPED_INSTANCES.map((u) => fetchAudioFromPipedInstance(u, videoId));
+  const invidiousPromises = getInvidiousInstances().map((u) => fetchAudioFromInvidiousInstance(u, videoId));
+
+  try {
+    return await Promise.any([directPromise, ...pipedPromises, ...invidiousPromises]);
+  } catch (err) {
+    throw new Error("All fast stream resolvers (YouTube Direct, Piped & Invidious) failed");
+  }
+}
+
+// In-flight deduplicatie map om dubbel werk voor hetzelfde videoId te voorkomen
+const inFlightPromises = new Map();
+
+async function resolveViaYtdlp(videoId, startMs) {
   const info = await getYoutubedl()(
     `https://www.youtube.com/watch?v=${videoId}`,
     {
       dumpSingleJson: true,
       noWarnings: true,
       noPlaylist: true,
+      noCallHome: true,
+      noCheckCertificates: true,
+      preferFreeFormats: true,
+      socketTimeout: "5",
       format: "bestaudio[ext=m4a]/bestaudio",
     },
   );
 
-  if (!info || !info.url) throw new Error("Geen audio-URL gevonden");
+  if (!info || !info.url) throw new Error("Geen audio-URL gevonden via yt-dlp");
 
-  // Verloop: gebruik 'expire' uit de URL (unix-seconden) indien aanwezig,
-  // anders max 1 uur cachen.
   let expires = Date.now() + 60 * 60 * 1000;
   const m = /[?&]expire=(\d+)/.exec(info.url);
   if (m) expires = Math.min(expires, parseInt(m[1], 10) * 1000 - 60 * 1000);
@@ -315,9 +575,56 @@ export async function resolveAudio(videoId) {
     mime: mimeForExt(info.ext),
     duration: normalizeDuration(info.duration),
     expires,
+    source: "yt-dlp",
   };
-  formatCache.set(videoId, resolved);
+  console.log(`[Stream Resolved] 🐢 Audio for video ${videoId} extracted via yt-dlp fallback in ${Date.now() - startMs}ms`);
   return resolved;
+}
+
+// Eén gedeelde resolve + cache + in-flight deduplicatie voor de hele backend
+export async function resolveAudio(videoId) {
+  // 1. Check completed cache
+  const cached = formatCache.get(videoId);
+  if (cached && cached.expires > Date.now()) {
+    console.log(`[Stream Cache Hit] ⚡ Instant stream cache hit for video ${videoId}`);
+    return cached;
+  }
+
+  // 2. Check in-flight resolution (Deduplicate concurrent prefetch / click calls!)
+  if (inFlightPromises.has(videoId)) {
+    console.log(`[Stream Deduplicated] ⏳ Joined in-flight resolution for video ${videoId}`);
+    return await inFlightPromises.get(videoId);
+  }
+
+  // 3. Create shared single resolution task
+  const startMs = Date.now();
+  const resolutionPromise = (async () => {
+    try {
+      const streamResult = await audioViaFastPool(videoId);
+      const tookMs = Date.now() - startMs;
+      console.log(`[Stream Resolved] 🚀 Audio for video ${videoId} extracted via ${streamResult.source} in ${tookMs}ms`);
+      formatCache.set(videoId, streamResult);
+      return streamResult;
+    } catch (err) {
+      console.warn(
+        `Fast stream pool failed for video ${videoId}, falling back to single yt-dlp CLI:`,
+        err.message
+      );
+      try {
+        const fallbackResult = await resolveViaYtdlp(videoId, startMs);
+        formatCache.set(videoId, fallbackResult);
+        return fallbackResult;
+      } catch (ytErr) {
+        console.error(`yt-dlp fallback also failed for video ${videoId}:`, ytErr.message);
+        throw ytErr;
+      }
+    } finally {
+      inFlightPromises.delete(videoId);
+    }
+  })();
+
+  inFlightPromises.set(videoId, resolutionPromise);
+  return await resolutionPromise;
 }
 
 // Haalt de upstream-stream op; bij een verlopen URL (403/410) één keer opnieuw resolven.
@@ -334,23 +641,36 @@ async function fetchUpstream(videoId, rangeHeader, allowRetry = true) {
   return { audio, upstream };
 }
 
-// GET /api/youtube/prefetch/:videoId — warmt alleen de audio-URL-cache op
-// (geen body). De frontend roept dit aan voor het volgende nummer in de wachtrij
-// zodat skip/auto-advance direct speelt i.p.v. ~4s op yt-dlp te wachten.
+// GET /api/youtube/prefetch/:videoId — warmt de audio-URL-cache op
 router.get("/prefetch/:videoId", async (req, res) => {
   const { videoId } = req.params;
   if (!videoId) return res.status(400).json({ error: "Geen videoId" });
+  console.log(`[Prefetch] ⚡ Pre-warming audio stream for video ${videoId}...`);
   try {
     await resolveAudio(videoId);
+    console.log(`[Prefetch] ✅ Audio pre-warmed for video ${videoId}`);
     res.status(204).end();
-  } catch {
-    // Stilletjes falen: prefetch is best-effort, de echte stream probeert opnieuw.
+  } catch (err) {
+    console.warn(`[Prefetch] ⚠️ Pre-warm failed for video ${videoId}:`, err.message);
     res.status(204).end();
   }
 });
 
-// GET /api/youtube/stream/:videoId — proxyt YouTube-audio met Range-support,
-// zodat de tijdbalk werkt en je kunt seeken.
+// POST /api/youtube/prefetch-batch — warmt meerdere video's in één keer op (parallel)
+router.post("/prefetch-batch", async (req, res) => {
+  const { videoIds } = req.body || {};
+  if (!Array.isArray(videoIds) || videoIds.length === 0) {
+    return res.status(400).json({ error: "videoIds array vereist" });
+  }
+
+  const slice = videoIds.slice(0, 5);
+  console.log(`[Prefetch] 🚀 Batch pre-warming ${slice.length} top search result tracks: [${slice.join(", ")}]...`);
+  await Promise.allSettled(slice.map((id) => resolveAudio(id)));
+  console.log(`[Prefetch] ✅ Batch pre-warming complete for search results.`);
+  res.status(204).end();
+});
+
+// GET /api/youtube/stream/:videoId — proxyt YouTube-audio met Range-support
 router.get("/stream/:videoId", async (req, res, next) => {
   try {
     const { videoId } = req.params;
@@ -362,7 +682,6 @@ router.get("/stream/:videoId", async (req, res, next) => {
       return res.status(502).json({ error: "Upstream stream fout" });
     }
 
-    // Status spiegelen: 200 (hele body) of 206 (partial → seeking).
     res.status(upstream.status);
     for (const h of [
       "content-length",
@@ -382,7 +701,6 @@ router.get("/stream/:videoId", async (req, res, next) => {
     nodeStream.on("error", () => {
       if (res.headersSent) res.end();
     });
-    // Stop de stream als de client de verbinding verbreekt (bv. ander nummer).
     req.on("close", () => nodeStream.destroy());
 
     nodeStream.pipe(res);

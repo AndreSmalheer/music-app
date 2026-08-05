@@ -423,3 +423,14 @@ export async function searchYoutubePage(q, pageToken = "") {
 export function getYoutubeStreamUrl(videoId) {
   return `${BASE_URL}/api/youtube/stream/${videoId}`;
 }
+
+export function prefetchYoutubeAudio(videoId) {
+  if (!videoId) return Promise.resolve();
+  return fetch(`${BASE_URL}/api/youtube/prefetch/${videoId}`).catch(() => {});
+}
+
+export function prefetchBatchYoutubeAudio(videoIds) {
+  if (!Array.isArray(videoIds) || videoIds.length === 0) return Promise.resolve();
+  return postJSON("/api/youtube/prefetch-batch", { videoIds }).catch(() => {});
+}
+

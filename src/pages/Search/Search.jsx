@@ -13,6 +13,7 @@ import {
   downloadFromYoutube,
   createYoutubeArtist,
   addRecent,
+  prefetchBatchYoutubeAudio,
 } from "../../services/api";
 import SongItem from "../../components/items/SongItem";
 import ArtistItem from "../../components/items/ArtistItems";
@@ -93,6 +94,13 @@ function Search() {
           artists,
           youtube: songs,
         });
+
+        // Prefetch direct de top 4 nummers op de achtergrond voor instant afspelen
+        const topIds = songs.slice(0, 4).map((s) => s.youtubeId).filter(Boolean);
+        if (topIds.length > 0) {
+          console.log("[Search UI] 🚀 Triggering background audio prefetch for top search results:", topIds);
+          prefetchBatchYoutubeAudio(topIds).catch(() => {});
+        }
       } catch (err) {
         console.error("YouTube zoeken mislukt:", err);
         setSearchResults(emptyResults);
@@ -120,16 +128,19 @@ function Search() {
 
     navigate("/now-playing");
 
-    downloadFromYoutube({
-      url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
-      title: song.title,
-      artist: song.artist,
-      thumbnail: song.cover,
-    })
-      .then((savedSong) => {
-        if (savedSong?.id) addRecent(savedSong.id).catch(() => {});
+    // Asynchroon metadata opslaan zonder de speler/navigatie te vertragen
+    setTimeout(() => {
+      downloadFromYoutube({
+        url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
+        title: song.title,
+        artist: song.artist,
+        thumbnail: song.cover,
       })
-      .catch((err) => console.error("YouTube track opslaan mislukt:", err));
+        .then((savedSong) => {
+          if (savedSong?.id) addRecent(savedSong.id).catch(() => {});
+        })
+        .catch((err) => console.error("YouTube track opslaan mislukt:", err));
+    }, 100);
   };
 
   // YouTube-kanaal eerst in de DB opslaan, dan de artiestpagina openen.

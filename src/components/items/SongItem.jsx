@@ -1,14 +1,55 @@
+import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import useLongPress from "../../hooks/useLongPress";
 import {
   addSongToPlaylist,
   getPlaylists,
   removeSongFromPlaylist,
+  prefetchYoutubeAudio,
 } from "../../services/api";
 import { gradientFor } from "../../data/placeholderContent";
 
 function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
   const menuOptions = ["Play", "Add to Playlist"];
+  const itemRef = useRef(null);
+  const prefetchedRef = useRef(false);
+
+  const handlePrefetch = () => {
+    if (song?.youtubeId && !prefetchedRef.current) {
+      prefetchedRef.current = true;
+      prefetchYoutubeAudio(song.youtubeId);
+    }
+  };
+
+  useEffect(() => {
+    const youtubeId = song?.youtubeId;
+    if (!youtubeId || prefetchedRef.current) return;
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !prefetchedRef.current) {
+            prefetchedRef.current = true;
+            prefetchYoutubeAudio(youtubeId);
+            if (itemRef.current) observer.unobserve(itemRef.current);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: "150px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    const el = itemRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [song?.youtubeId]);
 
   const showPlaylistOptions = async () => {
     try {
@@ -60,11 +101,14 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
     const cover = song.cover || song.img;
     return (
       <motion.div
+        ref={itemRef}
         className="track-card"
         {...longPressProps}
         whileTap={{
           scale: 0.98,
         }}
+        onMouseEnter={handlePrefetch}
+        onPointerDown={handlePrefetch}
         onClick={() => handlePlaySong(song)}
       >
         {cover ? (
@@ -104,11 +148,14 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
   if (variant === "search") {
     return (
       <motion.div
+        ref={itemRef}
         className="song"
         {...longPressProps}
         whileTap={{
           scale: 0.98,
         }}
+        onMouseEnter={handlePrefetch}
+        onPointerDown={handlePrefetch}
         onClick={() => handlePlaySong(song)}
       >
         <div className="album-cover-search-result">
@@ -141,9 +188,12 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
 
     return (
       <motion.div
+        ref={itemRef}
         className="home-tile"
         {...longPressProps}
         whileTap={{ scale: 0.98 }}
+        onMouseEnter={handlePrefetch}
+        onPointerDown={handlePrefetch}
         onClick={() => handlePlaySong(song)}
       >
         {cover ? (
@@ -175,11 +225,14 @@ function SongItem({ song, handlePlaySong, showOptions, variant = "list" }) {
 
   return (
     <motion.div
+      ref={itemRef}
       className="see-all-recent-song"
       {...longPressProps}
       whileTap={{
         scale: 0.98,
       }}
+      onMouseEnter={handlePrefetch}
+      onPointerDown={handlePrefetch}
       onClick={() => handlePlaySong(song)}
     >
       <div className="see-all-recent-song-album-cover">
