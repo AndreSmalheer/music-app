@@ -332,21 +332,32 @@
   color: var(--text-secondary);
 }
 
-.search-yt-button {
-  margin-top: 20px;
-  padding: 12px 26px;
-  background: var(--accent);
-  color: var(--on-accent);
+
+/* ── "Search on YouTube" button ── */
+.no-results-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}
+
+.yt-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 28px;
+  background: #ff0000;
+  color: #fff;
   border: none;
   border-radius: 30px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   font-family: var(--font-primary);
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 18px rgba(255, 0, 0, 0.35);
 }
 
-.search-yt-button:active {
+.yt-search-btn:active {
   transform: scale(0.96);
 }
-
