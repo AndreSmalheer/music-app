@@ -16,6 +16,7 @@ import artistsRouter from "./routes/artists.js";
 import recentRouter from "./routes/recent.js";
 import searchRouter from "./routes/search.js";
 import youtubeRouter from "./routes/youtube.js";
+import albumsRouter from "./routes/albums.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +40,7 @@ app.use("/api/artists", artistsRouter);
 app.use("/api/recent", recentRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/youtube", youtubeRouter);
+app.use("/api/albums", albumsRouter);
 
 // 404 fallback
 app.use((req, res) => {

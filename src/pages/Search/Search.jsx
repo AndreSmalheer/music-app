@@ -1,39 +1,17 @@
-import { useState, useContext, useEffect, useCallback } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon } from "lucide-react";
-
-function YoutubeIcon({ size = 18 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
 import "./Search.css";
-import EmptyState from "../../components/EmptyState/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";
 import useDelayedLoading from "../../hooks/useDelayedLoading";
 import { PlayerContext } from "../../components/MediaPlayer/MediaPlayer";
 import { useModal } from "../../context/ModalContext";
-import {
-  search,
-  searchYoutubePage,
-  downloadFromYoutube,
-  createYoutubeArtist,
-  addRecent,
-  prefetchBatchYoutubeAudio,
-} from "../../services/api";
+import { search } from "../../services/api";
 import SongItem from "../../components/items/SongItem";
 import ArtistItem from "../../components/items/ArtistItems";
 
-const TAGS = ["All", "Songs", "Artists"];
-const emptyResults = { topResults: [], songs: [], artists: [], youtube: [] };
+const TAGS = ["All", "Songs", "Artists", "Albums", "Playlists"];
+const emptyResults = { topResults: [], songs: [], artists: [], albums: [], playlists: [] };
 
 const GENRES = [
   { name: "Pop", color: "#c0392b" },
@@ -73,194 +51,106 @@ const item = {
   },
 };
 
-// Which mode the search results are in
-// "local"   — showing local DB results
-// "youtube" — showing YouTube results (after user clicked the button)
-// "none"    — no results from local, show the YT button
-
 function Search() {
   const [activeTag, setActiveTag] = useState("All");
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState(emptyResults);
   const [isLoading, setIsLoading] = useState(false);
-  const [ytLoading, setYtLoading] = useState(false);
-  const [resultMode, setResultMode] = useState("local"); // "local" | "youtube" | "none"
-  const showLoading = useDelayedLoading(isLoading || ytLoading, 150);
+  const showLoading = useDelayedLoading(isLoading, 150);
   const { playSong } = useContext(PlayerContext);
   const { showOptions } = useModal();
   const navigate = useNavigate();
-  const showTopResult = activeTag === "All";
-  const showSongs = activeTag === "All" || activeTag === "Songs";
-  const showArtists = activeTag === "All" || activeTag === "Artists";
 
-  // --- Local search on every query change ---
+  // --- MusicBrainz Search ---
   useEffect(() => {
     const q = query.trim();
     if (!q) {
       setSearchResults(emptyResults);
-      setResultMode("local");
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    setResultMode("local");
 
     const timer = setTimeout(async () => {
       try {
         const data = await search(q);
-
-        if (
-          data.songs.length === 0 &&
-          data.artists.length === 0 &&
-          data.playlists.length === 0
-        ) {
-          // No local results — surface the "Search on YouTube" prompt
-          setSearchResults(emptyResults);
-          setResultMode("none");
-        } else {
-          setSearchResults({
-            topResults: data.songs.slice(0, 1),
-            songs: data.songs,
-            artists: data.artists,
-            youtube: [],
-          });
-          setResultMode("local");
-        }
+        setSearchResults(data);
       } catch (err) {
-        console.error("Local search failed:", err);
+        console.error("MusicBrainz search failed:", err);
         setSearchResults(emptyResults);
-        setResultMode("none");
       } finally {
         setIsLoading(false);
       }
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [query]);
 
-  // --- YouTube search (triggered by the button) ---
-  const handleSearchYoutube = useCallback(async () => {
-    const q = query.trim();
-    if (!q) return;
-
-    setYtLoading(true);
-    try {
-      const page = await searchYoutubePage(q);
-      const songs = page.results.filter((r) => r.type !== "youtube-artist");
-      const artists = page.results.filter((r) => r.type === "youtube-artist");
-
-      setSearchResults({
-        topResults: songs.slice(0, 1),
-        songs,
-        artists,
-        youtube: songs,
-      });
-      setResultMode("youtube");
-
-      // Pre-warm the top results, keeping the loader alive until done
-      const topIds = songs
-        .slice(0, 4)
-        .map((s) => s.youtubeId)
-        .filter(Boolean);
-      if (topIds.length > 0) {
-        console.log(
-          "[Search UI] 🚀 Pre-warming YouTube top results before showing:",
-          topIds,
-        );
-        const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
-        await Promise.race([prefetchBatchYoutubeAudio(topIds), timeout]);
-        console.log(
-          "[Search UI] ✅ Pre-warm done — showing YouTube results now",
-        );
-      }
-    } catch (err) {
-      console.error("YouTube search failed:", err);
-    } finally {
-      setYtLoading(false);
-    }
+  // Reset tag when search query changes
+  useEffect(() => {
+    setActiveTag("All");
   }, [query]);
 
-  // --- Playback ---
   const handlePlaySong = (song) => {
     playSong(
-      song.src,
+      "",
       song.title,
       song.artist,
-      song.cover,
+      song.cover || song.img || "",
       -1,
-      song.youtubeId || null,
+      null, // Resolved on-the-fly in playSong!
       searchResults.songs,
+      song.id // MusicBrainz Recording ID
     );
-
     navigate("/now-playing");
-
-    if (song.youtubeId) {
-      setTimeout(() => {
-        downloadFromYoutube({
-          url: `https://www.youtube.com/watch?v=${song.youtubeId}`,
-          title: song.title,
-          artist: song.artist,
-          thumbnail: song.cover,
-        })
-          .then((savedSong) => {
-            if (savedSong?.id) addRecent(savedSong.id).catch(() => {});
-          })
-          .catch((err) => console.error("YouTube track opslaan mislukt:", err));
-      }, 100);
-    }
   };
 
-  const handleOpenYoutubeArtist = async (artist) => {
-    try {
-      const savedArtist = await createYoutubeArtist({
-        name: artist.name || artist.artist || artist.title,
-        thumbnail: artist.cover || artist.img,
-        youtubeChannelId: artist.youtubeChannelId,
-      });
-      navigate(`/artist/${savedArtist.id}`);
-    } catch (err) {
-      console.error("YouTube artiest openen mislukt:", err);
-    }
+  const handleOpenArtist = (artist) => {
+    navigate(`/artist/${artist.id}`);
+  };
+
+  const handleOpenAlbum = (album) => {
+    navigate(`/album/${album.id}`);
+  };
+
+  const handleOpenPlaylist = (playlist) => {
+    navigate(`/playlist/${playlist.id}`);
   };
 
   const hasResults =
     searchResults.topResults.length > 0 ||
     searchResults.songs.length > 0 ||
-    searchResults.artists.length > 0;
+    searchResults.artists.length > 0 ||
+    searchResults.albums.length > 0 ||
+    searchResults.playlists.length > 0;
+
+  // Filter lists based on tags
+  const displayedSongs = activeTag === "All" ? searchResults.songs.slice(0, 4) : searchResults.songs;
+  const displayedArtists = activeTag === "All" ? searchResults.artists.slice(0, 5) : searchResults.artists;
+  const displayedAlbums = activeTag === "All" ? searchResults.albums.slice(0, 6) : searchResults.albums;
+  const displayedPlaylists = activeTag === "All" ? searchResults.playlists.slice(0, 6) : searchResults.playlists;
+  const topResult = searchResults.topResults[0];
 
   return (
     <div className="search-page">
       <h1 className="search-title">Zoeken</h1>
 
       <div className="search-field">
-        <SearchIcon
-          className="search-field__icon"
-          size={21}
-          strokeWidth={2.4}
-        />
+        <SearchIcon className="search-field__icon" size={21} strokeWidth={2.4} />
         <input
           className="search-container"
-          placeholder="Artiesten, nummers of afspeellijsten"
+          placeholder="Artiesten, nummers of albums"
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setResultMode("local");
-          }}
+          onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
       {!query.trim() ? (
-        <motion.div
-          className="genre-section"
-          initial="hidden"
-          animate="show"
-          variants={container}
-        >
+        <motion.div className="genre-section" initial="hidden" animate="show" variants={container}>
           <motion.h2 className="genre-section__title" variants={item}>
             Bladeren door alles
           </motion.h2>
-
           <motion.div className="genre-grid" variants={container}>
             {GENRES.map((genre) => (
               <motion.button
@@ -308,71 +198,63 @@ function Search() {
                     width: "40px",
                     height: "40px",
                     border: "4px solid rgba(255, 255, 255, 0.1)",
-                    borderTop: "4px solid var(--accent, #1db954)",
+                    borderTop: "4px solid var(--accent, #e8730f)",
                     borderRadius: "50%",
                     margin: "0 auto 20px",
                   }}
                 />
-                <h1>{ytLoading ? "Searching YouTube..." : "Searching..."}</h1>
-              </motion.div>
-            ) : resultMode === "none" ? (
-              /* ── No local results: invite the user to search YouTube ── */
-              <motion.div
-                key="no-local-results"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="search-placeholder"
-              >
-                <p className="no-results-label">No results in your library</p>
-                <motion.button
-                  className="yt-search-btn"
-                  whileTap={{ scale: 0.96 }}
-                  onClick={handleSearchYoutube}
-                >
-                  <YoutubeIcon size={18} />
-                  Search on YouTube
-                </motion.button>
+                <h1>Searching MusicBrainz...</h1>
               </motion.div>
             ) : hasResults ? (
-              /* ── Results grid (local or YouTube) ── */
-              <motion.div
-                key={activeTag + resultMode}
-                variants={container}
-                initial="hidden"
-                animate="show"
-                exit="hidden"
-              >
-                {showTopResult && (
-                  <motion.div
-                    variants={item}
-                    className="top-result result-section"
-                  >
+              <motion.div key={activeTag} variants={container} initial="hidden" animate="show" exit="hidden">
+                {activeTag === "All" && searchResults.topResults.length > 0 && (
+                  <motion.div variants={item} className="result-section top-result-section">
                     <h3>Top Result</h3>
-                    <div className="result-container">
-                      {searchResults.topResults.map((song) => (
+                    <div className="top-result-container">
+                      {topResult.type === "artist" ? (
+                        <div
+                          className="top-result-card top-result-artist"
+                          onClick={() => handleOpenArtist(topResult)}
+                        >
+                          {topResult.img && (
+                            <img
+                              className="top-result-avatar top-result-avatar-image"
+                              src={topResult.img}
+                              alt={topResult.name}
+                              onError={(event) => {
+                                event.currentTarget.style.display = "none";
+                                event.currentTarget.nextElementSibling.style.display = "flex";
+                              }}
+                            />
+                          )}
+                          <div
+                            className="top-result-avatar"
+                            style={{ display: topResult.img ? "none" : "flex" }}
+                          >
+                            {topResult.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase()}
+                          </div>
+                          <h2 className="top-result-name">{topResult.name}</h2>
+                          <span className="top-result-type">Artist</span>
+                        </div>
+                      ) : (
                         <SongItem
-                          key={`top-${song.youtubeId || song.id}`}
-                          song={song}
+                          song={searchResults.topResults[0]}
                           handlePlaySong={handlePlaySong}
                           showOptions={showOptions}
                           variant="card"
                         />
-                      ))}
+                      )}
                     </div>
                   </motion.div>
                 )}
-                {showSongs && searchResults.songs.length > 0 && (
-                  <motion.div
-                    variants={item}
-                    className="result-section result-songs"
-                  >
+
+                {(activeTag === "All" || activeTag === "Songs") && displayedSongs.length > 0 && (
+                  <motion.div variants={item} className="result-section result-songs">
                     <h3>Songs</h3>
                     <div className="songs-container">
-                      {searchResults.songs.map((song) => (
+                      {displayedSongs.map((song) => (
                         <SongItem
-                          key={song.youtubeId || song.id}
+                          key={song.id}
                           song={song}
                           handlePlaySong={handlePlaySong}
                           showOptions={showOptions}
@@ -382,18 +264,16 @@ function Search() {
                     </div>
                   </motion.div>
                 )}
-                {showArtists && searchResults.artists.length > 0 && (
-                  <motion.div
-                    variants={item}
-                    className="result-section result-artist"
-                  >
-                    <h3 className="result-section-title">Artist</h3>
+
+                {(activeTag === "All" || activeTag === "Artists") && displayedArtists.length > 0 && (
+                  <motion.div variants={item} className="result-section result-artists-section">
+                    <h3>Artists</h3>
                     <div className="artists-container-result">
-                      {searchResults.artists.map((artist) => (
+                      {displayedArtists.map((artist) => (
                         <ArtistItem
-                          key={artist.youtubeChannelId || artist.id}
+                          key={artist.id}
                           artist={artist}
-                          navigate={() => handleOpenYoutubeArtist(artist)}
+                          navigate={() => handleOpenArtist(artist)}
                           showOptions={showOptions}
                           variant="artist"
                         />
@@ -401,8 +281,64 @@ function Search() {
                     </div>
                   </motion.div>
                 )}
+
+                {(activeTag === "All" || activeTag === "Albums") && displayedAlbums.length > 0 && (
+                  <motion.div variants={item} className="result-section result-albums-section">
+                    <h3>Albums</h3>
+                    <div className="albums-grid">
+                      {displayedAlbums.map((album) => (
+                        <div key={album.id} className="album-search-card" onClick={() => handleOpenAlbum(album)}>
+                          <div className="album-search-cover-wrap">
+                            {album.cover && (
+                              <img
+                                src={album.cover}
+                                alt={album.title}
+                                onError={(event) => {
+                                  event.currentTarget.style.display = "none";
+                                }}
+                              />
+                            )}
+                          </div>
+                          <h4 className="album-search-title">{album.title}</h4>
+                          <p className="album-search-artist">{album.artist} &middot; {album.year}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {(activeTag === "All" || activeTag === "Playlists") && displayedPlaylists.length > 0 && (
+                  <motion.div variants={item} className="result-section result-playlists-section">
+                    <h3>Playlists</h3>
+                    <div className="playlists-grid">
+                      {displayedPlaylists.map((pl) => (
+                        <div key={pl.id} className="playlist-search-card" onClick={() => handleOpenPlaylist(pl)}>
+                          <div className="playlist-search-cover-wrap">
+                            {pl.cover ? (
+                              <img src={pl.cover} alt={pl.name} />
+                            ) : (
+                              <div className="playlist-search-cover-fallback" />
+                            )}
+                          </div>
+                          <h4 className="playlist-search-title">{pl.name}</h4>
+                          <p className="playlist-search-songs">{pl.songCount} songs</p>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
-            ) : null}
+            ) : (
+              <motion.div
+                key="no-results"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="search-placeholder"
+              >
+                <h1>No results found</h1>
+                <p>Try searching for artists, songs, or albums.</p>
+              </motion.div>
+            )}
           </AnimatePresence>
         </>
       )}

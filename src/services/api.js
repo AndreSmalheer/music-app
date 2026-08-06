@@ -77,15 +77,16 @@ function normalizeDuration(duration = 0) {
 export function toUiTrack(song) {
   if (!song) return null;
   const isYoutubeTrack = !!song.youtubeId;
+  const cover = assetUrl(song.thumbnail || song.cover || song.img);
   return {
-    id: song._id,
+    id: song._id || song.id,
     title: song.title,
     artist: song.artist,
     album: song.album,
     duration: normalizeDuration(song.duration),
     durationLabel: formatDuration(song.duration),
-    cover: assetUrl(song.thumbnail),
-    img: assetUrl(song.thumbnail),
+    cover,
+    img: cover,
     src: isYoutubeTrack
       ? getYoutubeStreamUrl(song.youtubeId)
       : assetUrl(song.filePath),
@@ -99,17 +100,31 @@ export function toUiTrack(song) {
 
 export function toUiArtist(artist) {
   if (!artist) return null;
+  const cover = assetUrl(artist.thumbnail || artist.cover || artist.img);
+  const toUiAlbum = (album) => ({
+    ...album,
+    id: album._id || album.id,
+    cover: assetUrl(album.thumbnail || album.cover || album.img),
+    img: assetUrl(album.thumbnail || album.cover || album.img),
+  });
+
   return {
-    id: artist._id,
+    id: artist._id || artist.id,
     name: artist.name,
-    img: assetUrl(artist.thumbnail),
-    cover: assetUrl(artist.thumbnail),
+    img: cover,
+    cover,
     isYoutubeArtist: !!artist.isYoutubeArtist,
     youtubeChannelId: artist.youtubeChannelId,
     type: artist.isYoutubeArtist ? "youtube-artist" : "artist",
     songs: (artist.songs || []).map((s) =>
       typeof s === "object" ? toUiTrack(s) : s,
     ),
+    country: artist.country,
+    biography: artist.biography,
+    albums: (artist.albums || []).map(toUiAlbum),
+    singles: (artist.singles || []).map(toUiAlbum),
+    eps: (artist.eps || []).map(toUiAlbum),
+    chronology: (artist.chronology || []).map(toUiAlbum),
   };
 }
 
@@ -359,16 +374,23 @@ export function addRecent(songId) {
 
 export async function search(q) {
   const data = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
-
   return {
-    songs: (data.songs || []).map(toUiTrack),
-
-    artists: (data.artists || [])
-      .filter((artist) => !artist.isYoutubeArtist)
-      .map(toUiArtist),
-
-    playlists: (data.playlists || []).map(toUiPlaylist),
+    topResults: data.topResults || [],
+    songs: data.songs || [],
+    artists: data.artists || [],
+    albums: data.albums || [],
+    playlists: data.playlists || [],
   };
+}
+
+export async function getAlbum(id) {
+  return await getJSON(`/api/albums/${id}`);
+}
+
+export async function matchYoutubeTrack(title, artist, mbid = "") {
+  return await getJSON(
+    `/api/youtube/match?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}&mbid=${encodeURIComponent(mbid)}`
+  );
 }
 
 // ---- YouTube ------------------------------------------------------------

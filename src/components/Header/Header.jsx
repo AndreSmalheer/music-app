@@ -25,7 +25,6 @@ function Header() {
   // Header toont alleen nog een terug-knop op de legacy-pagina's.
   const isLegacyBackPage =
     path.includes("see-all") ||
-    path.includes("artist") ||
     path.includes("edit-playlist");
 
   if (!isLegacyBackPage) return null;

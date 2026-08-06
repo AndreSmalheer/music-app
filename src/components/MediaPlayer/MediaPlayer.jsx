@@ -1,5 +1,11 @@
 import { useRef, useState, createContext, useEffect } from "react";
-import { getYoutubeStreamUrl, prefetchYoutubeAudio } from "../../services/api";
+import {
+  getYoutubeStreamUrl,
+  prefetchYoutubeAudio,
+  matchYoutubeTrack,
+  createYoutubeSong,
+  addRecent,
+} from "../../services/api";
 
 export const PlayerContext = createContext();
 
@@ -125,28 +131,62 @@ function MediaPlayer({ children }) {
   ) => {
     if (!audioPlayerRef.current) return;
 
-    setYtLoading(!!youtubeId);
+    setYtLoading(true);
 
-    const finalSrc = youtubeId ? getYoutubeStreamUrl(youtubeId) : src;
+    // Populate the player before the MusicBrainz-to-YouTube lookup finishes.
+    // This lets Now Playing show its loading UI instead of a misleading
+    // "No song selected" state while the stream is being resolved.
+    setCurrentTrack({
+      id: trackId,
+      src: "",
+      title,
+      artist,
+      coverSrc,
+      youtubeId,
+    });
+
+    let resolvedYoutubeId = youtubeId;
+    let resolvedSrc = src;
+
+    // If this is a MusicBrainz song (no youtubeId, no src), fetch the match
+    if (!resolvedYoutubeId && !resolvedSrc && title !== "Unknown") {
+      try {
+        const matchData = await matchYoutubeTrack(title, artist, trackId || "");
+        resolvedYoutubeId = matchData.youtubeId;
+        resolvedSrc = getYoutubeStreamUrl(resolvedYoutubeId);
+      } catch (err) {
+        console.error(
+          "[MediaPlayer] Failed to match MusicBrainz track to YouTube:",
+          err,
+        );
+        setYtLoading(false);
+        handleAudioError();
+        return;
+      }
+    }
+
+    const finalSrc = resolvedYoutubeId
+      ? getYoutubeStreamUrl(resolvedYoutubeId)
+      : resolvedSrc;
     const resolvedTrackId =
       trackId ||
       newQueue?.find((song) => {
         const songSrc = song.youtubeId
           ? getYoutubeStreamUrl(song.youtubeId)
           : song.src;
-        return songSrc === finalSrc;
+        return songSrc === finalSrc || song.id === trackId;
       })?.id ||
       null;
 
     audioPlayerRef.current.src = finalSrc;
 
     const track = {
-      id: resolvedTrackId,
+      id: resolvedTrackId || trackId,
       src: finalSrc,
       title,
       artist,
       coverSrc,
-      youtubeId,
+      youtubeId: resolvedYoutubeId,
     };
 
     setCurrentTrack(track);
@@ -154,24 +194,30 @@ function MediaPlayer({ children }) {
     if (newQueue) {
       const formattedQueue = newQueue.map((song) => ({
         id: song.id || null,
-        src: song.youtubeId ? getYoutubeStreamUrl(song.youtubeId) : song.src,
+        src: song.youtubeId
+          ? getYoutubeStreamUrl(song.youtubeId)
+          : song.src || "",
         title: song.title,
         artist: song.artist,
-        coverSrc: song.cover,
+        coverSrc: song.cover || song.img || "",
         youtubeId: song.youtubeId || null,
       }));
 
-      const currentIndex = formattedQueue.findIndex(
-        (song) => song.src === finalSrc,
+      const findIdx = formattedQueue.findIndex(
+        (song) =>
+          (song.id && song.id === (resolvedTrackId || trackId)) ||
+          (song.src && song.src === finalSrc),
       );
 
       setQueue(formattedQueue);
-      setCurrentIndex(currentIndex !== -1 ? currentIndex : 0);
+      setCurrentIndex(findIdx !== -1 ? findIdx : 0);
     } else if (index !== -1) {
       setCurrentIndex(index);
     } else {
       setQueue((prev) => {
-        const exists = prev.findIndex((t) => t.src === finalSrc);
+        const exists = prev.findIndex(
+          (t) => (t.id && t.id === track.id) || t.src === finalSrc,
+        );
 
         if (exists !== -1) {
           setCurrentIndex(exists);
@@ -191,177 +237,203 @@ function MediaPlayer({ children }) {
     try {
       await audioPlayerRef.current.play();
       setIsPlaying(true);
+
+      // Asynchronously register in recently played
+      if (resolvedYoutubeId) {
+        createYoutubeSong({
+          youtubeId: resolvedYoutubeId,
+          title,
+          artist,
+          cover: coverSrc,
+          duration: 0, // Duration will update on metadata load or be fetched
+        })
+          .then((savedSong) => {
+            if (savedSong?.id) {
+              addRecent(savedSong.id).catch(() => {});
+            }
+          })
+          .catch((err) => {
+            console.warn(
+              "[MediaPlayer] Recently played register failed:",
+              err.message,
+            );
+          });
+      }
     } catch (err) {
       console.log("Autoplay blocked or error:", err);
       setIsPlaying(false);
+      setYtLoading(false);
     }
   };
 
   // Prefetch het volgende nummer in de wachtrij zodra de speler wisselt
-  useEffect(() => {
-    if (currentIndex >= 0 && currentIndex < queue.length - 1) {
-      const nextTrack = queue[currentIndex + 1];
-      if (nextTrack?.youtubeId) {
-        prefetchYoutubeAudio(nextTrack.youtubeId);
+    useEffect(() => {
+      if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+        const nextTrack = queue[currentIndex + 1];
+        if (nextTrack?.youtubeId) {
+          prefetchYoutubeAudio(nextTrack.youtubeId);
+        }
       }
-    }
-  }, [currentIndex, queue]);
+    }, [currentIndex, queue]);
 
-  // Bepaalt welke index als volgende speelt; houdt rekening met shuffle en repeat.
-  const getNextIndex = () => {
-    if (queue.length === 0) return -1;
-    if (shuffle && queue.length > 1) {
-      let r = currentIndex;
-      while (r === currentIndex) r = Math.floor(Math.random() * queue.length);
-      return r;
-    }
-    if (currentIndex < queue.length - 1) return currentIndex + 1;
-    if (repeatMode === "repeat") return 0; // hele wachtrij opnieuw
-    return -1; // einde
-  };
-
-  const playIndex = (index) => {
-    const track = queue[index];
-    if (!track) return;
-    playSong(
-      track.src,
-      track.title,
-      track.artist,
-      track.coverSrc,
-      index,
-      track.youtubeId,
-      null,
-      track.id,
-    );
-  };
-
-  const handleNext = () => {
-    const nextIndex = getNextIndex();
-    if (nextIndex !== -1) playIndex(nextIndex);
-  };
-
-  const handlePrevious = () => {
-    if (queue.length === 0) return;
-    // Meer dan 3s gespeeld? Dan eerst dit nummer herstarten (zoals Spotify).
-    if (audioPlayerRef.current && audioPlayerRef.current.currentTime > 3) {
-      audioPlayerRef.current.currentTime = 0;
-      return;
-    }
-    if (currentIndex > 0) {
-      playIndex(currentIndex - 1);
-    } else if (repeatMode === "repeat") {
-      playIndex(queue.length - 1);
-    } else if (audioPlayerRef.current) {
-      audioPlayerRef.current.currentTime = 0;
-    }
-  };
-
-  // Wordt aangeroepen als een nummer is afgelopen.
-  const handleEnded = () => {
-    if (repeatMode === "repeat-one") {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.currentTime = 0;
-        audioPlayerRef.current.play().catch(() => {});
+    // Bepaalt welke index als volgende speelt; houdt rekening met shuffle en repeat.
+    const getNextIndex = () => {
+      if (queue.length === 0) return -1;
+      if (shuffle && queue.length > 1) {
+        let r = currentIndex;
+        while (r === currentIndex) r = Math.floor(Math.random() * queue.length);
+        return r;
       }
-      return;
-    }
-    const nextIndex = getNextIndex();
-    if (nextIndex !== -1) {
-      playIndex(nextIndex);
-    } else {
-      setIsPlaying(false);
-    }
-  };
-
-  // Surface laadfouten (bv. ontbrekend MP3-bestand of onbereikbare stream).
-  const handleAudioError = () => {
-    console.error(
-      "Audio kon niet geladen/afgespeeld worden:",
-      currentTrack?.title,
-    );
-    setIsPlaying(false);
-    setYtLoading(false);
-  };
-
-  const reorderQueue = (newQueue) => {
-    setQueue(newQueue);
-    if (currentTrack) {
-      const newIndex = newQueue.findIndex((t) => t.src === currentTrack.src);
-      if (newIndex !== -1) {
-        setCurrentIndex(newIndex);
-      }
-    }
-  };
-
-  const onTimeUpdate = () => {
-    setCurrentTime(audioPlayerRef.current?.currentTime || 0);
-  };
-
-  const onLoadedMetadata = () => {
-    setDuration(audioPlayerRef.current?.duration || 0);
-  };
-
-  useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-
-    const setHandlers = () => {
-      navigator.mediaSession.setActionHandler("play", handlePlay);
-      navigator.mediaSession.setActionHandler("pause", handlePause);
-
-      navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-      navigator.mediaSession.setActionHandler("previoustrack", handlePrevious);
+      if (currentIndex < queue.length - 1) return currentIndex + 1;
+      if (repeatMode === "repeat") return 0; // hele wachtrij opnieuw
+      return -1; // einde
     };
 
-    setHandlers();
-  }, [
-    handlePlay,
-    handlePause,
-    handleNext,
-    handlePrevious,
-    queue,
-    currentIndex,
-    shuffle,
-    repeatMode,
-  ]);
+    const playIndex = (index) => {
+      const track = queue[index];
+      if (!track) return;
+      playSong(
+        track.src,
+        track.title,
+        track.artist,
+        track.coverSrc,
+        index,
+        track.youtubeId,
+        null,
+        track.id,
+      );
+    };
 
-  const value = {
-    audioPlayerRef,
-    isPlaying,
-    currentTime,
-    duration,
-    currentTrack,
-    volume,
-    queue,
-    currentIndex,
-    repeatMode,
-    shuffle,
-    handlePlay,
-    handlePause,
-    handleNext,
-    handlePrevious,
-    handleVolumeChange,
-    toggleRepeat,
-    toggleShuffle,
-    playSong,
-    reorderQueue,
-    ytLoading,
-  };
+    const handleNext = () => {
+      const nextIndex = getNextIndex();
+      if (nextIndex !== -1) playIndex(nextIndex);
+    };
 
-  return (
-    <PlayerContext.Provider value={value}>
-      <audio
-        ref={audioPlayerRef}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={handleEnded}
-        onError={handleAudioError}
-        onPlaying={() => setYtLoading(false)}
-        onCanPlay={() => setYtLoading(false)}
-        onPause={() => setYtLoading(false)}
-      />
-      {children}
-    </PlayerContext.Provider>
-  );
+    const handlePrevious = () => {
+      if (queue.length === 0) return;
+      // Meer dan 3s gespeeld? Dan eerst dit nummer herstarten (zoals Spotify).
+      if (audioPlayerRef.current && audioPlayerRef.current.currentTime > 3) {
+        audioPlayerRef.current.currentTime = 0;
+        return;
+      }
+      if (currentIndex > 0) {
+        playIndex(currentIndex - 1);
+      } else if (repeatMode === "repeat") {
+        playIndex(queue.length - 1);
+      } else if (audioPlayerRef.current) {
+        audioPlayerRef.current.currentTime = 0;
+      }
+    };
+
+    // Wordt aangeroepen als een nummer is afgelopen.
+    const handleEnded = () => {
+      if (repeatMode === "repeat-one") {
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.currentTime = 0;
+          audioPlayerRef.current.play().catch(() => {});
+        }
+        return;
+      }
+      const nextIndex = getNextIndex();
+      if (nextIndex !== -1) {
+        playIndex(nextIndex);
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
+    // Surface laadfouten (bv. ontbrekend MP3-bestand of onbereikbare stream).
+    const handleAudioError = () => {
+      console.error(
+        "Audio kon niet geladen/afgespeeld worden:",
+        currentTrack?.title,
+      );
+      setIsPlaying(false);
+      setYtLoading(false);
+    };
+
+    const reorderQueue = (newQueue) => {
+      setQueue(newQueue);
+      if (currentTrack) {
+        const newIndex = newQueue.findIndex((t) => t.src === currentTrack.src);
+        if (newIndex !== -1) {
+          setCurrentIndex(newIndex);
+        }
+      }
+    };
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audioPlayerRef.current?.currentTime || 0);
+    };
+
+    const onLoadedMetadata = () => {
+      setDuration(audioPlayerRef.current?.duration || 0);
+    };
+
+    useEffect(() => {
+      if (!("mediaSession" in navigator)) return;
+
+      const setHandlers = () => {
+        navigator.mediaSession.setActionHandler("play", handlePlay);
+        navigator.mediaSession.setActionHandler("pause", handlePause);
+
+        navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+        navigator.mediaSession.setActionHandler(
+          "previoustrack",
+          handlePrevious,
+        );
+      };
+
+      setHandlers();
+    }, [
+      handlePlay,
+      handlePause,
+      handleNext,
+      handlePrevious,
+      queue,
+      currentIndex,
+      shuffle,
+      repeatMode,
+    ]);
+
+    const value = {
+      audioPlayerRef,
+      isPlaying,
+      currentTime,
+      duration,
+      currentTrack,
+      volume,
+      queue,
+      currentIndex,
+      repeatMode,
+      shuffle,
+      handlePlay,
+      handlePause,
+      handleNext,
+      handlePrevious,
+      handleVolumeChange,
+      toggleRepeat,
+      toggleShuffle,
+      playSong,
+      reorderQueue,
+      ytLoading,
+    };
+
+    return (
+      <PlayerContext.Provider value={value}>
+        <audio
+          ref={audioPlayerRef}
+          onTimeUpdate={onTimeUpdate}
+          onLoadedMetadata={onLoadedMetadata}
+          onEnded={handleEnded}
+          onError={handleAudioError}
+          onPlaying={() => setYtLoading(false)}
+          onCanPlay={() => setYtLoading(false)}
+          onPause={() => setYtLoading(false)}
+        />
+        {children}
+      </PlayerContext.Provider>
+    );
 }
 
 export default MediaPlayer;

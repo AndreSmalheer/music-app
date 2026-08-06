@@ -25,11 +25,15 @@ function ArtistItem({ artist, navigate, showOptions, variant = "home" }) {
         whileTap={{ scale: 0.98 }}
         onClick={() => navigate(`/artist/${artist.id}`)}
       >
-        <img src={artist.img || "/covers/test-cover.jpg"} alt={artist.name} />
+        {artist.img ? (
+          <img src={artist.img} alt={artist.name} />
+        ) : (
+          <div className="artist-search-cover-placeholder" aria-label={`${artist.name} artwork unavailable`} />
+        )}
 
         <div className="info">
           <h3>{artist.name}</h3>
-          <p>YouTube Artist</p>
+          <p>{artist.isYoutubeArtist ? "YouTube Artist" : "Artist"}</p>
         </div>
       </motion.div>
     );

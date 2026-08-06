@@ -17,6 +17,7 @@ import SeeAllPlaylists from "./pages/SeeAll/SeeAllPlaylists";
 import CreatePlaylist from "./pages/SeeAll/CreatePlaylist";
 import PlaylistDetail from "./pages/PlaylistDetail/PlaylistDetail";
 import ArtistDetail from "./pages/ArtistDetail/ArtistDetail";
+import AlbumDetail from "./pages/AlbumDetail/AlbumDetail";
 import Download from "./pages/Download/Download";
 import Radio from "./pages/Radio/Radio";
 import Library from "./pages/Library/Library";
@@ -24,7 +25,6 @@ import Upload from "./pages/Upload/Upload";
 import Settings from "./pages/Settings/Settings";
 import Onboarding from "./pages/Onboarding/Onboarding";
 import EditPlaylist from "./pages/EditPlaylist/EditPlaylist";
-import DesktopUnsupported from "./components/DesktopUnsupported/DesktopUnsupported";
 import LoadingScreen from "./components/LoadingScreen/LoadingScreen";
 import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { useState } from "react";
@@ -52,7 +52,6 @@ function PageWrapper({ children }) {
 }
 
 function AppContent() {
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const location = useLocation();
   const { currentTrack } = useContext(PlayerContext);
   const { toast } = useDownload();
@@ -68,12 +67,7 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
       document.body.classList.add("capacitor");
     }
-    const checkIsDesktop = () => setIsDesktop(window.innerWidth > 768);
-    window.addEventListener("resize", checkIsDesktop);
-    return () => window.removeEventListener("resize", checkIsDesktop);
   }, []);
-
-  if (isDesktop) return <DesktopUnsupported />;
 
   const isNowPlayingPage = location.pathname === "/now-playing";
   const isOnboarding = location.pathname === "/onboarding";
@@ -81,169 +75,183 @@ function AppContent() {
 
   return (
     <LayoutGroup>
-    <div className={`App ${hasActiveTrack ? "has-player" : ""}`}>
-      {!isOnboarding && <Header />}
+      <div className={`App ${hasActiveTrack ? "has-player" : ""}`}>
+        {!isOnboarding && <Header />}
 
-      <div className="page">
-        <AnimatePresence mode="popLayout">
-          <Routes location={lastActiveLocationRef.current} key={lastActiveLocationRef.current.pathname}>
-            <Route
-              path="/"
-              element={
-                <PageWrapper>
-                  <Home />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/search"
-              element={
-                <PageWrapper>
-                  <Search />
-                </PageWrapper>
-              }
-            />
+        <div className="page">
+          <AnimatePresence mode="popLayout">
+            <Routes
+              location={lastActiveLocationRef.current}
+              key={lastActiveLocationRef.current.pathname}
+            >
+              <Route
+                path="/"
+                element={
+                  <PageWrapper>
+                    <Home />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <PageWrapper>
+                    <Search />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/see-all"
-              element={
-                <PageWrapper>
-                  <SeeAll />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/see-all"
+                element={
+                  <PageWrapper>
+                    <SeeAll />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/see-all-artists"
-              element={
-                <PageWrapper>
-                  <SeeAllArtists />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/see-all-artists"
+                element={
+                  <PageWrapper>
+                    <SeeAllArtists />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/see-all-playlists"
-              element={
-                <PageWrapper>
-                  <SeeAllPlaylists />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/see-all-playlists"
+                element={
+                  <PageWrapper>
+                    <SeeAllPlaylists />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/playlist/:id"
-              element={
-                <PageWrapper>
-                  <PlaylistDetail />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/playlist/:id"
+                element={
+                  <PageWrapper>
+                    <PlaylistDetail />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/artist/:id"
-              element={
-                <PageWrapper>
-                  <ArtistDetail />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/artist/:id"
+                element={
+                  <PageWrapper>
+                    <ArtistDetail />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/create-playlist"
-              element={
-                <PageWrapper>
-                  <CreatePlaylist />
-                </PageWrapper>
-              }
-            />
+              <Route
+                path="/album/:id"
+                element={
+                  <PageWrapper>
+                    <AlbumDetail />
+                  </PageWrapper>
+                }
+              />
 
-            <Route path="/download" element={<Download />} />
+              <Route
+                path="/create-playlist"
+                element={
+                  <PageWrapper>
+                    <CreatePlaylist />
+                  </PageWrapper>
+                }
+              />
 
-            <Route
-              path="/settings"
-              element={
-                <PageWrapper>
-                  <Settings />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/onboarding"
-              element={
-                <PageWrapper>
-                  <Onboarding />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/edit-playlist/:id"
-              element={
-                <PageWrapper>
-                  <EditPlaylist />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/radio"
-              element={
-                <PageWrapper>
-                  <Radio />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/library"
-              element={
-                <PageWrapper>
-                  <Library />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/upload"
-              element={
-                <PageWrapper>
-                  <Upload />
-                </PageWrapper>
-              }
-            />
-            <Route
-              path="/downloads"
-              element={
-                <PageWrapper>
-                  <Downloads />
-                </PageWrapper>
-              }
-            />
-          </Routes>
-        </AnimatePresence>
+              <Route path="/download" element={<Download />} />
+
+              <Route
+                path="/settings"
+                element={
+                  <PageWrapper>
+                    <Settings />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/onboarding"
+                element={
+                  <PageWrapper>
+                    <Onboarding />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/edit-playlist/:id"
+                element={
+                  <PageWrapper>
+                    <EditPlaylist />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/radio"
+                element={
+                  <PageWrapper>
+                    <Radio />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/library"
+                element={
+                  <PageWrapper>
+                    <Library />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/upload"
+                element={
+                  <PageWrapper>
+                    <Upload />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/downloads"
+                element={
+                  <PageWrapper>
+                    <Downloads />
+                  </PageWrapper>
+                }
+              />
+            </Routes>
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isNowPlayingPage && <NowPlaying key="now-playing" />}
+          </AnimatePresence>
+        </div>
+
+        {!isOnboarding && <Footer />}
 
         <AnimatePresence>
-          {isNowPlayingPage && (
-            <NowPlaying key="now-playing" />
+          {toast && (
+            <motion.div
+              className="download-toast"
+              initial={{ opacity: 0, y: 30, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 20, x: "-50%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              style={{ bottom: hasActiveTrack ? "170px" : "110px" }}
+            >
+              {toast.type === "success" ? (
+                <CheckCircle size={20} />
+              ) : (
+                <AlertCircle size={20} />
+              )}
+              <span>{toast.message}</span>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-      {!isOnboarding && <Footer />}
-
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            className="download-toast"
-            initial={{ opacity: 0, y: 30, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: 20, x: "-50%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            style={{ bottom: hasActiveTrack ? "170px" : "110px" }}
-          >
-            {toast.type === "success" ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-            <span>{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
     </LayoutGroup>
   );
 }

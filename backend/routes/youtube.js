@@ -281,6 +281,82 @@ async function videoViaInvidious(videoId) {
   }
 }
 
+const matchCache = new Map();
+
+// GET /api/youtube/match
+router.get("/match", async (req, res, next) => {
+  try {
+    const title = (req.query.title || "").trim();
+    const artist = (req.query.artist || "").trim();
+    const duration = req.query.duration ? Number(req.query.duration) : null;
+    const mbid = (req.query.mbid || "").trim();
+
+    if (!title || !artist) {
+      return res.status(400).json({ error: "Missing title or artist parameter" });
+    }
+
+    const cacheKey = mbid || `${artist.toLowerCase()}::${title.toLowerCase()}`;
+
+    // 1. Check in-memory match cache
+    if (matchCache.has(cacheKey)) {
+      console.log(`[YouTube Match] ⚡ In-memory cache hit for ${cacheKey}`);
+      return res.json({ youtubeId: matchCache.get(cacheKey) });
+    }
+
+    // 2. Check SQL DB songs table for an existing matched song
+    try {
+      const Song = (await import("../models/Song.js")).default;
+      const dbSong = await Song.findOne({ title, artist });
+      if (dbSong && dbSong.youtubeId) {
+        console.log(`[YouTube Match] ⚡ DB hit for ${artist} - ${title}: ${dbSong.youtubeId}`);
+        matchCache.set(cacheKey, dbSong.youtubeId);
+        return res.json({ youtubeId: dbSong.youtubeId });
+      }
+    } catch (dbErr) {
+      console.warn("[YouTube Match] Error checking DB for match:", dbErr.message);
+    }
+
+    // 3. Search YouTube for "${artist} - ${title}"
+    const q = `${artist} - ${title}`;
+    let payload;
+    try {
+      payload = await searchViaInvidious(q, 1);
+    } catch (err) {
+      console.warn(`[YouTube Match] Invidious search failed for: ${q}. Falling back to yt-dlp.`);
+      payload = await searchViaYtdlp(q);
+    }
+
+    const results = payload.results || [];
+    const videos = results.filter(r => r.type !== "youtube-artist");
+
+    if (videos.length === 0) {
+      return res.status(404).json({ error: "No matching YouTube video found" });
+    }
+
+    // 4. Find the best match
+    // Standard: take first result
+    let bestMatch = videos[0];
+
+    // Simple heuristic: look for titles containing "audio", "topic", "official audio" to prefer them
+    for (const vid of videos) {
+      const lowerTitle = vid.title.toLowerCase();
+      if (lowerTitle.includes("audio") || lowerTitle.includes("topic") || lowerTitle.includes("official audio")) {
+        bestMatch = vid;
+        break;
+      }
+    }
+
+    console.log(`[YouTube Match] Selected video for ${artist} - ${title}: ${bestMatch.youtubeId} ("${bestMatch.title}")`);
+
+    // Cache the match in-memory
+    matchCache.set(cacheKey, bestMatch.youtubeId);
+
+    res.json({ youtubeId: bestMatch.youtubeId });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/youtube/search?q=
 router.get("/search", async (req, res, next) => {
   try {

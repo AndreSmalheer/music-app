@@ -236,27 +236,188 @@
 .search-page .track-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
+  background: var(--surface-strong, #181818);
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 320px;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.search-page .track-card:hover {
+  background: var(--surface-hover, #282828);
 }
 
 .search-page .track-card__cover {
-  width: 110px;
-  height: 110px;
+  width: 92px;
+  height: 92px;
   object-fit: cover;
-  border-radius: var(--cover-radius);
-  background-color: var(--surface);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .search-page .track-card__title {
   margin: 0;
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-page .track-card__artist {
+  margin: 0;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Spotify Top Result Card for Artist */
+.top-result-section {
+  width: 100%;
+}
+
+.top-result-container {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.top-result-card.top-result-artist {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 320px;
+  padding: 18px;
+  background: #2d2b2b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.top-result-avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8730f, #ffab5c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.top-result-avatar-image {
+  object-fit: cover;
+}
+
+.top-result-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-result-type {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #bdbdbd;
+  text-transform: uppercase;
+}
+
+/* Albums & Playlists Grid Layout */
+.albums-grid,
+.playlists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.album-search-card,
+.playlist-search-card {
+  background: #2d2b2b;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.album-search-cover-wrap,
+.playlist-search-cover-wrap {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #232320;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.album-search-cover-wrap img,
+.playlist-search-cover-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-search-cover-fallback,
+.playlist-search-cover-fallback {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  text-align: center;
+}
+
+.playlist-search-cover-fallback {
+  background: linear-gradient(135deg, #282828, #121212);
+  width: 100%;
+  height: 100%;
+}
+
+.album-search-title,
+.playlist-search-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album-search-artist,
+.playlist-search-songs {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Artiesten */
-.result-section.result-artist {
+.result-section.result-artists-section {
   margin-top: 24px;
 }
 
@@ -274,6 +435,7 @@
   align-items: center;
   width: 76px;
   cursor: pointer;
+  user-select: none;
 }
 
 .search-page .radio-song-item.artist img {
@@ -284,6 +446,13 @@
   background-color: var(--surface);
 }
 
+.search-page .artist-search-cover-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
 .search-page .radio-song-item.artist .info {
   text-align: center;
   margin-top: 8px;
@@ -292,7 +461,7 @@
 
 .search-page .radio-song-item.artist .info h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -303,19 +472,9 @@
 
 .search-page .radio-song-item.artist .info p {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--text-secondary);
-}
-
-.yt-badge {
-  font-size: 10px;
-  font-weight: 700;
-  background: #ff0000;
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
 }
 
 /* Laad- en lege toestanden */
@@ -330,34 +489,4 @@
   font-size: 22px;
   font-weight: 600;
   color: var(--text-secondary);
-}
-
-
-/* ── "Search on YouTube" button ── */
-.no-results-label {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 0 0 20px;
-}
-
-.yt-search-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 13px 28px;
-  background: #ff0000;
-  color: #fff;
-  border: none;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: var(--font-primary);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 18px rgba(255, 0, 0, 0.35);
-}
-
-.yt-search-btn:active {
-  transform: scale(0.96);
 }
