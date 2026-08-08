@@ -178,7 +178,14 @@ function MediaPlayer({ children }) {
       })?.id ||
       null;
 
+    audioPlayerRef.current.pause();
+    audioPlayerRef.current.removeAttribute("src");
+    audioPlayerRef.current.load();
+    setDuration(0);
+    setCurrentTime(0);
+
     audioPlayerRef.current.src = finalSrc;
+    audioPlayerRef.current.load();
 
     const track = {
       id: resolvedTrackId || trackId,
@@ -369,7 +376,9 @@ function MediaPlayer({ children }) {
     if (!audio) return;
 
     const d = audio.duration;
-    setDuration(Number.isFinite(d) ? d : 0);
+    if (!Number.isFinite(d) || d <= 0) return;
+
+    setDuration(d);
     setCurrentTime(audio.currentTime || 0);
   };
 
