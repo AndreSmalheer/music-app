@@ -1,0 +1,52 @@
+name: Build iOS Simulator App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Sync Capacitor iOS project
+        run: npx cap sync ios
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install
+
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Compress app for Appetize
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r "$GITHUB_WORKSPACE/CapacitorApp-ios-simulator.zip" App.app
+
+      - name: Upload simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-build
+          path: CapacitorApp-ios-simulator.zip
