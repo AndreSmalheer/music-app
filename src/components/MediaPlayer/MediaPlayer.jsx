@@ -446,6 +446,86 @@ function MediaPlayer({ children }) {
         onCanPlay={() => setYtLoading(false)}
         onPause={() => setYtLoading(false)}
       />
+
+      {isPlaying && audioPlayerRef.current && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 16,
+            right: 16,
+            padding: "12px",
+            background: "rgba(0,0,0,0.9)",
+            color: "#fff",
+            borderRadius: 6,
+            zIndex: 99999,
+            fontSize: 12,
+            fontFamily: "monospace",
+            lineHeight: 1.4,
+            maxWidth: 420,
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          <div>
+            <strong>PLAYER DEBUG</strong>
+          </div>
+          <div>Title: {currentTrack?.title}</div>
+          <div>YouTube ID: {currentTrack?.youtubeId || "none"}</div>
+
+          <hr />
+
+          <div>React currentTime: {currentTime}</div>
+          <div>React duration: {duration}</div>
+
+          <hr />
+
+          <div>audio.currentTime: {audioPlayerRef.current.currentTime}</div>
+          <div>audio.duration: {audioPlayerRef.current.duration}</div>
+          <div>
+            audio.seekable.end:
+            {audioPlayerRef.current.seekable.length
+              ? ` ${audioPlayerRef.current.seekable.end(audioPlayerRef.current.seekable.length - 1)}`
+              : " none"}
+          </div>
+          <div>
+            audio.buffered.end:
+            {audioPlayerRef.current.buffered.length
+              ? ` ${audioPlayerRef.current.buffered.end(audioPlayerRef.current.buffered.length - 1)}`
+              : " none"}
+          </div>
+
+          <hr />
+
+          <div>readyState: {audioPlayerRef.current.readyState}</div>
+          <div>networkState: {audioPlayerRef.current.networkState}</div>
+          <div>paused: {String(audioPlayerRef.current.paused)}</div>
+          <div>ended: {String(audioPlayerRef.current.ended)}</div>
+          <div>seeking: {String(audioPlayerRef.current.seeking)}</div>
+          <div>playbackRate: {audioPlayerRef.current.playbackRate}</div>
+
+          <hr />
+
+          <div>
+            Difference (React vs audio duration):{" "}
+            {(duration - (audioPlayerRef.current.duration || 0)).toFixed(3)}
+          </div>
+
+          <div>Remaining (React): {(duration - currentTime).toFixed(3)}</div>
+
+          <div>
+            Remaining (audio):{" "}
+            {(
+              (audioPlayerRef.current.duration || 0) -
+              audioPlayerRef.current.currentTime
+            ).toFixed(3)}
+          </div>
+
+          <div>User Agent:</div>
+          <div style={{ fontSize: 10, wordBreak: "break-word" }}>
+            {navigator.userAgent}
+          </div>
+        </div>
+      )}
+
       {children}
     </PlayerContext.Provider>
   );
