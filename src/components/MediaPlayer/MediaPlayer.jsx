@@ -448,6 +448,7 @@ function MediaPlayer({ children }) {
         onPause={() => setYtLoading(false)}
       />
 
+      {/*
       {isPlaying && audioPlayerRef.current && (
         <div
           style={{
@@ -526,6 +527,7 @@ function MediaPlayer({ children }) {
           </div>
         </div>
       )}
+    */}
 
       {children}
     </PlayerContext.Provider>
