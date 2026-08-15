@@ -149,11 +149,13 @@ function MediaPlayer({ children }) {
     let resolvedSrc = src;
 
     // If this is a MusicBrainz song (no youtubeId, no src), fetch the match
+    let knownDuration = 0;
     if (!resolvedYoutubeId && !resolvedSrc && title !== "Unknown") {
       try {
         const matchData = await matchYoutubeTrack(title, artist, trackId || "");
         resolvedYoutubeId = matchData.youtubeId;
         resolvedSrc = getYoutubeStreamUrl(resolvedYoutubeId);
+        knownDuration = matchData.duration || 0;
       } catch (err) {
         console.error(
           "[MediaPlayer] Failed to match MusicBrainz track to YouTube:",
@@ -181,7 +183,7 @@ function MediaPlayer({ children }) {
     audioPlayerRef.current.pause();
     audioPlayerRef.current.removeAttribute("src");
     audioPlayerRef.current.load();
-    setDuration(0);
+    setDuration(knownDuration);
     setCurrentTime(0);
 
     audioPlayerRef.current.src = finalSrc;
@@ -194,6 +196,7 @@ function MediaPlayer({ children }) {
       artist,
       coverSrc,
       youtubeId: resolvedYoutubeId,
+      duration: knownDuration,
     };
 
     setCurrentTrack(track);
@@ -251,7 +254,7 @@ function MediaPlayer({ children }) {
           title,
           artist,
           cover: coverSrc,
-          duration: 0,
+          duration: knownDuration,
         })
           .then((savedSong) => {
             if (savedSong?.id) {
@@ -374,17 +377,15 @@ function MediaPlayer({ children }) {
   const onMetadataUpdate = () => {
     const audio = audioPlayerRef.current;
     if (!audio) return;
-
     const d = audio.duration;
     if (!Number.isFinite(d) || d <= 0) return;
-
-    setDuration(d);
+    setDuration((prev) => (prev > 0 && Math.abs(d - prev) > 5 ? prev : d));
     setCurrentTime(audio.currentTime || 0);
   };
 
   useEffect(() => {
     setCurrentTime(0);
-    setDuration(0);
+    setDuration(currentTrack?.duration || 0);
   }, [currentTrack?.src]);
 
   useEffect(() => {

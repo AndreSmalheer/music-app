@@ -104,7 +104,10 @@ function getInvidiousInstances() {
   const envUrl = process.env.INVIDIOUS_URL?.trim();
   if (envUrl) {
     instances.push(envUrl);
-    if (envUrl.startsWith("https://") && /https:\/\/\d+\.\d+\.\d+\.\d+/.test(envUrl)) {
+    if (
+      envUrl.startsWith("https://") &&
+      /https:\/\/\d+\.\d+\.\d+\.\d+/.test(envUrl)
+    ) {
       instances.push(envUrl.replace("https://", "http://"));
     }
   }
@@ -136,10 +139,15 @@ async function searchSingleInvidious(baseUrl, query, page = 1) {
       `${baseUrl}/api/v1/search?q=${encodeURIComponent(query)}` +
       `&type=channel`;
 
-    const headers = { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" };
+    const headers = {
+      "User-Agent": DEFAULT_USER_AGENT,
+      Accept: "application/json",
+    };
 
     const [channelsRes, videosRes] = await Promise.all([
-      page === 1 ? fetch(channelsUrl, { headers, signal: controller.signal }) : Promise.resolve(null),
+      page === 1
+        ? fetch(channelsUrl, { headers, signal: controller.signal })
+        : Promise.resolve(null),
       fetch(videosUrl, { headers, signal: controller.signal }),
     ]);
 
@@ -171,6 +179,7 @@ async function searchSingleInvidious(baseUrl, query, page = 1) {
       artist: video.author,
       thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
       type: "youtube",
+      duration: video.lengthSeconds || 0,
     }));
 
     return {
@@ -187,7 +196,7 @@ async function searchViaInvidious(query, page = 1) {
   const instances = getInvidiousInstances();
   try {
     return await Promise.any(
-      instances.map((url) => searchSingleInvidious(url, query, page))
+      instances.map((url) => searchSingleInvidious(url, query, page)),
     );
   } catch (err) {
     throw new Error("All Invidious search mirrors failed");
@@ -211,6 +220,7 @@ async function searchViaYtdlp(q, max = 30) {
       artist: e.channel || e.uploader || "",
       thumbnail: thumbForVideo(e.id),
       type: "youtube",
+      duration: e.duration || 0,
     }));
 
   return { results, nextPageToken: null };
@@ -250,7 +260,10 @@ async function videoViaInvidious(videoId) {
         const timeoutId = setTimeout(() => controller.abort(), 3500);
         try {
           const res = await fetch(`${baseUrl}/api/v1/videos/${videoId}`, {
-            headers: { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" },
+            headers: {
+              "User-Agent": DEFAULT_USER_AGENT,
+              Accept: "application/json",
+            },
             signal: controller.signal,
           });
           clearTimeout(timeoutId);
@@ -263,8 +276,8 @@ async function videoViaInvidious(videoId) {
                 title: info.title || "Onbekend",
                 artist: info.author || "",
                 thumbnail:
-                  info.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
-                  thumbForVideo(videoId),
+                  info.videoThumbnails?.find((t) => t.quality === "medium")
+                    ?.url ?? thumbForVideo(videoId),
                 type: "youtube",
               },
             ],
@@ -274,7 +287,7 @@ async function videoViaInvidious(videoId) {
           clearTimeout(timeoutId);
           throw err;
         }
-      })
+      }),
     );
   } catch {
     return videoViaYtdlp(videoId);
@@ -284,6 +297,7 @@ async function videoViaInvidious(videoId) {
 const matchCache = new Map();
 
 // GET /api/youtube/match
+// GET /api/youtube/match
 router.get("/match", async (req, res, next) => {
   try {
     const title = (req.query.title || "").trim();
@@ -292,7 +306,9 @@ router.get("/match", async (req, res, next) => {
     const mbid = (req.query.mbid || "").trim();
 
     if (!title || !artist) {
-      return res.status(400).json({ error: "Missing title or artist parameter" });
+      return res
+        .status(400)
+        .json({ error: "Missing title or artist parameter" });
     }
 
     const cacheKey = mbid || `${artist.toLowerCase()}::${title.toLowerCase()}`;
@@ -300,7 +316,7 @@ router.get("/match", async (req, res, next) => {
     // 1. Check in-memory match cache
     if (matchCache.has(cacheKey)) {
       console.log(`[YouTube Match] ⚡ In-memory cache hit for ${cacheKey}`);
-      return res.json({ youtubeId: matchCache.get(cacheKey) });
+      return res.json(matchCache.get(cacheKey));
     }
 
     // 2. Check SQL DB songs table for an existing matched song
@@ -308,12 +324,21 @@ router.get("/match", async (req, res, next) => {
       const Song = (await import("../models/Song.js")).default;
       const dbSong = await Song.findOne({ title, artist });
       if (dbSong && dbSong.youtubeId) {
-        console.log(`[YouTube Match] ⚡ DB hit for ${artist} - ${title}: ${dbSong.youtubeId}`);
-        matchCache.set(cacheKey, dbSong.youtubeId);
-        return res.json({ youtubeId: dbSong.youtubeId });
+        console.log(
+          `[YouTube Match] ⚡ DB hit for ${artist} - ${title}: ${dbSong.youtubeId}`,
+        );
+        const match = {
+          youtubeId: dbSong.youtubeId,
+          duration: dbSong.duration || 0,
+        };
+        matchCache.set(cacheKey, match);
+        return res.json(match);
       }
     } catch (dbErr) {
-      console.warn("[YouTube Match] Error checking DB for match:", dbErr.message);
+      console.warn(
+        "[YouTube Match] Error checking DB for match:",
+        dbErr.message,
+      );
     }
 
     // 3. Search YouTube for "${artist} - ${title}"
@@ -322,13 +347,14 @@ router.get("/match", async (req, res, next) => {
     try {
       payload = await searchViaInvidious(q, 1);
     } catch (err) {
-      console.warn(`[YouTube Match] Invidious search failed for: ${q}. Falling back to yt-dlp.`);
+      console.warn(
+        `[YouTube Match] Invidious search failed for: ${q}. Falling back to yt-dlp.`,
+      );
       payload = await searchViaYtdlp(q);
     }
 
     const results = payload.results || [];
-    const videos = results.filter(r => r.type !== "youtube-artist");
-
+    const videos = results.filter((r) => r.type !== "youtube-artist");
     if (videos.length === 0) {
       return res.status(404).json({ error: "No matching YouTube video found" });
     }
@@ -336,22 +362,31 @@ router.get("/match", async (req, res, next) => {
     // 4. Find the best match
     // Standard: take first result
     let bestMatch = videos[0];
-
     // Simple heuristic: look for titles containing "audio", "topic", "official audio" to prefer them
     for (const vid of videos) {
       const lowerTitle = vid.title.toLowerCase();
-      if (lowerTitle.includes("audio") || lowerTitle.includes("topic") || lowerTitle.includes("official audio")) {
+      if (
+        lowerTitle.includes("audio") ||
+        lowerTitle.includes("topic") ||
+        lowerTitle.includes("official audio")
+      ) {
         bestMatch = vid;
         break;
       }
     }
 
-    console.log(`[YouTube Match] Selected video for ${artist} - ${title}: ${bestMatch.youtubeId} ("${bestMatch.title}")`);
+    console.log(
+      `[YouTube Match] Selected video for ${artist} - ${title}: ${bestMatch.youtubeId} ("${bestMatch.title}")`,
+    );
+
+    const match = {
+      youtubeId: bestMatch.youtubeId,
+      duration: bestMatch.duration || 0,
+    };
 
     // Cache the match in-memory
-    matchCache.set(cacheKey, bestMatch.youtubeId);
-
-    res.json({ youtubeId: bestMatch.youtubeId });
+    matchCache.set(cacheKey, match);
+    res.json(match);
   } catch (err) {
     next(err);
   }
@@ -381,10 +416,7 @@ router.get("/search", async (req, res, next) => {
     if (urlMatch) {
       payload = await videoViaInvidious(urlMatch[1]);
     } else {
-      payload = await searchViaInvidious(
-        q,
-        page,
-      ).catch((err) => {
+      payload = await searchViaInvidious(q, page).catch((err) => {
         return searchViaYtdlp(q);
       });
     }
@@ -434,17 +466,24 @@ async function fetchAudioFromPipedInstance(baseUrl, videoId) {
       (s) =>
         s.format === "M4A" ||
         s.mimeType?.includes("mp4") ||
-        s.mimeType?.includes("m4a")
+        s.mimeType?.includes("m4a"),
     );
 
     const targetList = m4aStreams.length > 0 ? m4aStreams : audioStreams;
-    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+    targetList.sort(
+      (a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0),
+    );
 
     const bestAudio = targetList[0];
-    if (!bestAudio || !bestAudio.url) throw new Error("No valid stream URL in Piped");
+    if (!bestAudio || !bestAudio.url)
+      throw new Error("No valid stream URL in Piped");
 
-    const ext = bestAudio.format?.toLowerCase() || (bestAudio.mimeType?.includes("webm") ? "webm" : "m4a");
-    const mime = bestAudio.mimeType ? bestAudio.mimeType.split(";")[0] : mimeForExt(ext);
+    const ext =
+      bestAudio.format?.toLowerCase() ||
+      (bestAudio.mimeType?.includes("webm") ? "webm" : "m4a");
+    const mime = bestAudio.mimeType
+      ? bestAudio.mimeType.split(";")[0]
+      : mimeForExt(ext);
     const duration = normalizeDuration(info.duration);
 
     let expires = Date.now() + 60 * 60 * 1000;
@@ -485,7 +524,7 @@ async function fetchAudioFromInvidiousInstance(baseUrl, videoId) {
         f.type?.includes("audio/") ||
         f.mimeType?.includes("audio/") ||
         f.container === "m4a" ||
-        f.container === "webm"
+        f.container === "webm",
     );
 
     if (audioFormats.length === 0) throw new Error("No audio formats found");
@@ -494,11 +533,13 @@ async function fetchAudioFromInvidiousInstance(baseUrl, videoId) {
       (f) =>
         f.container === "m4a" ||
         f.type?.includes("mp4a") ||
-        f.type?.includes("audio/mp4")
+        f.type?.includes("audio/mp4"),
     );
 
     const targetList = m4aFormats.length > 0 ? m4aFormats : audioFormats;
-    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+    targetList.sort(
+      (a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0),
+    );
 
     const bestAudio = targetList[0];
     if (!bestAudio || !bestAudio.url) throw new Error("No valid stream URL");
@@ -506,7 +547,9 @@ async function fetchAudioFromInvidiousInstance(baseUrl, videoId) {
     const ext =
       bestAudio.container ||
       (bestAudio.type?.includes("webm") ? "webm" : "m4a");
-    const mime = bestAudio.type ? bestAudio.type.split(";")[0] : mimeForExt(ext);
+    const mime = bestAudio.type
+      ? bestAudio.type.split(";")[0]
+      : mimeForExt(ext);
     const duration = normalizeDuration(info.lengthSeconds || info.duration);
 
     let expires = Date.now() + 60 * 60 * 1000;
@@ -557,27 +600,33 @@ async function fetchInnerTubeClient(clientName, clientVersion, videoId) {
     });
     clearTimeout(timeoutId);
 
-    if (!res.ok) throw new Error(`InnerTube (${clientName}) status ${res.status}`);
+    if (!res.ok)
+      throw new Error(`InnerTube (${clientName}) status ${res.status}`);
     const data = await res.json();
     const formats = data?.streamingData?.adaptiveFormats || [];
     const audioFormats = formats.filter(
-      (f) => f.mimeType && f.mimeType.startsWith("audio/") && f.url
+      (f) => f.mimeType && f.mimeType.startsWith("audio/") && f.url,
     );
 
-    if (audioFormats.length === 0) throw new Error(`No direct audio URLs returned by InnerTube (${clientName})`);
+    if (audioFormats.length === 0)
+      throw new Error(
+        `No direct audio URLs returned by InnerTube (${clientName})`,
+      );
 
     const m4aFormats = audioFormats.filter(
-      (f) => f.mimeType.includes("mp4a") || f.mimeType.includes("audio/mp4")
+      (f) => f.mimeType.includes("mp4a") || f.mimeType.includes("audio/mp4"),
     );
 
     const targetList = m4aFormats.length > 0 ? m4aFormats : audioFormats;
-    targetList.sort((a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0));
+    targetList.sort(
+      (a, b) => (Number(b.bitrate) || 0) - (Number(a.bitrate) || 0),
+    );
 
     const bestAudio = targetList[0];
     const ext = bestAudio.mimeType.includes("webm") ? "webm" : "m4a";
     const mime = bestAudio.mimeType.split(";")[0];
     const duration = normalizeDuration(
-      (Number(bestAudio.approxDurationMs) || 0) / 1000
+      (Number(bestAudio.approxDurationMs) || 0) / 1000,
     );
 
     let expires = Date.now() + 60 * 60 * 1000;
@@ -611,13 +660,23 @@ async function audioViaInnerTube(videoId) {
 
 async function audioViaFastPool(videoId) {
   const directPromise = audioViaInnerTube(videoId);
-  const pipedPromises = PIPED_INSTANCES.map((u) => fetchAudioFromPipedInstance(u, videoId));
-  const invidiousPromises = getInvidiousInstances().map((u) => fetchAudioFromInvidiousInstance(u, videoId));
+  const pipedPromises = PIPED_INSTANCES.map((u) =>
+    fetchAudioFromPipedInstance(u, videoId),
+  );
+  const invidiousPromises = getInvidiousInstances().map((u) =>
+    fetchAudioFromInvidiousInstance(u, videoId),
+  );
 
   try {
-    return await Promise.any([directPromise, ...pipedPromises, ...invidiousPromises]);
+    return await Promise.any([
+      directPromise,
+      ...pipedPromises,
+      ...invidiousPromises,
+    ]);
   } catch (err) {
-    throw new Error("All fast stream resolvers (YouTube Direct, Piped & Invidious) failed");
+    throw new Error(
+      "All fast stream resolvers (YouTube Direct, Piped & Invidious) failed",
+    );
   }
 }
 
@@ -653,7 +712,9 @@ async function resolveViaYtdlp(videoId, startMs) {
     expires,
     source: "yt-dlp",
   };
-  console.log(`[Stream Resolved] 🐢 Audio for video ${videoId} extracted via yt-dlp fallback in ${Date.now() - startMs}ms`);
+  console.log(
+    `[Stream Resolved] 🐢 Audio for video ${videoId} extracted via yt-dlp fallback in ${Date.now() - startMs}ms`,
+  );
   return resolved;
 }
 
@@ -662,13 +723,17 @@ export async function resolveAudio(videoId) {
   // 1. Check completed cache
   const cached = formatCache.get(videoId);
   if (cached && cached.expires > Date.now()) {
-    console.log(`[Stream Cache Hit] ⚡ Instant stream cache hit for video ${videoId}`);
+    console.log(
+      `[Stream Cache Hit] ⚡ Instant stream cache hit for video ${videoId}`,
+    );
     return cached;
   }
 
   // 2. Check in-flight resolution (Deduplicate concurrent prefetch / click calls!)
   if (inFlightPromises.has(videoId)) {
-    console.log(`[Stream Deduplicated] ⏳ Joined in-flight resolution for video ${videoId}`);
+    console.log(
+      `[Stream Deduplicated] ⏳ Joined in-flight resolution for video ${videoId}`,
+    );
     return await inFlightPromises.get(videoId);
   }
 
@@ -678,20 +743,25 @@ export async function resolveAudio(videoId) {
     try {
       const streamResult = await audioViaFastPool(videoId);
       const tookMs = Date.now() - startMs;
-      console.log(`[Stream Resolved] 🚀 Audio for video ${videoId} extracted via ${streamResult.source} in ${tookMs}ms`);
+      console.log(
+        `[Stream Resolved] 🚀 Audio for video ${videoId} extracted via ${streamResult.source} in ${tookMs}ms`,
+      );
       formatCache.set(videoId, streamResult);
       return streamResult;
     } catch (err) {
       console.warn(
         `Fast stream pool failed for video ${videoId}, falling back to single yt-dlp CLI:`,
-        err.message
+        err.message,
       );
       try {
         const fallbackResult = await resolveViaYtdlp(videoId, startMs);
         formatCache.set(videoId, fallbackResult);
         return fallbackResult;
       } catch (ytErr) {
-        console.error(`yt-dlp fallback also failed for video ${videoId}:`, ytErr.message);
+        console.error(
+          `yt-dlp fallback also failed for video ${videoId}:`,
+          ytErr.message,
+        );
         throw ytErr;
       }
     } finally {
@@ -727,7 +797,10 @@ router.get("/prefetch/:videoId", async (req, res) => {
     console.log(`[Prefetch] ✅ Audio pre-warmed for video ${videoId}`);
     res.status(204).end();
   } catch (err) {
-    console.warn(`[Prefetch] ⚠️ Pre-warm failed for video ${videoId}:`, err.message);
+    console.warn(
+      `[Prefetch] ⚠️ Pre-warm failed for video ${videoId}:`,
+      err.message,
+    );
     res.status(204).end();
   }
 });
@@ -740,7 +813,9 @@ router.post("/prefetch-batch", async (req, res) => {
   }
 
   const slice = videoIds.slice(0, 5);
-  console.log(`[Prefetch] 🚀 Batch pre-warming ${slice.length} top search result tracks: [${slice.join(", ")}]...`);
+  console.log(
+    `[Prefetch] 🚀 Batch pre-warming ${slice.length} top search result tracks: [${slice.join(", ")}]...`,
+  );
   await Promise.allSettled(slice.map((id) => resolveAudio(id)));
   console.log(`[Prefetch] ✅ Batch pre-warming complete for search results.`);
   res.status(204).end();
